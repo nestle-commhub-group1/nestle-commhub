@@ -136,45 +136,44 @@ A single registration page presents **two tabs**:
 
 ```
 nestle-commhub/
-├── app/                          ← Single React + Vite PWA (all roles)
+├── app/
 │   ├── src/
-│   │   ├── components/           ← Shared UI components
+│   │   ├── components/
 │   │   ├── pages/
-│   │   │   ├── auth/             ← Login & registration (tabbed form)
-│   │   │   ├── retailer/         ← Retailer dashboard pages
-│   │   │   ├── staff/            ← Sales Staff dashboard pages
-│   │   │   ├── manager/          ← Regional Manager dashboard pages
-│   │   │   ├── admin/            ← HQ Admin dashboard pages
-│   │   │   └── distributor/      ← Distributor dashboard pages
-│   │   ├── routes/               ← Route definitions & role-based guards
-│   │   ├── context/              ← React context (auth, user role, etc.)
+│   │   │   ├── auth/
+│   │   │   │   ├── Register.jsx
+│   │   │   │   ├── Login.jsx
+│   │   │   │   ├── OTP.jsx
+│   │   │   │   ├── ForgotPassword.jsx
+│   │   │   │   └── Unauthorized.jsx
+│   │   │   ├── retailer/
+│   │   │   │   └── RetailerDashboard.jsx
+│   │   │   ├── staff/
+│   │   │   │   └── StaffDashboard.jsx
+│   │   │   ├── manager/
+│   │   │   │   └── ManagerDashboard.jsx
+│   │   │   ├── admin/
+│   │   │   │   └── AdminDashboard.jsx
+│   │   │   └── distributor/
+│   │   │       └── DistributorDashboard.jsx
+│   │   ├── routes/
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
 │   │   └── App.jsx
 │   ├── index.html
 │   ├── vite.config.js
+│   ├── tailwind.config.js
 │   └── package.json
-│
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
 │   │   ├── models/
 │   │   ├── routes/
 │   │   ├── middleware/
-│   │   └── index.js              ← Express entry point
+│   │   └── index.js
 │   └── package.json
-│
-├── docs/
-│   ├── meeting-minutes/          ← Meeting notes (per-meeting files)
-│   ├── api-documentation.md      ← REST endpoint reference
-│   ├── bug-tracker.md            ← Bug log (BUG-001, BUG-002…)
-│   ├── changelog.md              ← All notable project changes
-│   ├── code-decisions.md         ← Architecture & tech decision log
-│   ├── context-report.md         ← This document
-│   └── sprint-reviews.md         ← End-of-sprint review log
-│
-├── .gitignore
-├── .env                          ← Local environment variables (not committed)
-├── .env.example                  ← Template for environment variables
-└── README.md
+└── docs/
 ```
 
 ---
@@ -201,6 +200,14 @@ nestle-commhub/
 | 16 | Consolidated two-app architecture into single PWA in `app/` — deleted `retailer-portal/` and `management-dashboard/` | 13 March 2026 |
 | 17 | Adopted Tailwind CSS as styling framework for `app/` | 13 March 2026 |
 | 18 | Defined role-based routing via JWT — single login/registration page, role determines dashboard rendered | 13 March 2026 |
+| 19 | Scaffolded single unified PWA in `app/` (Vite + React) | 13 March 2026 |
+| 20 | Installed and configured Tailwind CSS (`tailwind.config.js`, `postcss.config.js`, directives in `index.css`) | 13 March 2026 |
+| 21 | Installed and configured `vite-plugin-pwa` with Nestlé brand colours | 13 March 2026 |
+| 22 | Set up React Router in `App.jsx` with all role-based protected routes | 13 March 2026 |
+| 23 | Created `AuthContext.jsx` — user object, JWT token, `login()`, `logout()`, `isAuthenticated` | 13 March 2026 |
+| 24 | Created `ProtectedRoute.jsx` — auth check and role-based access control | 13 March 2026 |
+| 25 | Created placeholder pages for all role-based routes (retailer, staff, manager, admin, distributor) | 13 March 2026 |
+| 26 | Created auth placeholder pages (`Register`, `Login`, `OTP`, `ForgotPassword`, `Unauthorized`) | 13 March 2026 |
 
 ---
 
@@ -208,10 +215,9 @@ nestle-commhub/
 
 | Task | Owner | Notes |
 |---|---|---|
-| Scaffold `app/` with Vite + React + Tailwind CSS + `vite-plugin-pwa` | TBD | Single PWA replacing the two deleted apps |
-| MongoDB setup and connection | TBD | Not started — no DB connection in backend yet |
-| Authentication system design | TBD | JWT-based RBAC planned; registration needs Employee ID verification flow |
-| Sprint 1 planning and task assignment | Team | Sprint 1 tasks need to be formally assigned to team members |
+| Registration page UI (Retailer + Nestlé Employee tabs) | TBD | UI not yet built — placeholder only |
+| Backend registration endpoint (`POST /api/auth/register`) | TBD | Not yet built — no User schema or auth routes |
+| MongoDB Atlas connection | TBD | Not yet set up — backend has no DB connection |
 
 ---
 

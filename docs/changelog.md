@@ -5,6 +5,20 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
+## [13 March 2026] - Sprint
+### Changed
+- Deleted `retailer-portal/` and `management-dashboard/` folders from the repo
+- Created single unified PWA in `app/` folder (React + Vite)
+- Installed dependencies: `react-router-dom`, `vite-plugin-pwa`, `tailwindcss`, `postcss`, `autoprefixer`
+- Configured Tailwind CSS (`tailwind.config.js`, `postcss.config.js`, directives in `src/index.css`)
+- Configured `vite-plugin-pwa` with Nestlé brand colours (theme `#3D2B1F`, background `#ffffff`)
+- Set up React Router in `App.jsx` with role-based protected routes (retailer, staff, manager, admin, distributor)
+- Created `AuthContext.jsx` for JWT and user state management
+- Created `ProtectedRoute.jsx` for role-based route protection
+- Created placeholder pages for all role-based routes
+
+---
+
 ## [11 March 2026] - Pre-Sprint
 ### Changed
 - Both `retailer-portal` and `management-dashboard` upgraded to PWAs
