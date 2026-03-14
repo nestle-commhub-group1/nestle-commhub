@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import AuthLayout from "../../components/AuthLayout";
 
 // ── Reusable field components ─────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ function TextInput({ name, placeholder, value, onChange, error, type = "text", a
   );
 }
 
-function PasswordInput({ name, placeholder, value, onChange, error, autoComplete }) {
+function PasswordInput({ name, value, onChange, error, autoComplete }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -70,7 +71,7 @@ function PasswordInput({ name, placeholder, value, onChange, error, autoComplete
 
 function ShopIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 4l9 5.75V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.75z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 21V12h6v9" />
     </svg>
@@ -79,8 +80,16 @@ function ShopIcon() {
 
 function OfficeIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M8 11h1m2 0h1m-4 4h1m2 0h1m-4 4h1m2 0h1" />
+    </svg>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17H3V7a1 1 0 011-1h10v11M9 17h6m0 0h3l2-4V11h-5V7M15 17a2 2 0 104 0 2 2 0 00-4 0zM5 17a2 2 0 104 0 2 2 0 00-4 0z" />
     </svg>
   );
 }
@@ -97,16 +106,34 @@ const employeeDefaults = {
   phone: "", employeeId: "", department: "", officeLocation: "",
 };
 
+const driverDefaults = {
+  fullName: "", email: "", password: "", confirmPassword: "",
+  phone: "", licenseNo: "", vehiclePlate: "", assignedZone: "",
+};
+
+// ── Tabs config ───────────────────────────────────────────────────────────────
+
+const TABS = [
+  { id: "retailer", label: "Retailer",     sub: "Business partner", Icon: ShopIcon },
+  { id: "employee", label: "Nestlé Staff", sub: "Employee",          Icon: OfficeIcon },
+  { id: "driver",   label: "Driver",       sub: "Delivery driver",   Icon: TruckIcon },
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Register() {
-  const [tab, setTab] = useState("retailer"); // "retailer" | "employee"
-  const [retailerForm, setRetailerForm] = useState(retailerDefaults);
-  const [employeeForm, setEmployeeForm] = useState(employeeDefaults);
-  const [errors, setErrors] = useState({});
+  const [tab, setTab]               = useState("retailer");
+  const [retailerForm, setRetailer] = useState(retailerDefaults);
+  const [employeeForm, setEmployee] = useState(employeeDefaults);
+  const [driverForm,   setDriver]   = useState(driverDefaults);
+  const [errors, setErrors]         = useState({});
 
-  const form = tab === "retailer" ? retailerForm : employeeForm;
-  const setForm = tab === "retailer" ? setRetailerForm : setEmployeeForm;
+  const formMap = {
+    retailer: [retailerForm, setRetailer],
+    employee: [employeeForm, setEmployee],
+    driver:   [driverForm,   setDriver],
+  };
+  const [form, setForm] = formMap[tab];
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -116,40 +143,32 @@ export default function Register() {
 
   function validate() {
     const e = {};
-    const required = (field, label) => {
-      if (!form[field]?.trim()) e[field] = `${label} is required.`;
-    };
+    const req = (field, label) => { if (!form[field]?.trim()) e[field] = `${label} is required.`; };
 
-    required("fullName", "Full Name");
+    req("fullName", "Full Name");
 
-    if (!form.email?.trim()) {
-      e.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      e.email = "Enter a valid email address.";
-    }
+    if (!form.email?.trim())                             e.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
 
-    if (!form.password) {
-      e.password = "Password is required.";
-    } else if (form.password.length < 8) {
-      e.password = "Password must be at least 8 characters.";
-    }
+    if (!form.password)                  e.password = "Password is required.";
+    else if (form.password.length < 8)   e.password = "Password must be at least 8 characters.";
 
-    if (!form.confirmPassword) {
-      e.confirmPassword = "Please confirm your password.";
-    } else if (form.confirmPassword !== form.password) {
-      e.confirmPassword = "Passwords do not match.";
-    }
+    if (!form.confirmPassword)                         e.confirmPassword = "Please confirm your password.";
+    else if (form.confirmPassword !== form.password)   e.confirmPassword = "Passwords do not match.";
 
-    required("phone", "Phone Number");
+    req("phone", "Phone Number");
 
     if (tab === "retailer") {
-      required("businessName", "Business Name");
-      required("businessAddress", "Business Address");
-      required("taxId", "Tax ID / Business Registration Number");
-    } else {
-      required("employeeId", "Employee ID");
-      required("department", "Department");
-      // officeLocation is optional
+      req("businessName",    "Business Name");
+      req("businessAddress", "Business Address");
+      req("taxId",           "Tax ID / Business Registration Number");
+    } else if (tab === "employee") {
+      req("employeeId",  "Employee ID");
+      req("department",  "Department");
+    } else if (tab === "driver") {
+      req("licenseNo",    "Driving License No.");
+      req("vehiclePlate", "Vehicle Plate No.");
+      req("assignedZone", "Assigned Zone / Region");
     }
 
     return e;
@@ -158,72 +177,52 @@ export default function Register() {
   function handleSubmit(e) {
     e.preventDefault();
     const validation = validate();
-    if (Object.keys(validation).length > 0) {
-      setErrors(validation);
-      return;
-    }
+    if (Object.keys(validation).length > 0) { setErrors(validation); return; }
     console.log(`Register [${tab}]:`, form);
     // TODO: connect to POST /api/auth/register
   }
 
-  function switchTab(next) {
-    setTab(next);
-    setErrors({});
-  }
+  function switchTab(next) { setTab(next); setErrors({}); }
 
-  // Helper: two-column grid on md+
   const row2 = "grid grid-cols-1 md:grid-cols-2 gap-4";
 
   return (
-    <div className="min-h-screen bg-[#F0EDEA] flex items-center justify-center px-4 py-10">
+    <AuthLayout>
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-md px-8 py-10">
 
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#3D2B1F]">Create Account</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Register as a Nestlé employee or Retailer partner
+            Register as a Nestlé employee, Retailer partner, or Delivery Driver
           </p>
         </div>
 
-        {/* Tab selector */}
+        {/* Tab selector — 3 columns */}
         <p className="text-sm font-semibold text-[#3D2B1F] mb-3">I am a</p>
-        <div className="grid grid-cols-2 gap-3 mb-7">
-          {/* Retailer tab */}
-          <button
-            type="button"
-            onClick={() => switchTab("retailer")}
-            className={`rounded-xl border-2 py-4 px-3 text-center transition-all
-              ${tab === "retailer"
-                ? "border-[#3D2B1F] bg-[#F5F0EC]"
-                : "border-gray-200 bg-white hover:bg-gray-50"
-              }`}
-          >
-            <ShopIcon />
-            <p className="text-sm font-bold text-[#3D2B1F]">Retailer</p>
-            <p className="text-xs text-gray-500 mt-0.5">Business partner</p>
-          </button>
-
-          {/* Employee tab */}
-          <button
-            type="button"
-            onClick={() => switchTab("employee")}
-            className={`rounded-xl border-2 py-4 px-3 text-center transition-all
-              ${tab === "employee"
-                ? "border-[#3D2B1F] bg-[#F5F0EC]"
-                : "border-gray-200 bg-white hover:bg-gray-50"
-              }`}
-          >
-            <OfficeIcon />
-            <p className="text-sm font-bold text-[#3D2B1F]">Nestlé</p>
-            <p className="text-xs text-gray-500 mt-0.5">Employee</p>
-          </button>
+        <div className="grid grid-cols-3 gap-2 mb-7">
+          {TABS.map(({ id, label, sub, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => switchTab(id)}
+              className={`rounded-xl border-2 py-4 px-2 text-center transition-all
+                ${tab === id
+                  ? "border-[#3D2B1F] bg-[#F5F0EC]"
+                  : "border-gray-200 bg-white hover:bg-gray-50"
+                }`}
+            >
+              <Icon />
+              <p className="text-xs font-bold text-[#3D2B1F] leading-tight">{label}</p>
+              <p className="text-[11px] text-gray-500 mt-0.5">{sub}</p>
+            </button>
+          ))}
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
-          {/* Row: Full Name + Email */}
+          {/* Common: Full Name + Email */}
           <div className={row2}>
             <Field label="Full Name" required error={errors.fullName}>
               <TextInput name="fullName" placeholder="John Doe" value={form.fullName} onChange={handleChange} error={errors.fullName} autoComplete="name" />
@@ -233,7 +232,7 @@ export default function Register() {
             </Field>
           </div>
 
-          {/* Row: Password + Confirm Password */}
+          {/* Common: Password + Confirm Password */}
           <div className={row2}>
             <Field label="Password" required error={errors.password}>
               <PasswordInput name="password" value={form.password} onChange={handleChange} error={errors.password} autoComplete="new-password" />
@@ -243,12 +242,12 @@ export default function Register() {
             </Field>
           </div>
 
-          {/* Phone — full width */}
+          {/* Common: Phone */}
           <Field label="Phone Number" required error={errors.phone}>
             <TextInput name="phone" type="tel" placeholder="+94 77 000 0000" value={form.phone} onChange={handleChange} error={errors.phone} autoComplete="tel" />
           </Field>
 
-          {/* ── Retailer-only fields ── */}
+          {/* ── Retailer-only ── */}
           {tab === "retailer" && (
             <>
               <Field label="Business Name" required error={errors.businessName}>
@@ -263,7 +262,7 @@ export default function Register() {
             </>
           )}
 
-          {/* ── Employee-only fields ── */}
+          {/* ── Employee-only ── */}
           {tab === "employee" && (
             <>
               <div className={row2}>
@@ -271,11 +270,28 @@ export default function Register() {
                   <TextInput name="employeeId" placeholder="NES123456" value={form.employeeId} onChange={handleChange} error={errors.employeeId} />
                 </Field>
                 <Field label="Department" required error={errors.department}>
-                  <TextInput name="department" placeholder="Sales &amp; Marketing" value={form.department} onChange={handleChange} error={errors.department} />
+                  <TextInput name="department" placeholder="Sales & Marketing" value={form.department} onChange={handleChange} error={errors.department} />
                 </Field>
               </div>
               <Field label="Office Location" error={errors.officeLocation}>
                 <TextInput name="officeLocation" placeholder="Colombo Office" value={form.officeLocation} onChange={handleChange} error={errors.officeLocation} />
+              </Field>
+            </>
+          )}
+
+          {/* ── Driver-only ── */}
+          {tab === "driver" && (
+            <>
+              <div className={row2}>
+                <Field label="Driving License No." required error={errors.licenseNo}>
+                  <TextInput name="licenseNo" placeholder="B1234567" value={form.licenseNo} onChange={handleChange} error={errors.licenseNo} />
+                </Field>
+                <Field label="Vehicle Plate No." required error={errors.vehiclePlate}>
+                  <TextInput name="vehiclePlate" placeholder="WP CAB-1234" value={form.vehiclePlate} onChange={handleChange} error={errors.vehiclePlate} />
+                </Field>
+              </div>
+              <Field label="Assigned Zone / Region" required error={errors.assignedZone}>
+                <TextInput name="assignedZone" placeholder="e.g. Colombo North" value={form.assignedZone} onChange={handleChange} error={errors.assignedZone} />
               </Field>
             </>
           )}
@@ -297,6 +313,6 @@ export default function Register() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

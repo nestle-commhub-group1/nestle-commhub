@@ -5,7 +5,25 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
-## [13 March 2026] - Sprint
+## [14 March 2026] - Sprint 1
+### Added
+- Added Delivery Driver tab to `Register.jsx` — Driving License No., Vehicle Plate No., Assigned Zone / Region
+- Created `AuthLayout.jsx` shared component — Nestlé logo displayed above the card on all auth pages
+- Added `nestle-logo.png` to `app/public/` and applied to `Login`, `Register`, `OTP`, `ForgotPassword`
+
+### Changed
+- Added Delivery Driver as a new actor following lecturer feedback
+- Delivery Driver added to management dashboard with lightweight driver view
+- New use cases added: View Assigned Deliveries, Update Delivery Status, File Retailer Complaint, Attach Evidence, View Complaint Status
+- Driver-related tasks `DRV-01` to `DRV-08` added to Sprint 2 backlog
+
+---
+
+## [13 March 2026] - Pre-Sprint
+### Added
+- Built `Login.jsx` — email/password fields, show/hide toggle, inline validation, forgot password link, routes to `/register`
+- Built `Register.jsx` — Retailer / Nestlé Employee tabbed form, all required fields per tab, show/hide password toggles, full inline validation
+
 ### Changed
 - Deleted `retailer-portal/` and `management-dashboard/` folders from the repo
 - Created single unified PWA in `app/` folder (React + Vite)

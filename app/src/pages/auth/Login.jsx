@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../../components/AuthLayout";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0EDEA] flex items-center justify-center px-4 py-10">
+    <AuthLayout>
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md px-8 py-10">
 
         {/* Header */}
@@ -153,6 +154,6 @@ export default function Login() {
           </Link>
         </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

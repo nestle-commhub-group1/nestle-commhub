@@ -16,6 +16,7 @@
 | **Sales Representatives** | Field staff who manage retailer accounts and visit stores regularly |
 | **Regional Managers** | Oversee multiple sales reps and their territories |
 | **HQ Admins** | Nestlé head office staff who manage the platform, promotions, and high-level reporting |
+| **Delivery Drivers** | Drivers responsible for last-mile delivery to retailers; file complaints and update delivery statuses |
 
 ### What problem does it solve?
 Nestlé Sri Lanka's field operations currently rely on ad-hoc communication methods — phone calls, WhatsApp groups, physical paperwork — which result in:
@@ -98,6 +99,7 @@ A single registration page presents **two tabs**:
 | Regional Manager | Regional Manager dashboard |
 | HQ Admin | HQ Admin dashboard |
 | Distributor | Distributor dashboard |
+| Delivery Driver | Driver dashboard (management app — driver view) |
 
 ---
 
@@ -129,6 +131,14 @@ A single registration page presents **two tabs**:
 - Manage user accounts (create, deactivate, assign roles)
 - View platform-wide analytics and reports
 - Configure system settings
+
+### Delivery Driver
+- Login, OTP verification, password reset, manage profile
+- View assigned deliveries for the day
+- Update delivery status (Out for Delivery, Delivered, Failed Delivery)
+- File complaints against retailers (late payment, refused delivery, misconduct)
+- Attach evidence to complaints (photos, voice notes)
+- View status and resolution of filed complaints
 
 ---
 
@@ -208,6 +218,11 @@ nestle-commhub/
 | 24 | Created `ProtectedRoute.jsx` — auth check and role-based access control | 13 March 2026 |
 | 25 | Created placeholder pages for all role-based routes (retailer, staff, manager, admin, distributor) | 13 March 2026 |
 | 26 | Created auth placeholder pages (`Register`, `Login`, `OTP`, `ForgotPassword`, `Unauthorized`) | 13 March 2026 |
+| 27 | Built `Login.jsx` UI — email/password fields, show/hide toggle, inline validation, forgot password link | 13 March 2026 |
+| 28 | Built `Register.jsx` UI — Retailer / Nestlé Employee tabs, all required fields per tab, inline validation, show/hide toggles | 13 March 2026 |
+| 29 | Added Delivery Driver tab to `Register.jsx` — Driving License No., Vehicle Plate No., Assigned Zone / Region fields | 14 March 2026 |
+| 30 | Created `AuthLayout.jsx` shared component — Nestlé logo floating above card on all auth pages | 14 March 2026 |
+| 31 | Added `nestle-logo.png` to `app/public/` and integrated across `Login`, `Register`, `OTP`, `ForgotPassword` pages | 14 March 2026 |
 
 ---
 
@@ -215,8 +230,9 @@ nestle-commhub/
 
 | Task | Owner | Notes |
 |---|---|---|
-| Registration page UI (Retailer + Nestlé Employee tabs) | TBD | UI not yet built — placeholder only |
-| Backend registration endpoint (`POST /api/auth/register`) | TBD | Not yet built — no User schema or auth routes |
+| `Login.jsx` — connect to backend `POST /api/auth/login` | TBD | UI complete — awaiting backend endpoint |
+| `Register.jsx` — connect to backend `POST /api/auth/register` | TBD | UI complete — awaiting backend endpoint and Employee ID verification |
+| Backend auth endpoints (`POST /api/auth/register`, `POST /api/auth/login`) | TBD | Not yet built — no User schema or auth routes |
 | MongoDB Atlas connection | TBD | Not yet set up — backend has no DB connection |
 
 ---
@@ -309,6 +325,14 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | Stock request form (Retailer) | ⬜ Not Started |
 | Delivery status tracking (Retailer) | ⬜ Not Started |
 | Push notifications via PWA | ⬜ Not Started |
+| `DRV-01` Driver dashboard UI | ⬜ Not Started |
+| `DRV-02` View assigned deliveries page | ⬜ Not Started |
+| `DRV-03` Update delivery status functionality (Out for Delivery, Delivered, Failed Delivery) | ⬜ Not Started |
+| `DRV-04` File retailer complaint form | ⬜ Not Started |
+| `DRV-05` Attach evidence to complaint (Cloudinary — photos, voice notes) | ⬜ Not Started |
+| `DRV-06` View complaint status page | ⬜ Not Started |
+| `DRV-07` Driver complaint backend API endpoints | ⬜ Not Started |
+| `DRV-08` Auto-escalate unresolved driver complaints to Regional Manager | ⬜ Not Started |
 
 ### Sprint 3 — Analytics, Polish & Deployment
 | Task | Status |
@@ -332,6 +356,7 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | 3 | No authentication system | No protected routes, no role separation, app cannot be used in production | TBD |
 | 4 | Employee ID verification endpoint not designed | Cannot build the Nestlé Employee registration tab | TBD |
 | 5 | Sprint 1 tasks not formally assigned | Team members don't know what to work on | Whole team — needs kickoff meeting |
+| 6 | Driver dashboard not yet designed | Cannot build driver-facing views until UI mockup is approved — needed before Sprint 2 | TBD |
 
 ---
 
