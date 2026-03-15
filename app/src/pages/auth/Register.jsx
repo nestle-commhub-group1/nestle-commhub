@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import AuthLayout from "../../components/AuthLayout";
 
 // ── Reusable field components ─────────────────────────────────────────────────
@@ -98,17 +99,17 @@ function TruckIcon() {
 
 const retailerDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", businessName: "", businessAddress: "", taxId: "",
+  phone: "", businessName: "", businessAddress: "", taxId: "", role: "retailer"
 };
 
 const employeeDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", employeeId: "", department: "", officeLocation: "",
+  phone: "", employeeId: "", department: "", officeLocation: "", role: "sales_staff"
 };
 
 const driverDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", licenseNo: "", vehiclePlate: "", assignedZone: "",
+  phone: "", licenseNo: "", vehiclePlate: "", assignedZone: "", role: "delivery_driver"
 };
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
@@ -122,11 +123,14 @@ const TABS = [
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Register() {
+  const navigate = useNavigate();
   const [tab, setTab]               = useState("retailer");
   const [retailerForm, setRetailer] = useState(retailerDefaults);
   const [employeeForm, setEmployee] = useState(employeeDefaults);
   const [driverForm,   setDriver]   = useState(driverDefaults);
   const [errors, setErrors]         = useState({});
+  const [globalError, setGlobalError] = useState("");
+  const [successMsg, setSuccessMsg]   = useState("");
 
   const formMap = {
     retailer: [retailerForm, setRetailer],
@@ -142,19 +146,49 @@ export default function Register() {
   }
 
   function validate() {
+    console.log("=== STARTING VALIDATION ===");
+    
     const e = {};
-    const req = (field, label) => { if (!form[field]?.trim()) e[field] = `${label} is required.`; };
+    const req = (field, label) => { 
+      if (!form[field]?.trim()) {
+        e[field] = `${label} is required.`;
+        console.log(`❌ Validation Failed: ${field} (${label}) is missing or empty`);
+      } else {
+        console.log(`✅ Validation Passed: ${field} = "${form[field]}"`);
+      }
+    };
 
     req("fullName", "Full Name");
 
-    if (!form.email?.trim())                             e.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
+    if (!form.email?.trim()) {
+      e.email = "Email is required.";
+      console.log(`❌ Validation Failed: email is missing or empty`);
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = "Enter a valid email address.";
+      console.log(`❌ Validation Failed: email format invalid`);
+    } else {
+      console.log(`✅ Validation Passed: email = "${form.email}"`);
+    }
 
-    if (!form.password)                  e.password = "Password is required.";
-    else if (form.password.length < 8)   e.password = "Password must be at least 8 characters.";
+    if (!form.password) {
+      e.password = "Password is required.";
+      console.log(`❌ Validation Failed: password is missing or empty`);
+    } else if (form.password.length < 8) {
+      e.password = "Password must be at least 8 characters.";
+      console.log(`❌ Validation Failed: password is too short`);
+    } else {
+      console.log(`✅ Validation Passed: password = [HIDDEN]`);
+    }
 
-    if (!form.confirmPassword)                         e.confirmPassword = "Please confirm your password.";
-    else if (form.confirmPassword !== form.password)   e.confirmPassword = "Passwords do not match.";
+    if (!form.confirmPassword) {
+      e.confirmPassword = "Please confirm your password.";
+      console.log(`❌ Validation Failed: confirmPassword is missing or empty`);
+    } else if (form.confirmPassword !== form.password) {
+      e.confirmPassword = "Passwords do not match.";
+      console.log(`❌ Validation Failed: confirmPassword does not match password`);
+    } else {
+      console.log(`✅ Validation Passed: confirmPassword matches`);
+    }
 
     req("phone", "Phone Number");
 
@@ -170,19 +204,62 @@ export default function Register() {
       req("vehiclePlate", "Vehicle Plate No.");
       req("assignedZone", "Assigned Zone / Region");
     }
+    
+    // Validate role is set
+    if (!form.role) {
+      e.role = "Role is required.";
+      console.log(`❌ Validation Failed: role is missing or empty`);
+    } else {
+      console.log(`✅ Validation Passed: role = "${form.role}"`);
+    }
 
+    console.log("=== END VALIDATION ===");
     return e;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setGlobalError("");
+    setSuccessMsg("");
+    
+    console.log("=========================================");
+    console.log("FORM SUBMISSION TRIGGERED");
+    console.log("Current Tab:", tab);
+    console.log("Entire Form State Object right before validation:");
+    console.log(JSON.parse(JSON.stringify(form)));
+    
     const validation = validate();
-    if (Object.keys(validation).length > 0) { setErrors(validation); return; }
-    console.log(`Register [${tab}]:`, form);
-    // TODO: connect to POST /api/auth/register
+    if (Object.keys(validation).length > 0) { 
+      setErrors(validation); 
+      console.log("Validation Errors:", validation);
+      console.log("Submission stopped due to validation errors.");
+      console.log("=========================================");
+      return; 
+    }
+    
+    try {
+      // Note: using 5001 because macOS AirPlay occupies 5000
+      console.log("Sending POST payload to backend:", form);
+      const response = await axios.post("http://localhost:5001/api/auth/register", form);
+      console.log("Registration Success:", response.data);
+      setSuccessMsg("Account created successfully");
+      
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+      
+    } catch (err) {
+      console.error("Registration Error:", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setGlobalError(err.response.data.message);
+      } else {
+        setGlobalError("An error occurred during registration. Please check if the server is running.");
+      }
+    }
+    console.log("=========================================");
   }
 
-  function switchTab(next) { setTab(next); setErrors({}); }
+  function switchTab(next) { setTab(next); setErrors({}); setGlobalError(""); setSuccessMsg(""); }
 
   const row2 = "grid grid-cols-1 md:grid-cols-2 gap-4";
 
@@ -221,6 +298,18 @@ export default function Register() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
+
+          {globalError && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-200">
+              {globalError}
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="bg-green-50 text-green-600 p-3 rounded-lg text-sm text-center border border-green-200">
+              {successMsg}
+            </div>
+          )}
 
           {/* Common: Full Name + Email */}
           <div className={row2}>
@@ -265,6 +354,19 @@ export default function Register() {
           {/* ── Employee-only ── */}
           {tab === "employee" && (
             <>
+              <Field label="Employee Role" required error={errors.role}>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${errors.role ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"}`}
+                >
+                  <option value="sales_staff">Sales Staff</option>
+                  <option value="regional_manager">Regional Manager</option>
+                  <option value="hq_admin">HQ Admin</option>
+                  <option value="distributor">Distributor</option>
+                </select>
+              </Field>
               <div className={row2}>
                 <Field label="Employee ID" required error={errors.employeeId}>
                   <TextInput name="employeeId" placeholder="NES123456" value={form.employeeId} onChange={handleChange} error={errors.employeeId} />

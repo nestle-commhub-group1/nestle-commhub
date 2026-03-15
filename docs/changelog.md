@@ -5,6 +5,28 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
+## [15 March 2026] - Sprint 1
+### Added
+- MongoDB Atlas connected successfully to backend
+- User model created with bcryptjs password hashing
+- ValidEmployee model created for employee ID verification
+- Seed script created and run — 5 valid employee IDs seeded (NES001-NES005)
+- Auth controller created with registerUser and loginUser functions
+- Auth routes created:
+  POST /api/auth/register
+  POST /api/auth/login
+- JWT authentication implemented
+- Auth middleware created (protect, restrictTo)
+- Registration tested and working for retailers and Nestlé staff
+- Login tested and working with role-based redirection
+- Placeholder dashboards created for all 6 roles: RetailerDashboard, StaffDashboard, ManagerDashboard, AdminDashboard, DistributorDashboard, DriverDashboard
+- Unauthorized.jsx page created
+- AuthContext updated with localStorage persistence
+- ProtectedRoute updated with role-based protection
+- Login.jsx connected to backend auth API
+- Session persistence working on page refresh
+- Logout working and clearing localStorage
+
 ## [14 March 2026] - Sprint 1
 ### Added
 - Added Delivery Driver tab to `Register.jsx` — Driving License No., Vehicle Plate No., Assigned Zone / Region

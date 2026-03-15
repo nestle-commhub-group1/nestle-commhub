@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import AuthLayout from "../../components/AuthLayout";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   function validate() {
     const e = {};
@@ -25,21 +30,53 @@ export default function Login() {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear the error for this field as the user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+    if (globalError) setGlobalError("");
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setGlobalError("");
+    
     const validation = validate();
     if (Object.keys(validation).length > 0) {
       setErrors(validation);
       return;
     }
-    console.log("Login form submitted:", form);
-    // TODO: connect to POST /api/auth/login
+
+    setLoading(true);
+    try {
+      const response = await axios.post("http://localhost:5001/api/auth/login", form);
+      const { user, token } = response.data;
+      
+      // Update context and storage
+      login(user, token);
+
+      // Redirect based on role
+      const roleRedirects = {
+        retailer: "/retailer/dashboard",
+        sales_staff: "/staff/dashboard",
+        regional_manager: "/manager/dashboard",
+        hq_admin: "/admin/dashboard",
+        distributor: "/distributor/dashboard",
+        delivery_driver: "/driver/dashboard",
+      };
+
+      const target = roleRedirects[user.role] || "/unauthorized";
+      navigate(target);
+
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setGlobalError(err.response.data.message);
+      } else {
+        setGlobalError("Failed to connect to server. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -53,6 +90,12 @@ export default function Login() {
             Sign in to your Nestlé CommHub account
           </p>
         </div>
+
+        {globalError && (
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
+            {globalError}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
@@ -108,20 +151,16 @@ export default function Login() {
                     : "border-transparent focus:border-[#3D2B1F]"
                   }`}
               />
-              {/* Show / Hide toggle */}
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-[#3D2B1F] transition-colors"
-                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  /* Eye-off icon */
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
                 ) : (
-                  /* Eye icon */
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -137,9 +176,10 @@ export default function Login() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-[#3D2B1F] text-white text-sm font-semibold rounded-lg py-3.5 mt-2 hover:bg-[#2e1f15] active:scale-[0.98] transition-all"
+            disabled={loading}
+            className="w-full bg-[#3D2B1F] text-white text-sm font-semibold rounded-lg py-3.5 mt-2 hover:bg-[#2e1f15] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 

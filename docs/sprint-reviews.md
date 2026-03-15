@@ -21,10 +21,23 @@
 
 ---
 
-## Sprint 1 Review — *(pending)*
+## Sprint 1 — In Progress — 15 March 2026
 
+### Completed so far:
+- Full authentication system (register, login, JWT, role-based routing)
+- MongoDB Atlas connected
+- All placeholder dashboards working
+- Session persistence and logout working
+- Registration validated and tested end to end
+- Login validated and tested end to end
 
-*(To be documented at end of Sprint 1)*
+### In progress:
+- OTP verification
+- Password reset
+- Real dashboard UIs
+- Ticket submission system (Ryan)
+- Management dashboard UI (Ganidu)
+- Retailer portal UI (Kavinda)
 
 ---
 

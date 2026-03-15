@@ -3,4 +3,8 @@
 
 ---
 
-*(No bugs reported yet. Entries will appear here as BUG-001, BUG-002, etc.)*
+### BLK-01: MongoDB Atlas not set up
+**Status:** Resolved
+**Fix:** Connected to MongoDB Atlas using correct srv connection string
+**Resolved by:** Thihas
+**Date:** 15 March 2026

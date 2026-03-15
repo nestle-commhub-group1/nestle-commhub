@@ -223,6 +223,12 @@ nestle-commhub/
 | 29 | Added Delivery Driver tab to `Register.jsx` — Driving License No., Vehicle Plate No., Assigned Zone / Region fields | 14 March 2026 |
 | 30 | Created `AuthLayout.jsx` shared component — Nestlé logo floating above card on all auth pages | 14 March 2026 |
 | 31 | Added `nestle-logo.png` to `app/public/` and integrated across `Login`, `Register`, `OTP`, `ForgotPassword` pages | 14 March 2026 |
+| 32 | MongoDB Atlas connected to backend | 15 March 2026 |
+| 33 | User and ValidEmployee models built | 15 March 2026 |
+| 34 | Full auth system built and tested: registration, login, JWT, role-based routing | 15 March 2026 |
+| 35 | All 6 placeholder dashboards created | 15 March 2026 |
+| 36 | Session persistence via localStorage | 15 March 2026 |
+| 37 | Protected routes enforcing role-based access | 15 March 2026 |
 
 ---
 
@@ -230,10 +236,11 @@ nestle-commhub/
 
 | Task | Owner | Notes |
 |---|---|---|
-| `Login.jsx` — connect to backend `POST /api/auth/login` | TBD | UI complete — awaiting backend endpoint |
-| `Register.jsx` — connect to backend `POST /api/auth/register` | TBD | UI complete — awaiting backend endpoint and Employee ID verification |
-| Backend auth endpoints (`POST /api/auth/register`, `POST /api/auth/login`) | TBD | Not yet built — no User schema or auth routes |
-| MongoDB Atlas connection | TBD | Not yet set up — backend has no DB connection |
+| `Login.jsx` — connect to backend `POST /api/auth/login` | Thihas | Logic complete — tested end-to-end |
+| `Register.jsx` — connect to backend `POST /api/auth/register` | Thihas | Logic complete — includes Employee ID verification |
+| OTP verification screen | Ryan | Not yet built |
+| Password reset flow | Thihas | Not yet built |
+| Real dashboard UIs replacing placeholders | Ganidu / Kavinda | Not yet built |
 
 ---
 
@@ -351,12 +358,12 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 
 | # | Blocker | Impact | Owner |
 |---|---|---|---|
-| 1 | `app/` not yet scaffolded (Vite + React + Tailwind + PWA) | No frontend to build on | TBD |
-| 2 | MongoDB not connected | Backend cannot persist any data | TBD |
-| 3 | No authentication system | No protected routes, no role separation, app cannot be used in production | TBD |
-| 4 | Employee ID verification endpoint not designed | Cannot build the Nestlé Employee registration tab | TBD |
-| 5 | Sprint 1 tasks not formally assigned | Team members don't know what to work on | Whole team — needs kickoff meeting |
-| 6 | Driver dashboard not yet designed | Cannot build driver-facing views until UI mockup is approved — needed before Sprint 2 | TBD |
+| 1 | `app/` not yet scaffolded (Vite + React + Tailwind + PWA) | Resolved | Thihas |
+| 2 | MongoDB not connected | Resolved | Thihas |
+| 3 | No authentication system | Resolved | Thihas |
+| 4 | Employee ID verification endpoint not designed | Resolved | Thihas |
+| 5 | Dialog Axiata API key still not obtained | Blocks OTP SMS sending | TBD |
+| 6 | Driver dashboard not yet designed | Cannot build driver-facing views until UI mockup is approved | TBD |
 
 ---
 

@@ -1,0 +1,11 @@
+{
+  "fullName": "Chamara Perera",
+  "email": "chamara3@test.com",
+  "password": "password123",
+  "confirmPassword": "password123",
+  "phone": "0771234567",
+  "role": "retailer",
+  "businessName": "Perera Grocery",
+  "businessAddress": "123 Kandy Road",
+  "taxId": "TAX123456"
+}

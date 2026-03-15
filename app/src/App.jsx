@@ -7,6 +7,7 @@ import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import OTP from "./pages/auth/OTP";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import Unauthorized from "./pages/Unauthorized";
 
 // Retailer pages
 import RetailerDashboard from "./pages/retailer/RetailerDashboard";
@@ -23,8 +24,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 // Distributor pages
 import DistributorDashboard from "./pages/distributor/DistributorDashboard";
 
-// Misc
-import Unauthorized from "./pages/auth/Unauthorized";
+// Driver pages
+import DriverDashboard from "./pages/driver/DriverDashboard";
 
 function App() {
   return (
@@ -41,7 +42,7 @@ function App() {
 
           {/* Retailer routes */}
           <Route
-            path="/retailer/*"
+            path="/retailer/dashboard"
             element={
               <ProtectedRoute roles="retailer">
                 <RetailerDashboard />
@@ -51,7 +52,7 @@ function App() {
 
           {/* Sales Staff routes */}
           <Route
-            path="/staff/*"
+            path="/staff/dashboard"
             element={
               <ProtectedRoute roles="sales_staff">
                 <StaffDashboard />
@@ -61,7 +62,7 @@ function App() {
 
           {/* Regional Manager routes */}
           <Route
-            path="/manager/*"
+            path="/manager/dashboard"
             element={
               <ProtectedRoute roles="regional_manager">
                 <ManagerDashboard />
@@ -71,7 +72,7 @@ function App() {
 
           {/* HQ Admin routes */}
           <Route
-            path="/admin/*"
+            path="/admin/dashboard"
             element={
               <ProtectedRoute roles="hq_admin">
                 <AdminDashboard />
@@ -81,10 +82,20 @@ function App() {
 
           {/* Distributor routes */}
           <Route
-            path="/distributor/*"
+            path="/distributor/dashboard"
             element={
               <ProtectedRoute roles="distributor">
                 <DistributorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Driver routes */}
+          <Route
+            path="/driver/dashboard"
+            element={
+              <ProtectedRoute roles="delivery_driver">
+                <DriverDashboard />
               </ProtectedRoute>
             }
           />

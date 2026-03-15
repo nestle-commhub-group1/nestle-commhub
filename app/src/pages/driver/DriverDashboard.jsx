@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const AdminDashboard = () => {
+const DriverDashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -14,13 +14,13 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center text-[#3D2B1F]">
-        <h1 className="text-3xl font-bold mb-4">Welcome to HQ Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-4">Welcome to Driver Dashboard</h1>
         <div className="mb-6">
           <p className="text-lg font-semibold">{user.fullName || "User Name"}</p>
           <p className="text-gray-600">{user.email || "user@example.com"}</p>
         </div>
         <div className="inline-block bg-[#3D2B1F] text-white text-xs px-3 py-1 rounded-full uppercase tracking-wider mb-8">
-          {user.role || "HQ Admin"}
+          {user.role || "Delivery Driver"}
         </div>
         <button
           onClick={handleLogout}
@@ -33,4 +33,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default DriverDashboard;
