@@ -5,6 +5,49 @@ New entries are appended at the top.
 
 ---
 
+## Startup Orchestration — run.sh Script
+**Date:** 19 March 2026
+
+**What it does:** A single bash script at the project root (`./run.sh`) kills any stale processes on ports 5001 and 5173, runs `npm install` for both apps, starts the backend in the background, waits for it to initialize, then starts the frontend. Prints a summary of live URLs on success.
+
+**Why we built it:** On macOS, VSCode terminals and manual `cd`/`npm run dev` sequences were causing port conflicts and inconsistent startup order (frontend trying to contact backend before it was ready). A single deterministic script eliminates all of these issues.
+
+**Alternatives considered:**
+- **`concurrently` npm package** — Rejected. Adds a dependency; requires both apps to be in the same `package.json`. Our backend and frontend are in separate directories.
+- **`npm-run-all`** — Same issue as `concurrently`.
+- **Docker Compose** — Rejected. Overkill for a student project; adds environment complexity.
+
+---
+
+## Dev Server — nodemon over node --watch
+**Date:** 19 March 2026
+
+**What it does:** The `backend` dev script (`npm run dev`) uses `nodemon` instead of Node's built-in `--watch` flag.
+
+**Why:** `node --watch` is still experimental and was silently hanging without restarting on some file change events, making backend development unreliable. `nodemon` is the established, battle-tested solution with consistent behaviour across Node versions.
+
+**Change made:** `backend/package.json` `dev` script changed from `node --watch src/index.js` → `nodemon src/index.js`. `nodemon ^3.1.9` added to `devDependencies`.
+
+---
+
+## UI Pattern — Role-Specific Layout Components
+**Date:** 19 March 2026
+
+**What it does:** Each user role has its own layout wrapper component (`RetailerLayout`, `StaffLayout`, `AdminLayout`, `ManagerLayout`) that contains the sidebar, notification panel, and mobile topbar. Dashboard pages render inside the layout via `{children}`.
+
+**Why:** Keeps the sidebar and notification logic completely separate from page content. Each role requires a different navigation structure, badge colour, and notification set — embedding these in individual page files would cause massive duplication.
+
+**How it works:**
+- Dashboard page wraps all its content in `<AdminLayout>` / `<ManagerLayout>` etc.
+- The layout reads the user from `localStorage` to populate the sidebar avatar and name.
+- Logout is handled inside the layout so all pages in that role get it for free.
+
+**Alternatives considered:**
+- **Single `DashboardLayout` with props** — Considered but rejected. The differences between roles (nav links, badge colours, notification content) are significant enough that one generic layout with many conditionals would be harder to read and maintain than separate role layouts.
+
+---
+
+
 ## State Management — React Context API
 **Date:** 13 March 2026
 

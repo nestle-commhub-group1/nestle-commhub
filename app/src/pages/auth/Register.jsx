@@ -107,9 +107,9 @@ const employeeDefaults = {
   phone: "", employeeId: "", department: "", officeLocation: "", role: "sales_staff"
 };
 
-const driverDefaults = {
+const distributorDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", licenseNo: "", vehiclePlate: "", assignedZone: "", role: "delivery_driver"
+  phone: "", businessName: "", businessAddress: "", assignedRegion: "", role: "distributor"
 };
 
 // ── Tabs config ───────────────────────────────────────────────────────────────
@@ -117,7 +117,6 @@ const driverDefaults = {
 const TABS = [
   { id: "retailer", label: "Retailer",     sub: "Business partner", Icon: ShopIcon },
   { id: "employee", label: "Nestlé Staff", sub: "Employee",          Icon: OfficeIcon },
-  { id: "driver",   label: "Driver",       sub: "Delivery driver",   Icon: TruckIcon },
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -125,17 +124,16 @@ const TABS = [
 export default function Register() {
   const navigate = useNavigate();
   const [tab, setTab]               = useState("retailer");
-  const [retailerForm, setRetailer] = useState(retailerDefaults);
-  const [employeeForm, setEmployee] = useState(employeeDefaults);
-  const [driverForm,   setDriver]   = useState(driverDefaults);
-  const [errors, setErrors]         = useState({});
+  const [retailerForm, setRetailer]       = useState(retailerDefaults);
+  const [employeeForm, setEmployee]       = useState(employeeDefaults);
+  const [distributorForm, setDistributor] = useState(distributorDefaults);
+  const [errors, setErrors]               = useState({});
   const [globalError, setGlobalError] = useState("");
   const [successMsg, setSuccessMsg]   = useState("");
 
   const formMap = {
     retailer: [retailerForm, setRetailer],
     employee: [employeeForm, setEmployee],
-    driver:   [driverForm,   setDriver],
   };
   const [form, setForm] = formMap[tab];
 
@@ -199,10 +197,10 @@ export default function Register() {
     } else if (tab === "employee") {
       req("employeeId",  "Employee ID");
       req("department",  "Department");
-    } else if (tab === "driver") {
-      req("licenseNo",    "Driving License No.");
-      req("vehiclePlate", "Vehicle Plate No.");
-      req("assignedZone", "Assigned Zone / Region");
+    } else if (tab === "distributor") {
+      req("businessName",    "Business Name");
+      req("businessAddress", "Business Address");
+      req("assignedRegion",  "Assigned Region");
     }
     
     // Validate role is set
@@ -271,13 +269,13 @@ export default function Register() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#3D2B1F]">Create Account</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Register as a Nestlé employee, Retailer partner, or Delivery Driver
+          Register as a Nestlé employee or Retailer partner
           </p>
         </div>
 
-        {/* Tab selector — 3 columns */}
+        {/* Tab selector — 2 columns */}
         <p className="text-sm font-semibold text-[#3D2B1F] mb-3">I am a</p>
-        <div className="grid grid-cols-3 gap-2 mb-7">
+        <div className="grid grid-cols-2 gap-2 mb-7">
           {TABS.map(({ id, label, sub, Icon }) => (
             <button
               key={id}
@@ -362,7 +360,6 @@ export default function Register() {
                   className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${errors.role ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"}`}
                 >
                   <option value="sales_staff">Sales Staff</option>
-                  <option value="regional_manager">Regional Manager</option>
                   <option value="hq_admin">HQ Admin</option>
                   <option value="distributor">Distributor</option>
                 </select>
@@ -381,22 +378,6 @@ export default function Register() {
             </>
           )}
 
-          {/* ── Driver-only ── */}
-          {tab === "driver" && (
-            <>
-              <div className={row2}>
-                <Field label="Driving License No." required error={errors.licenseNo}>
-                  <TextInput name="licenseNo" placeholder="B1234567" value={form.licenseNo} onChange={handleChange} error={errors.licenseNo} />
-                </Field>
-                <Field label="Vehicle Plate No." required error={errors.vehiclePlate}>
-                  <TextInput name="vehiclePlate" placeholder="WP CAB-1234" value={form.vehiclePlate} onChange={handleChange} error={errors.vehiclePlate} />
-                </Field>
-              </div>
-              <Field label="Assigned Zone / Region" required error={errors.assignedZone}>
-                <TextInput name="assignedZone" placeholder="e.g. Colombo North" value={form.assignedZone} onChange={handleChange} error={errors.assignedZone} />
-              </Field>
-            </>
-          )}
 
           {/* Submit */}
           <button

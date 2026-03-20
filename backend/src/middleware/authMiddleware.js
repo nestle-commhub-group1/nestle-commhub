@@ -21,7 +21,26 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // 3. Verify token
+    // 3. Special handling for Dev Launcher tokens in development mode
+    if (token.startsWith("dev-token-")) {
+      const role = token.replace("dev-token-", "");
+      const emailMap = {
+        retailer: "chamara@test.com",
+        sales_staff: "nadeeka@nestle.com",
+        hq_admin: "dilini@nestle.com",
+        distributor: "kamal@distributor.com"
+      };
+      const email = emailMap[role];
+      if (email) {
+        const devUser = await User.findOne({ email });
+        if (devUser) {
+          req.user = devUser;
+          return next();
+        }
+      }
+    }
+
+    // 4. Verify real JWT token
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

@@ -58,10 +58,8 @@ export default function Login() {
       const roleRedirects = {
         retailer: "/retailer/dashboard",
         sales_staff: "/staff/dashboard",
-        regional_manager: "/manager/dashboard",
         hq_admin: "/admin/dashboard",
         distributor: "/distributor/dashboard",
-        delivery_driver: "/driver/dashboard",
       };
 
       const target = roleRedirects[user.role] || "/unauthorized";

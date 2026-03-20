@@ -19,6 +19,7 @@ const isValidEmail = (email) => {
 
 const registerUser = async (req, res) => {
   console.log("Request body received:", req.body);
+  console.log("Extracted role:", req.body.role);
   try {
     const {
       fullName,
@@ -55,10 +56,8 @@ const registerUser = async (req, res) => {
     const validRoles = [
       "retailer",
       "sales_staff",
-      "regional_manager",
       "hq_admin",
       "distributor",
-      "delivery_driver",
     ];
 
     if (!validRoles.includes(role)) {
@@ -76,10 +75,8 @@ const registerUser = async (req, res) => {
 
     const employeeRoles = [
       "sales_staff",
-      "regional_manager",
       "hq_admin",
       "distributor",
-      "delivery_driver",
     ];
 
     if (employeeRoles.includes(role)) {

@@ -5,9 +5,11 @@ const ValidEmployee = require("../models/ValidEmployee");
 const sampleEmployees = [
   { employeeId: "NES001", role: "hq_admin" },
   { employeeId: "NES002", role: "sales_staff" },
-  { employeeId: "NES003", role: "regional_manager" },
   { employeeId: "NES004", role: "distributor" },
-  { employeeId: "NES005", role: "delivery_driver" },
+  { employeeId: "NES100", role: "hq_admin" },
+  { employeeId: "NES200", role: "sales_staff" },
+  { employeeId: "NES400", role: "distributor" },
+  { employeeId: "NES123456", role: "sales_staff" },
 ];
 
 const seedEmployees = async () => {
@@ -27,7 +29,7 @@ const seedEmployees = async () => {
 
     // Insert new sample records
     await ValidEmployee.insertMany(sampleEmployees);
-    console.log("Successfully inserted 5 sample valid employee records");
+    console.log(`Successfully inserted ${sampleEmployees.length} sample valid employee records`);
 
     // Disconnect
     await mongoose.disconnect();

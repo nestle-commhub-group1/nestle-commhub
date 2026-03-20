@@ -36,10 +36,8 @@ const userSchema = new mongoose.Schema({
     enum: [
       "retailer",
       "sales_staff",
-      "regional_manager",
       "hq_admin",
       "distributor",
-      "delivery_driver",
     ],
   },
 

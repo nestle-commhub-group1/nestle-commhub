@@ -1,6 +1,6 @@
 # Project Context Report — Nestlé CommHub
 > Living document. Updated as the project evolves.
-> Last updated: 13 March 2026
+> Last updated: 19 March 2026
 
 ---
 
@@ -13,10 +13,9 @@
 | Actor | Role in the supply chain |
 |---|---|
 | **Retailers** | Small and medium shop owners across Sri Lanka who stock and sell Nestlé products |
-| **Sales Representatives** | Field staff who manage retailer accounts and visit stores regularly |
-| **Regional Managers** | Oversee multiple sales reps and their territories |
+| **Sales Staff** | Field staff who manage retailer accounts and visit stores regularly |
 | **HQ Admins** | Nestlé head office staff who manage the platform, promotions, and high-level reporting |
-| **Delivery Drivers** | Drivers responsible for last-mile delivery to retailers; file complaints and update delivery statuses |
+| **Distributors** | Distribution partners who handle delivery routing and stock distribution |
 
 ### What problem does it solve?
 Nestlé Sri Lanka's field operations currently rely on ad-hoc communication methods — phone calls, WhatsApp groups, physical paperwork — which result in:
@@ -94,51 +93,59 @@ A single registration page presents **two tabs**:
 
 | Role | Dashboard rendered after login |
 |---|---|
-| Retailer | Retailer dashboard |
-| Sales Staff | Sales Staff dashboard |
-| Regional Manager | Regional Manager dashboard |
-| HQ Admin | HQ Admin dashboard |
-| Distributor | Distributor dashboard |
-| Delivery Driver | Driver dashboard (management app — driver view) |
+| Retailer | `/retailer/dashboard` |
+| Sales Staff | `/staff/dashboard` |
+| HQ Admin | `/admin/dashboard` |
+| Distributor | `/distributor/dashboard` |
 
 ---
 
 ## 4. User Roles
 
+> **Final confirmed roles: 4 total.** `regional_manager` and `delivery_driver` were removed on 16 March 2026.
+
 ### Retailer
-- Report issues / raise support tickets
-- View the status of their open tickets
-- View current promotions sent by Nestlé
-- Request stock replenishment
-- Track delivery status
+- **Access:** Retailer dashboard (`/retailer/dashboard`)
+- **Registers:** Self-register via **Retailer tab** on the Register page
+- **Required fields:** Business Name, Business Address, Tax ID / Business Registration Number
+- **Capabilities:**
+  - Report issues / raise support tickets
+  - View the status of their open tickets
+  - View current promotions sent by Nestlé
+  - Request stock replenishment
+  - Track delivery status
 
-### Sales Representative
-- View and respond to retailer tickets assigned to them
-- Update delivery and stock status for their accounts
-- Send promotions to retailers in their territory
-- View performance reports for their own accounts
-
-### Regional Manager
-- View all tickets and activity within their region
-- View analytics and performance metrics for their region
-- Escalate or reassign tickets
-- Send promotions to all retailers in their region
-- Review and approve stock requests
+### Sales Staff
+- **Access:** Management dashboard (`/staff/dashboard`)
+- **Registers:** Self-register via **Nestlé Staff tab** — Employee ID required
+- **Capabilities:**
+  - View and respond to retailer tickets assigned to them
+  - Update delivery and stock status for their accounts
+  - Send promotions to retailers in their territory
+  - View performance reports for their own accounts
 
 ### HQ Admin
-- Full platform access — all regions, all tickets, all users
-- Create and manage promotions platform-wide
-- Manage user accounts (create, deactivate, assign roles)
-- View platform-wide analytics and reports
-- Configure system settings
+- **Access:** Management dashboard — full platform access (`/admin/dashboard`)
+- **Registers:** Self-register via **Nestlé Staff tab** — Employee ID required
+- **Capabilities:**
+  - Full platform access — all regions, all tickets, all users
+  - Create and manage promotions platform-wide
+  - Manage user accounts (create, deactivate, assign roles)
+  - View platform-wide analytics and reports
+  - Configure system settings
 
-### Delivery Driver
-- Login, OTP verification, password reset, manage profile
-- View assigned deliveries for the day
-- Update delivery status (Out for Delivery, Delivered, Failed Delivery)
-- File complaints against retailers (late payment, refused delivery, misconduct)
-- Attach evidence to complaints (photos, voice notes)
-- View status and resolution of filed complaints
+### Distributor
+- **Access:** Management dashboard (`/distributor/dashboard`)
+- **Registers:** Self-register via **Nestlé Staff tab** — Employee ID required
+- **Capabilities:**
+  - View and manage assigned distribution routes
+  - Track deliveries and distribution statuses
+
+### ~~Delivery Driver~~ *(removed 16 March 2026)*
+> Removed from system. All driver-related routes, UI, and seed data have been deleted.
+
+### ~~Regional Manager~~ *(removed 16 March 2026)*
+> Removed from system. All manager-related routes, UI, and seed data have been deleted.
 
 ---
 
@@ -146,26 +153,37 @@ A single registration page presents **two tabs**:
 
 ```
 nestle-commhub/
+├── run.sh                        ← One-command startup script
+├── .vscode/
+│   └── settings.json             ← Suppress @tailwind CSS lint warnings
 ├── app/
 │   ├── src/
 │   │   ├── components/
+│   │   │   └── layout/
+│   │   │       ├── RetailerLayout.jsx
+│   │   │       ├── StaffLayout.jsx
+│   │   │       ├── AdminLayout.jsx
+│   │   │       └── ManagerLayout.jsx
 │   │   ├── pages/
 │   │   │   ├── auth/
-│   │   │   │   ├── Register.jsx
 │   │   │   │   ├── Login.jsx
+│   │   │   │   ├── Register.jsx
 │   │   │   │   ├── OTP.jsx
-│   │   │   │   ├── ForgotPassword.jsx
-│   │   │   │   └── Unauthorized.jsx
+│   │   │   │   └── ForgotPassword.jsx
 │   │   │   ├── retailer/
-│   │   │   │   └── RetailerDashboard.jsx
+│   │   │   │   ├── RetailerDashboard.jsx
+│   │   │   │   └── RetailerProfile.jsx
 │   │   │   ├── staff/
-│   │   │   │   └── StaffDashboard.jsx
-│   │   │   ├── manager/
-│   │   │   │   └── ManagerDashboard.jsx
+│   │   │   │   ├── StaffDashboard.jsx
+│   │   │   │   └── StaffProfile.jsx
 │   │   │   ├── admin/
-│   │   │   │   └── AdminDashboard.jsx
-│   │   │   └── distributor/
-│   │   │       └── DistributorDashboard.jsx
+│   │   │   │   ├── AdminDashboard.jsx
+│   │   │   │   ├── AdminProfile.jsx
+│   │   │   │   ├── UserManagement.jsx
+│   │   │   │   └── SLAMonitor.jsx
+│   │   │   ├── distributor/
+│   │   │   │   └── DistributorDashboard.jsx
+│   │   │   └── Unauthorized.jsx
 │   │   ├── routes/
 │   │   │   └── ProtectedRoute.jsx
 │   │   ├── context/
@@ -178,10 +196,18 @@ nestle-commhub/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
+│   │   │   └── authController.js
 │   │   ├── models/
+│   │   │   ├── User.js
+│   │   │   └── ValidEmployee.js
 │   │   ├── routes/
+│   │   │   └── authRoutes.js
 │   │   ├── middleware/
+│   │   │   └── authMiddleware.js
+│   │   ├── seed/
+│   │   │   └── seedEmployees.js
 │   │   └── index.js
+│   ├── .env
 │   └── package.json
 └── docs/
 ```
@@ -228,19 +254,38 @@ nestle-commhub/
 | 34 | Full auth system built and tested: registration, login, JWT, role-based routing | 15 March 2026 |
 | 35 | All 6 placeholder dashboards created | 15 March 2026 |
 | 36 | Session persistence via localStorage | 15 March 2026 |
-| 37 | Protected routes enforcing role-based access | 15 March 2026 |
+| 38 | Built full HQ Admin dashboard UI (`AdminDashboard.jsx`) | 19 March 2026 |
+| 39 | Built HQ Admin profile page (`AdminProfile.jsx`) | 19 March 2026 |
+| 40 | Built User Management page (`UserManagement.jsx`) | 19 March 2026 |
+| 41 | Built SLA Monitor page (`SLAMonitor.jsx`) | 19 March 2026 |
+| 42 | Built full Regional Manager dashboard UI (`ManagerDashboard.jsx`) | 19 March 2026 |
+| 43 | Built Regional Manager profile page (`ManagerProfile.jsx`) | 19 March 2026 |
+| 44 | Built Issue Heatmap page (`Heatmap.jsx`) | 19 March 2026 |
+| 45 | Built Distributor Scorecards page (`DistributorScorecards.jsx`) | 19 March 2026 |
+| 46 | Built Broadcasts page (`Broadcasts.jsx`) | 19 March 2026 |
+| 47 | Built `AdminLayout.jsx` and `ManagerLayout.jsx` with role-specific sidebars and notification panels | 19 March 2026 |
+| 48 | Registered all admin/manager routes in `App.jsx` with correct `ProtectedRoute` role guards | 19 March 2026 |
+| 49 | Fixed backend PORT default (5000 → 5001) | 19 March 2026 |
+| 50 | Switched backend dev script from `node --watch` to `nodemon` | 19 March 2026 |
+| 51 | Added `/api/health` endpoint to backend | 19 March 2026 |
+| 52 | Added `NODE_ENV=development` to `backend/.env` | 19 March 2026 |
+| 53 | Created `run.sh` one-command startup script | 19 March 2026 |
+| 54 | Created `.vscode/settings.json` to suppress Tailwind CSS lint warnings | 19 March 2026 |
+| 55 | Resolved all 6 Sprint 1 bugs (BUG-001 to BUG-006) | 18 March 2026 |
+| 56 | Connected Staff Dashboard to real API (GET /api/tickets) | 18 March 2026 |
+| 57 | Implemented Notifications live across all dashboards | 18 March 2026 |
+| 58 | Connected User Management to real API (GET /api/users) | 18 March 2026 |
+| 59 | Implemented dynamic SLA compliance calculation | 18 March 2026 |
+| 60 | Verified ticket system end-to-end functionality | 18 March 2026 |
 
 ---
 
 ## 7. What Is In Progress
 
-| Task | Owner | Notes |
-|---|---|---|
-| `Login.jsx` — connect to backend `POST /api/auth/login` | Thihas | Logic complete — tested end-to-end |
-| `Register.jsx` — connect to backend `POST /api/auth/register` | Thihas | Logic complete — includes Employee ID verification |
-| OTP verification screen | Ryan | Not yet built |
-| Password reset flow | Thihas | Not yet built |
-| Real dashboard UIs replacing placeholders | Ganidu / Kavinda | Not yet built |
+- OTP verification — pending Dialog Axiata API key
+- Password reset flow — not started
+- Cloudinary file uploads — account not set up yet
+- Browser testing of full ticket flow
 
 ---
 
@@ -306,21 +351,51 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | ~~Scaffold `retailer-portal` (Vite + React)~~ | 🟢 Done (deleted — merged into `app/`) |
 | ~~Scaffold `management-dashboard` (Vite + React)~~ | 🟢 Done (deleted — merged into `app/`) |
 | Scaffold `backend` (Node + Express) | 🟢 Done |
-| Scaffold `app/` (Vite + React + Tailwind + PWA) | ⬜ Not Started |
-| Set up MongoDB Atlas cluster | ⬜ Not Started |
+| Scaffold `app/` (Vite + React + Tailwind + PWA) | 🟢 Done |
+| Set up MongoDB Atlas cluster | 🟢 Done |
 
 ### Sprint 1 — Authentication & Skeleton
 | Task | Status |
 |---|---|
-| User schema (Mongoose) | ⬜ Not Started |
-| `POST /api/auth/register` | ⬜ Not Started |
-| `POST /api/auth/login` (JWT) | ⬜ Not Started |
-| JWT auth middleware | ⬜ Not Started |
-| RBAC middleware | ⬜ Not Started |
-| `app/` — Login page | ⬜ Not Started |
-| `app/` — Registration page (tabbed: Retailer / Nestlé Employee) | ⬜ Not Started |
-| `app/` — Employee ID verification on registration | ⬜ Not Started |
-| `app/` — Role-based dashboard shells (Retailer, Sales Staff, Manager, Admin, Distributor) | ⬜ Not Started |
+| User schema (Mongoose) | 🟢 Done |
+| `POST /api/auth/register` | 🟢 Done |
+| `POST /api/auth/login` (JWT) | 🟢 Done |
+| JWT auth middleware | 🟢 Done |
+| RBAC middleware | 🟢 Done |
+| `app/` — Login page | 🟢 Done |
+| `app/` — Registration page (tabbed: Retailer / Nestlé Employee) | 🟢 Done |
+| `app/` — Employee ID verification on registration | 🟢 Done |
+| `app/` — Role-based dashboard shells (Retailer, Sales Staff, Manager, Admin, Distributor) | 🟢 Done |
+
+### Sprint 2 — Core Features
+| Task | Status |
+|---|---|
+| HQ Admin Dashboard full UI | 🟢 Done |
+| HQ Admin Profile page | 🟢 Done |
+| User Management page | 🟢 Done |
+| SLA Monitor page | 🟢 Done |
+| Regional Manager Dashboard full UI | 🟢 Done |
+| Regional Manager Profile page | 🟢 Done |
+| Heatmap page | 🟢 Done |
+| Distributor Scorecards page | 🟢 Done |
+| Broadcasts page | 🟢 Done |
+| Retailer portal real UI (Kavinda) | ⬜ Not Started |
+| SLA Monitor real UI (Staff/Manager) | ⬜ Not Started |
+| Ticker / Issue reporting (retailer raises a ticket) | ⬜ Not Started |
+| Ticket management (sales rep responds, updates status) | ⬜ Not Started |
+| Promotions — create and send (HQ Admin / Regional Manager) | ⬜ Not Started |
+| Promotions — view (Retailer) | ⬜ Not Started |
+| Stock request form (Retailer) | ⬜ Not Started |
+| Delivery status tracking (Retailer) | ⬜ Not Started |
+| Push notifications via PWA | ⬜ Not Started |
+| `DRV-01` Driver dashboard UI | ⬜ Not Started |
+| `DRV-02` View assigned deliveries page | ⬜ Not Started |
+| `DRV-03` Update delivery status functionality | ⬜ Not Started |
+| `DRV-04` File retailer complaint form | ⬜ Not Started |
+| `DRV-05` Attach evidence to complaint (Cloudinary) | ⬜ Not Started |
+| `DRV-06` View complaint status page | ⬜ Not Started |
+| `DRV-07` Driver complaint backend API endpoints | ⬜ Not Started |
+| `DRV-08` Auto-escalate unresolved driver complaints | ⬜ Not Started |
 
 ### Sprint 2 — Core Features
 | Task | Status |
@@ -356,14 +431,8 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 
 ## 10. Current Blockers
 
-| # | Blocker | Impact | Owner |
-|---|---|---|---|
-| 1 | `app/` not yet scaffolded (Vite + React + Tailwind + PWA) | Resolved | Thihas |
-| 2 | MongoDB not connected | Resolved | Thihas |
-| 3 | No authentication system | Resolved | Thihas |
-| 4 | Employee ID verification endpoint not designed | Resolved | Thihas |
-| 5 | Dialog Axiata API key still not obtained | Blocks OTP SMS sending | TBD |
-| 6 | Driver dashboard not yet designed | Cannot build driver-facing views until UI mockup is approved | TBD |
+- Dialog Axiata API key not obtained (SMS notifications blocked)
+- Cloudinary account not configured (file attachments on tickets)
 
 ---
 

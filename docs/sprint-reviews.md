@@ -21,23 +21,83 @@
 
 ---
 
-## Sprint 1 — In Progress — 15 March 2026
+## Sprint 1 — In Progress — 17 March 2026
 
-### Completed so far:
+### Progress as of 18 March 2026:
+
+All 6 bugs from yesterday resolved.
+
+Completed today:
+- All bug fixes applied and verified
+- Staff Dashboard fully connected to real backend data
+- Notifications system live across all dashboards
+- User Management connected to real API
+- SLA compliance calculating dynamically
+- Personalized greetings implemented
+- Under development placeholders added
+
+Verified working end to end:
+- Retailer Dashboard: PASS (Real ticket counts, greeting working)
+- Staff Dashboard: PASS (SLA 92%, assigned tickets showing)
+- Admin Dashboard: PASS (Platform metrics showing 8 tickets)
+- Notifications: PASS (Bell badge, panel, mark as read all work)
+- User Management: PASS (5 real users, search and toggle work)
+
+Still pending for Sprint 1 completion:
+- OTP verification screen
+- Password reset flow
+- Cloudinary file uploads
+- End to end ticket flow browser testing
+- In-ticket messaging browser testing
+- Staff ticket detail page full test
+
+### Progress as of 17 March 2026:
+Completed today:
+- Full ticket system backend built and deployed (models, controllers, routes)
+- SLA auto escalation job running
+- All retailer portal pages built
+- All staff dashboard pages built
+- 6 known bugs identified and logged
+
+---
+
+## Sprint 1 — Completed — 15 March 2026
+
+### Completed:
 - Full authentication system (register, login, JWT, role-based routing)
 - MongoDB Atlas connected
 - All placeholder dashboards working
 - Session persistence and logout working
 - Registration validated and tested end to end
 - Login validated and tested end to end
+- All 6 placeholder dashboard shells: Retailer, Staff, Manager, Admin, Distributor, Driver
+
+---
+
+## Sprint 2 — In Progress — 19 March 2026
+
+### Completed so far:
+- Full HQ Admin dashboard UI (`AdminDashboard.jsx`) — 6 summary cards, SLA compliance table, escalated tickets, all-tickets table, activity timeline
+- HQ Admin profile page (`AdminProfile.jsx`) — dark red HQ Admin badge
+- User Management page (`UserManagement.jsx`) — colour-coded role badges, filter tabs, search, edit/deactivate actions
+- SLA Monitor page (`SLAMonitor.jsx`) — 4 metric cards, regional breakdown, breach detail table
+- Full Regional Manager dashboard UI (`ManagerDashboard.jsx`) — 4 summary cards, Western Province SLA section with priority bars, escalated tickets table, My Sales Staff grid, regional tickets table
+- Regional Manager profile page (`ManagerProfile.jsx`) — purple Regional Manager badge
+- Issue Heatmap page (`Heatmap.jsx`) — styled placeholder map, coloured markers, hotspot list
+- Distributor Scorecards page (`DistributorScorecards.jsx`) — 3 distributor cards with performance bars and badges
+- Broadcasts page (`Broadcasts.jsx`) — Send/Sent tabs, target/subject/message/attach fields, view-rate bars
+- `AdminLayout.jsx` and `ManagerLayout.jsx` layout components with role-specific sidebars and notification panels
+- All new routes registered in `App.jsx` with correct `ProtectedRoute` role guards
+- Startup reliability fixes: nodemon, PORT default, `/api/health` endpoint, `NODE_ENV`
+- `run.sh` one-command startup script — kills ports, installs deps, starts backend then frontend
+- `.vscode/settings.json` CSS linter fix
 
 ### In progress:
+- Retailer portal real UI (Kavinda)
+- Ticket submission and management system (Ryan)
 - OTP verification
-- Password reset
-- Real dashboard UIs
-- Ticket submission system (Ryan)
-- Management dashboard UI (Ganidu)
-- Retailer portal UI (Kavinda)
+- Password reset flow
+- Real API integration for all dashboards (currently hardcoded placeholder data)
 
 ---
 
