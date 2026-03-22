@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
-import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Camera, CheckCircle, Clock, Loader2, Send, Upload, X } from 'lucide-react';
 
 const CATEGORIES = [
   { value: '', label: 'Select a category...' },
@@ -44,6 +45,17 @@ export default function SubmitIssue() {
     return e;
   }
 
+  const toBase64 = (file) => new Promise(
+    (resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+    }
+  )
+
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
+
   async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
@@ -67,19 +79,37 @@ export default function SubmitIssue() {
         "Critical": "critical"
       };
 
-      // Since the form values are already snake_case/lowercase, we check if we need the map
-      // But the user requested to use the map explicitly: category: categoryMap[selectedCategory]
-      // We'll map the current labels to the values to follow the requirement
       const selectedCategoryLabel = CATEGORIES.find(c => c.value === form.category)?.label;
       const selectedPriorityLabel = PRIORITIES.find(p => p.value === form.priority)?.label;
+
+      const base64Files = await Promise.all((form.files || []).map(file => toBase64(file)));
 
       const payload = {
         category: categoryMap[selectedCategoryLabel] || form.category,
         priority: priorityMap[selectedPriorityLabel] || form.priority,
-        description: form.description.trim()
+        description: form.description.trim(),
+        attachments: base64Files || []
       };
 
-      const response = await axios.post('http://localhost:5001/api/tickets', payload, {
+      console.log("Submitting:", {
+        categoryLabel: selectedCategoryLabel,
+        priorityLabel: selectedPriorityLabel,
+        payload,
+        API_URL,
+        token: !!token
+      });
+
+      // Simulation for dev mode
+      if (isDevMode) {
+        setTimeout(() => {
+          setSubmittedTicketNumber('TKT-VERIFY');
+          setSubmitted(true);
+          setLoading(false);
+        }, 800);
+        return;
+      }
+
+      const response = await axios.post(`${API_URL}/api/tickets`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -91,7 +121,7 @@ export default function SubmitIssue() {
       console.error('Error submitting ticket:', err);
       setErrors({ submit: err.response?.data?.message || 'Failed to submit issue. Please try again.' });
     } finally {
-      setLoading(false);
+      if (!isDevMode) setLoading(false);
     }
   }
 
@@ -123,9 +153,15 @@ export default function SubmitIssue() {
             >
               View My Tickets
             </Link>
+            <Link
+              to="/retailer/dashboard"
+              className="block w-full border-2 border-[#3D2B1F] text-[#3D2B1F] font-bold py-3 rounded-[12px] hover:bg-[#F5F3F0] transition-colors text-[15px] text-center mb-3"
+            >
+              Go to Dashboard
+            </Link>
             <button
               onClick={reset}
-              className="w-full border-2 border-[#3D2B1F] text-[#3D2B1F] font-bold py-3 rounded-[12px] hover:bg-[#F5F3F0] transition-colors text-[15px]"
+              className="w-full text-[14px] font-medium text-gray-400 hover:text-gray-600 transition-colors py-2"
             >
               Submit Another Issue
             </button>
@@ -139,6 +175,13 @@ export default function SubmitIssue() {
   return (
     <RetailerLayout>
       <div className="pb-10">
+        {/* Dev Mode Banner */}
+        {isDevMode && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center">
+            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">Submit an Issue</h1>

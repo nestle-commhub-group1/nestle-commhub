@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Save } from 'lucide-react';
+import { Save, User, MapPin, Phone, Mail, Loader2, LogOut, CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
+import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 
 const RetailerProfile = () => {
@@ -27,28 +29,23 @@ const RetailerProfile = () => {
         const parts = name.split(' ');
         const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
         
+        const phone = parsedUser.phone || parsedUser.contactNumber || '+94 77 123 4567';
+
         setUser(prev => ({
           ...prev,
           ...parsedUser,
           fullName: name,
           initials: initials.toUpperCase(),
-          email: parsedUser.email || prev.email,
-          phone: parsedUser.contactNumber || prev.phone,
-          businessName: parsedUser.businessName || prev.businessName,
-          taxId: parsedUser.taxId || prev.taxId,
-          address: parsedUser.address || prev.address
+          phone: phone
         }));
 
         setFormData({
           fullName: name,
-          phone: parsedUser.contactNumber || '+94 77 123 4567'
+          phone: phone
         });
-      } catch (e) {}
-    } else {
-      setFormData({
-        fullName: 'Chaminda Jayawardena',
-        phone: '+94 77 123 4567'
-      });
+      } catch (e) {
+        console.error("Profile parse error", e);
+      }
     }
   }, []);
 
@@ -59,12 +56,34 @@ const RetailerProfile = () => {
     });
   };
 
-  const handleSave = () => {
-    // Basic save simulation
-    const updatedUser = { ...user, ...formData };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    alert('Changes saved successfully!');
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API_URL}/api/users/profile`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        const updatedUserRaw = response.data.user;
+        const name = updatedUserRaw.fullName;
+        const parts = name.split(' ');
+        const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
+
+        const updatedUser = {
+          ...user,
+          ...updatedUserRaw,
+          initials: initials.toUpperCase()
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUserRaw)); // Save raw user from DB
+        alert('Profile updated successfully!');
+        window.location.reload(); // Force reload to sync UI
+      }
+    } catch (err) {
+      console.error("Profile update error:", err.response?.data || err.message);
+      alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   return (

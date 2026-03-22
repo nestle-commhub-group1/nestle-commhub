@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../../config/api";
 import AuthLayout from "../../components/AuthLayout";
 
 // ── Reusable field components ─────────────────────────────────────────────────
@@ -238,7 +239,7 @@ export default function Register() {
     try {
       // Note: using 5001 because macOS AirPlay occupies 5000
       console.log("Sending POST payload to backend:", form);
-      const response = await axios.post("http://localhost:5001/api/auth/register", form);
+      const response = await axios.post(`${API_URL}/api/auth/register`, form);
       console.log("Registration Success:", response.data);
       setSuccessMsg("Account created successfully");
       

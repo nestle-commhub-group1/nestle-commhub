@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../../config/api'; // Added this line
 import RetailerLayout from '../../components/layout/RetailerLayout';
 import { Search, Loader2, AlertCircle } from 'lucide-react';
 
@@ -27,16 +28,23 @@ const categoryColor = (c) => ({
   'product_quality': 'bg-green-50 text-green-600',
 }[c?.toLowerCase()] || 'bg-gray-50 text-gray-600');
 
-const formatCategory = (c) => {
-  if (!c) return '';
-  return c.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-};
+const formatCategory = (cat) => {
+  if (!cat) return "Unknown"
+  return cat.replace(/_/g, " ")
+    .replace(/\b\w/g, l => l.toUpperCase())
+}
 
-const formatStatus = (s) => {
-  if (!s) return '';
-  if (s === 'in_progress') return 'In Progress';
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
+const formatStatus = (status) => {
+  if (!status) return "Open"
+  return status.replace(/_/g, " ")
+    .replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const formatPriority = (priority) => {
+  if (!priority) return "Medium"
+  return priority.charAt(0).toUpperCase() 
+    + priority.slice(1)
+}
 
 export default function MyTickets() {
   const [tickets, setTickets] = useState([]);
@@ -45,25 +53,45 @@ export default function MyTickets() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('All');
 
-  useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5001/api/tickets/my', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setTickets(response.data.tickets || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching tickets:', err);
-        setError('Failed to load tickets. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
+  const fetchTickets = async () => {
+    // Skip API if dev mode
+    if (isDevMode) {
+      setTickets([
+        { _id: 'dev-1', ticketNumber: 'TKT-VERIFY', category: 'quality_issue', priority: 'medium', status: 'open', description: 'Final verification ticket', createdAt: new Date().toISOString() },
+        { _id: 'dev-2', ticketNumber: 'TKT-1037', category: 'stock_out', priority: 'high', status: 'in_progress', description: 'Testing no attachment fix', createdAt: new Date().toISOString() }
+      ]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tickets/my`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTickets(response.data.tickets || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching tickets:', err);
+      setError('Failed to load tickets. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount
+  useEffect(() => {
     fetchTickets();
+  }, [isDevMode]);
+
+  // Refetch when user navigates back to this tab/window
+  useEffect(() => {
+    const handleFocus = () => fetchTickets();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const summary = {
@@ -77,15 +105,22 @@ export default function MyTickets() {
     const statusTab = activeTab === 'All' ? true : formatStatus(t.status) === activeTab;
     const q = search.toLowerCase();
     const matchSearch = !q ||
-      t.ticketNumber.toLowerCase().includes(q) ||
-      t.description.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q);
+      (t.ticketNumber || "").toLowerCase().includes(q) ||
+      (t.description || "").toLowerCase().includes(q) ||
+      (t.category || "").toLowerCase().includes(q);
     return statusTab && matchSearch;
   });
 
   return (
     <RetailerLayout>
       <div className="pb-10 space-y-6">
+        {/* Dev Mode Banner */}
+        {isDevMode && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center">
+            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+          </div>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">My Tickets</h1>
@@ -193,7 +228,7 @@ export default function MyTickets() {
                     {formatCategory(ticket.category)}
                   </span>
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md ${priorityClass(ticket.priority)}`}>
-                    {ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}
+                    {formatPriority(ticket.priority)}
                   </span>
                   <span className="text-[12px] text-gray-400 font-medium ml-auto">
                     {new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

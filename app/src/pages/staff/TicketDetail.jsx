@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import StaffLayout from '../../components/layout/StaffLayout';
 import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateUtils';
@@ -27,7 +28,7 @@ const staCls = s => ({ 'Open':'bg-red-50 text-red-700 border border-red-200', 'I
 
 export default function StaffTicketDetail() {
   const { id } = useParams();
-  console.log("Ticket ID from URL:", id);
+  const token = localStorage.getItem('token');
   const [ticket, setTicket] = useState(FALLBACK);
   const [messages, setMessages] = useState(INIT_MSGS);
   const [input, setInput] = useState('');
@@ -40,32 +41,56 @@ export default function StaffTicketDetail() {
   const [distributors, setDistributors] = useState([]);
   const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [actionResult, setActionResult] = useState(null); // { type: 'success'|'error', msg }
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  const token = localStorage.getItem('token');
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
   // ── Fetch ticket + messages ───────────────────────────────────────────────
   useEffect(() => {
     if (!token || !id) { setLoading(false); return; }
+
+    // Skip API if dev mode
+    if (isDevMode) {
+      setTicket(FALLBACK);
+      setMessages(INIT_MSGS);
+      setLoading(false);
+      return;
+    }
+
     Promise.all([
-      fetch(`http://localhost:5001/api/tickets/${id}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
-      fetch(`http://localhost:5001/api/tickets/${id}/messages`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
+      fetch(`${API_URL}/api/tickets/${id}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
+      fetch(`${API_URL}/api/tickets/${id}/messages`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
     ]).then(([ticketData, msgData]) => {
       if (ticketData?.success && ticketData.ticket) {
         const t = ticketData.ticket;
         setTicket({
-          ...FALLBACK,
-          id: t.ticketNumber || t._id,
-          category: t.category?.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || FALLBACK.category,
-          priority: t.priority ? t.priority.charAt(0).toUpperCase()+t.priority.slice(1) : FALLBACK.priority,
-          status: t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : FALLBACK.status,
-          description: t.description || FALLBACK.description,
+          id: t.ticketNumber || 'TKT-PENDING',
+          category: t.category?.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || 'General',
+          priority: t.priority ? t.priority.charAt(0).toUpperCase()+t.priority.slice(1) : 'Medium',
+          status: t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : 'Open',
+          description: t.description || '',
+          submitted: new Date(t.createdAt).toLocaleString(),
           slaBreached: t.isEscalated || (t.slaDeadline && new Date(t.slaDeadline) < new Date()),
+          slaDeadline: t.slaDeadline ? new Date(t.slaDeadline).toLocaleString() : 'N/A',
+          originalDeadline: t.slaDeadline,
+          slaTime: t.status === 'resolved' ? 'Resolved' : 'Active',
+          slaProgress: 0,
+          retailer: t.retailerId?.businessName || t.retailerId?.fullName || 'Retailer',
+          retailerInfo: {
+            name: t.retailerId?.fullName || 'Retailer',
+            business: t.retailerId?.businessName || 'Business',
+            phone: t.retailerId?.phone || 'N/A',
+            email: t.retailerId?.email || 'N/A',
+            address: t.retailerId?.businessAddress || 'N/A',
+            initials: (t.retailerId?.fullName || 'R').split(' ').map(n=>n[0]).join('').toUpperCase()
+          },
+          attachments: t.attachments || [],
           _id: t._id,
         });
-        setStatus(t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : FALLBACK.status);
+        setStatus(t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : 'Open');
       }
-      if (msgData?.success && msgData.messages?.length > 0) {
-        const mapped = msgData.messages.map(m => ({
+      if (msgData?.success) {
+        const mapped = (msgData.messages || []).map(m => ({
           id: m._id, sender: m.senderRole === 'retailer' ? 'retailer' : 'staff',
           name: m.senderId?.fullName || (m.senderRole==='retailer' ? 'Retailer' : 'Staff'),
           text: m.message,
@@ -74,16 +99,39 @@ export default function StaffTicketDetail() {
         setMessages(mapped);
       }
     }).catch(err => {
-      console.log("Ticket detail error:", err.response?.data || err.message);
+      console.log("Ticket detail error:", err.message);
     }).finally(() => setLoading(false));
-  }, [id]);
+  }, [id, token, isDevMode]);
+
+  // ── SLA Countdown ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!ticket.originalDeadline || ticket.status === 'Resolved') {
+      setTimeLeft(0);
+      return;
+    }
+    
+    const calculate = () => {
+      const deadline = new Date(ticket.originalDeadline);
+      const now = new Date();
+      const diff = deadline - now;
+      setTimeLeft(Math.max(0, diff));
+    };
+
+    calculate();
+    const interval = setInterval(calculate, 1000 * 60); // Update every minute
+    return () => clearInterval(interval);
+  }, [ticket.originalDeadline, ticket.status]);
+
+  const hoursRemaining = Math.floor(timeLeft / (1000 * 60 * 60));
+  const minsRemaining = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const isOverdue = timeLeft <= 0 && ticket.status !== 'Resolved';
 
   // ── Fetch distributors ───────────────────────────────────────────────────
   useEffect(() => {
     if (showAssignModal) {
       const fetchDistributors = async () => {
         try {
-          const res = await axios.get('http://localhost:5001/api/users/distributors', {
+          const res = await axios.get(`${API_URL}/api/users/distributors`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.success) setDistributors(res.data.distributors);
@@ -103,10 +151,9 @@ export default function StaffTicketDetail() {
   // ── Send message ──────────────────────────────────────────────────────────
   async function sendMessage() {
     if (!input.trim()) return;
-    const token = localStorage.getItem("token");
     try {
       const res = await axios.post(
-        `http://localhost:5001/api/tickets/${id}/messages`,
+        `${API_URL}/api/tickets/${id}/messages`,
         { message: input.trim() },
         { headers: { 
           Authorization: "Bearer " + token,
@@ -135,12 +182,12 @@ export default function StaffTicketDetail() {
     const label = apiStatus === 'in_progress' ? 'In Progress' : 'Resolved';
     try {
       const res = await axios.put(
-        `http://localhost:5001/api/tickets/${id}/status`,
+        `${API_URL}/api/tickets/${id}/status`,
         { status: apiStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
-        setTicket(p => ({ ...p, status: apiStatus, resolvedAt: apiStatus === 'resolved' ? new Date() : p.resolvedAt }));
+        setTicket(p => ({ ...p, status: label, resolvedAt: apiStatus === 'resolved' ? new Date() : p.resolvedAt }));
         setStatus(label);
         setActionResult({ type: 'success', msg: `Status updated to ${label}` });
       }
@@ -157,7 +204,7 @@ export default function StaffTicketDetail() {
     if (!selectedDistributor) return;
     try {
       const res = await axios.put(
-        `http://localhost:5001/api/tickets/${id}/assign`,
+        `${API_URL}/api/tickets/${id}/assign`,
         { assignedTo: selectedDistributor },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -167,7 +214,6 @@ export default function StaffTicketDetail() {
       }
     } catch (err) {
       console.log("Assignment failed, logging to console as fallback.");
-      console.log("Assigning ticket to:", selectedDistributor);
       setActionResult({ type: 'success', msg: "Ticket assigned to distributor" });
     } finally {
       setShowAssignModal(false);
@@ -179,7 +225,7 @@ export default function StaffTicketDetail() {
   async function escalate() {
     setShowEscalateModal(false);
     try {
-      const r = await fetch(`http://localhost:5001/api/tickets/${id}/escalate`, { method:'POST', headers:{ Authorization:`Bearer ${token}` } });
+      const r = await fetch(`${API_URL}/api/tickets/${id}/escalate`, { method:'POST', headers:{ Authorization:`Bearer ${token}` } });
       const data = await r.json();
       if (data.success) { setStatus('Escalated'); setActionResult({ type:'success', msg:'Ticket escalated to HQ Admin.' }); return; }
     } catch(_) {}
@@ -191,6 +237,13 @@ export default function StaffTicketDetail() {
   return (
     <StaffLayout>
       <div className="pb-10">
+        {/* Dev Mode Banner */}
+        {isDevMode && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center">
+            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <Link to="/staff/tickets" className="inline-flex items-center space-x-2 text-[13px] font-bold text-gray-500 hover:text-[#3D2B1F] transition-colors mb-4">
@@ -230,24 +283,26 @@ export default function StaffTicketDetail() {
               <p className="text-[14px] text-[#2C1810] font-medium leading-relaxed">{ticket.description}</p>
             </div>
 
-            {/* SLA */}
-            <div className={`rounded-[20px] p-6 shadow-sm ${ticket.slaBreached ? 'bg-red-50 border border-red-200' : 'bg-white border border-[#E0DBD5]'}`}>
+            {/* SLA Status */}
+            <div className={`rounded-[20px] p-6 shadow-sm ${ticket.slaBreached || isOverdue ? 'bg-red-50 border border-red-200' : 'bg-white border border-[#E0DBD5]'}`}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[12px] font-extrabold uppercase tracking-widest flex items-center gap-2 text-[#3D2B1F]"><Clock size={14}/>SLA Status</h3>
                 <span className="text-[11px] text-gray-500 font-medium">Deadline: {ticket.slaDeadline}</span>
               </div>
-              {ticket.slaBreached ? (
+              {ticket.slaBreached || (isOverdue && ticket.status !== 'Resolved') ? (
                 <div>
                   <span className="inline-flex items-center gap-2 bg-red-100 border border-red-300 text-red-700 text-[14px] font-extrabold px-4 py-2 rounded-[10px]">⚠️ SLA BREACHED</span>
                   <p className="text-[13px] text-red-600 font-medium mt-2">This ticket has exceeded its SLA deadline and requires immediate attention.</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-[36px] font-extrabold text-orange-600 mb-3">{ticket.slaTime}</p>
+                  <p className={`text-[36px] font-extrabold mb-3 ${hoursRemaining < 2 && ticket.status !== 'Resolved' ? 'text-orange-600' : 'text-blue-600'}`}>
+                    {ticket.status === 'Resolved' ? 'Completed' : `${hoursRemaining}h ${minsRemaining}m remaining`}
+                  </p>
                   <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{ width:`${ticket.slaProgress}%` }}/>
+                    <div className={`h-2 rounded-full transition-all duration-500 ${hoursRemaining < 2 && ticket.status !== 'Resolved' ? 'bg-orange-500' : 'bg-blue-500'}`} style={{ width: ticket.status === 'Resolved' ? '100%' : `${Math.min(100, Math.max(5, (timeLeft / (24 * 60 * 60 * 1000)) * 100))}%` }} />
                   </div>
-                  <p className="text-[12px] text-gray-500 mt-2">{ticket.slaProgress}% of SLA time used</p>
+                  <p className="text-[12px] text-gray-500 mt-2">Ticket is within SLA requirements</p>
                 </>
               )}
             </div>
@@ -255,12 +310,34 @@ export default function StaffTicketDetail() {
             {/* Attachments */}
             <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">
               <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-4 flex items-center gap-2"><Paperclip size={14}/>Attached Evidence</h3>
-              <p className="text-[13px] text-gray-400 font-medium italic">No attachments uploaded.</p>
+              {ticket.attachments?.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {ticket.attachments.map((file, idx) => {
+                    const isImage = file.startsWith('data:image/');
+                    return (
+                      <div key={idx} className="group relative bg-[#F8F7F5] border border-[#E0DBD5] rounded-[12px] overflow-hidden hover:shadow-md transition-shadow aspect-square flex items-center justify-center">
+                        {isImage ? (
+                          <img src={file} alt={`Attachment ${idx + 1}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center p-3 text-center">
+                            <Paperclip size={24} className="text-gray-400 mb-1" />
+                            <span className="text-[10px] font-bold text-gray-500 break-all">FILE_{idx+1}</span>
+                          </div>
+                        )}
+                        <a href={file} download={`attachment-${idx+1}`} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[12px] font-bold">
+                          View / Download
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[13px] text-gray-400 font-medium italic">No attachments uploaded.</p>
+              )}
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              {/* Update Status */}
               <div className="relative">
                 <button onClick={() => setShowStatusMenu(s => !s)}
                   className="flex items-center gap-2 bg-[#3D2B1F] text-white text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-[#2C1810] transition-colors">
@@ -277,16 +354,8 @@ export default function StaffTicketDetail() {
                   </div>
                 )}
               </div>
-              {/* Escalate */}
-              <button onClick={() => setShowEscalateModal(true)}
-                className="flex items-center gap-2 border-2 border-red-500 text-red-600 text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-red-50 transition-colors">
-                Escalate to HQ
-              </button>
-              {/* Assign to Distributor */}
-              <button onClick={() => setShowAssignModal(true)}
-                className="flex items-center gap-2 border-2 border-gray-300 text-gray-600 text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-gray-50 transition-colors">
-                Assign to Distributor
-              </button>
+              <button onClick={() => setShowEscalateModal(true)} className="flex items-center gap-2 border-2 border-red-500 text-red-600 text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-red-50 transition-colors">Escalate to HQ</button>
+              <button onClick={() => setShowAssignModal(true)} className="flex items-center gap-2 border-2 border-gray-300 text-gray-600 text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-gray-50 transition-colors">Assign to Distributor</button>
             </div>
 
             {/* Chat */}
@@ -320,36 +389,42 @@ export default function StaffTicketDetail() {
               <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-5">Ticket Progress</h3>
               {(() => {
                 const steps = [
-                  { key: "submitted", label: "Submitted", description: ticket.createdAt ? formatDateTime(ticket.createdAt) : ticket.submitted },
-                  { key: "assigned", label: "Assigned", description: ticket.assignedTo ? "Assigned to " + (ticket.assignedTo?.fullName || "Distributor") : "Unassigned" },
-                  { key: "in_progress", label: "In Progress", description: (ticket.status === "in_progress" || ticket.status === "resolved" || ticket.status === "escalated") ? "Being handled" : "Pending" },
-                  { key: "resolved", label: "Resolved", description: ticket.resolvedAt ? formatDateTime(ticket.resolvedAt) : "Pending" }
+                  { key: "submitted", label: "Submitted", description: ticket.submitted },
+                  { key: "assigned", label: "Assigned", description: ticket.assignedTo ? "Assigned" : "Pending" },
+                  { key: "in_progress", label: "In Progress", description: ["In Progress", "Resolved", "Escalated"].includes(ticket.status) ? "Being handled" : "Pending" },
+                  { key: "resolved", label: "Resolved", description: ticket.status === "Resolved" ? "Completed" : "Pending" }
                 ];
 
                 const getStepStatus = (stepKey) => {
-                  const statusOrder = ["open", "in_progress", "resolved", "escalated"];
-                  const stepOrder = ["submitted", "assigned", "in_progress", "resolved"];
-                  
                   if (stepKey === "submitted") return "completed";
                   if (stepKey === "assigned" && ticket.assignedTo) return "completed";
-                  if (stepKey === "in_progress" && (ticket.status === "in_progress" || ticket.status === "resolved" || ticket.status === "escalated")) return "completed";
-                  if (stepKey === "in_progress" && ticket.status === "open") return "current";
-                  if (stepKey === "resolved" && ticket.status === "resolved") return "completed";
-                  if (stepKey === "resolved" && ticket.status === "in_progress") return "current";
+                  if (stepKey === "assigned" && !ticket.assignedTo) return "current";
+                  
+                  const s = (ticket.status || "").toLowerCase().replace(' ', '_');
+                  if (stepKey === "in_progress") {
+                    if (["in_progress", "resolved", "escalated"].includes(s)) return "completed";
+                    if (s === "open" && ticket.assignedTo) return "current";
+                  }
+                  
+                  if (stepKey === "resolved") {
+                    if (s === "resolved") return "completed";
+                    if (s === "in_progress") return "current";
+                  }
                   return "pending";
                 };
 
                 return steps.map((step, idx) => {
                   const status = getStepStatus(step.key);
+                  const isCompleted = status === "completed";
+                  const isCurrent = status === "current";
+
                   return (
                     <div key={step.key} className="flex items-start space-x-3">
                       <div className="flex flex-col items-center">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${status === 'completed' ? 'bg-green-500 text-white' : status === 'current' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}>
-                          {status === 'completed' && <CheckCircle size={16} />}
-                          {status === 'current' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-pulse" />}
-                          {status === 'pending' && <div className="w-2.5 h-2.5 border-2 border-gray-300 rounded-full" />}
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isCompleted ? 'bg-[#2D7A4F] text-white' : isCurrent ? 'bg-blue-100 text-blue-600 border-2 border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.2)]' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}>
+                          {isCompleted ? <CheckCircle size={16} /> : isCurrent ? <div className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-pulse" /> : <div className="w-2.5 h-2.5 border-2 border-gray-300 rounded-full" />}
                         </div>
-                        {idx < steps.length - 1 && <div className={`w-0.5 h-8 my-1 ${status === 'completed' ? 'bg-green-500' : 'bg-gray-200'}`} />}
+                        {idx < steps.length - 1 && <div className={`w-0.5 h-8 my-1 ${isCompleted ? 'bg-[#2D7A4F]' : 'bg-gray-200 shadow-inner'}`} />}
                       </div>
                       <div className="pb-3">
                         <p className={`text-[14px] font-bold ${status !== 'pending' ? 'text-[#2C1810]' : 'text-gray-400'}`}>{step.label}</p>
@@ -381,7 +456,7 @@ export default function StaffTicketDetail() {
         </div>
       </div>
 
-      {/* Escalate Modal */}
+      {/* Modals ... (keeping original modals as they work fine) */}
       {showEscalateModal && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setShowEscalateModal(false)}/>
@@ -392,7 +467,7 @@ export default function StaffTicketDetail() {
                 <button onClick={() => setShowEscalateModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
               </div>
               <h3 className="text-[18px] font-extrabold text-[#2C1810] mb-2">Escalate Ticket?</h3>
-              <p className="text-[14px] text-gray-600 font-medium mb-6">Are you sure you want to escalate <strong>{ticket.id}</strong> to HQ Admin? This action cannot be undone.</p>
+              <p className="text-[14px] text-gray-600 font-medium mb-6">Are you sure you want to escalate <strong>{ticket.id}</strong> to HQ Admin?</p>
               <div className="flex gap-3">
                 <button onClick={escalate} className="flex-1 bg-red-600 text-white font-bold py-3 rounded-[10px] hover:bg-red-700 transition-colors text-[14px]">Confirm Escalate</button>
                 <button onClick={() => setShowEscalateModal(false)} className="flex-1 border-2 border-gray-300 text-gray-600 font-bold py-3 rounded-[10px] hover:bg-gray-50 transition-colors text-[14px]">Cancel</button>
@@ -402,7 +477,6 @@ export default function StaffTicketDetail() {
         </>
       )}
 
-      {/* Assign Modal */}
       {showAssignModal && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setShowAssignModal(false)} />
@@ -435,7 +509,6 @@ export default function StaffTicketDetail() {
         </>
       )}
 
-      {/* Status Confirm Modal */}
       {showStatusConfirm && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setShowStatusConfirm(null)} />
@@ -445,9 +518,7 @@ export default function StaffTicketDetail() {
                 <Clock size={32} />
               </div>
               <h3 className="text-[18px] font-extrabold text-[#2C1810] mb-2">Update Status?</h3>
-              <p className="text-[14px] text-gray-600 font-medium mb-6">
-                Update ticket status to <strong>{showStatusConfirm === 'in_progress' ? 'In Progress' : 'Resolved'}</strong>?
-              </p>
+              <p className="text-[14px] text-gray-600 font-medium mb-6">Update ticket status to <strong>{showStatusConfirm === 'in_progress' ? 'In Progress' : 'Resolved'}</strong>?</p>
               <div className="flex gap-3">
                 <button onClick={confirmStatusUpdate} className="flex-1 bg-[#3D2B1F] text-white font-bold py-3.5 rounded-[12px] hover:bg-[#2C1810] transition-colors text-[14px]">Confirm</button>
                 <button onClick={() => setShowStatusConfirm(null)} className="flex-1 border-2 border-[#E0DBD5] text-gray-600 font-bold py-3.5 rounded-[12px] hover:bg-gray-50 transition-colors text-[14px]">Cancel</button>

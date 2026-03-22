@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  Bell, Menu, FileText, Users, Radio, User, 
-  LogOut, X, LayoutDashboard, AlertCircle, BarChart2, Star, CheckCircle, Loader2
+import {
+  Home, Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, AlertCircle, BarChart2, Star
 } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 import { formatTimeAgo } from '../../utils/dateUtils';
 
 const AdminLayout = ({ children }) => {
@@ -38,7 +39,7 @@ const AdminLayout = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await axios.get('http://localhost:5001/api/notifications', {
+      const res = await axios.get(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data.notifications || []);
@@ -50,7 +51,7 @@ const AdminLayout = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5001/api/notifications/${id}`, {}, {
+      await axios.put(`${API_URL}/api/notifications/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
@@ -62,7 +63,7 @@ const AdminLayout = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5001/api/notifications/read-all', {}, {
+      await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -87,7 +88,7 @@ const AdminLayout = ({ children }) => {
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChart2 size={20} /> },
     { label: 'SLA Monitor', path: '/admin/sla', icon: <AlertCircle size={20} /> },
     { label: 'Distributor Evaluations', path: '/admin/evaluations', icon: <Star size={20} /> },
-    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: 0, action: () => setIsNotificationsOpen(true) },
+    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/admin/profile', icon: <User size={20} /> },
   ];
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { FileText, CheckCircle, Store, AlertCircle, TrendingUp, Check, Loader2, Clock } from 'lucide-react';
+import API_URL from '../../config/api';
 import StaffLayout from '../../components/layout/StaffLayout';
 import { getCurrentGreeting, formatCurrentDate, formatDate } from '../../utils/dateUtils';
 
@@ -15,6 +16,8 @@ const StaffDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
 
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -26,6 +29,16 @@ const StaffDashboard = () => {
     }
 
     const fetchTickets = async () => {
+      // Skip API if dev mode
+      if (isDevMode) {
+        setTickets([
+          { _id: '1', ticketNumber: 'TKT-1041', category: 'stock_out', priority: 'high', status: 'in_progress', createdAt: new Date().toISOString() },
+          { _id: '2', ticketNumber: 'TKT-1037', category: 'packaging_damage', priority: 'medium', status: 'open', createdAt: new Date().toISOString() }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
@@ -38,7 +51,7 @@ const StaffDashboard = () => {
           return;
         }
 
-        const response = await axios.get('http://localhost:5001/api/tickets', {
+        const response = await axios.get(`${API_URL}/api/tickets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -58,7 +71,7 @@ const StaffDashboard = () => {
     };
 
     fetchTickets();
-  }, []);
+  }, [isDevMode]);
 
   const stats = {
     assigned: Array.isArray(tickets) ? tickets.length : 0,
@@ -158,6 +171,12 @@ const StaffDashboard = () => {
   return (
     <StaffLayout>
       <div className="space-y-8 pb-10">
+        {isDevMode && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center mb-4">
+            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+          </div>
+        )}
+
         <div>
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">{getCurrentGreeting()}, {user.fullName} 👋</h1>
           <div className="flex items-center text-gray-500 mt-1 text-[14px]">
@@ -286,7 +305,7 @@ const StaffDashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-[#2C1810]">{ticket.retailerId?.businessName || ticket.retailerId?.fullName || 'Retailer'}</td>
                       <td className="px-6 py-4 text-gray-600">
-                        {ticket.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        {(ticket.category || "").replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-[6px] text-[11px] font-bold ${getPriorityClasses(ticket.priority)}`}>
@@ -311,20 +330,22 @@ const StaffDashboard = () => {
           <h2 className="text-[20px] font-extrabold text-[#2C1810] mb-6">Operations Log</h2>
 
           <div className="space-y-6">
-            {[
-              { type: 'update', text: 'System update complete: Cloudinary integration ready', subtext: 'System · 10 minutes ago', color: 'bg-blue-500', icon: <Check size={14} className="text-white" /> },
-              { type: 'assigned', text: 'Auto-assignment logic refined for HQ Admin', subtext: 'System · 1 hour ago', color: 'bg-[#3D2B1F]', icon: <FileText size={14} className="text-white" /> },
-            ].map((activity, idx) => (
+            {tickets.slice(0, 5).map((t, idx) => (
               <div key={idx} className="flex relative items-start">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 z-10 mt-0.5 ${activity.color}`}>
-                  {activity.icon}
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 z-10 mt-0.5 ${t.status === 'resolved' ? 'bg-green-500' : 'bg-[#3D2B1F]'}`}>
+                   {t.status === 'resolved' ? <Check size={14} className="text-white" /> : <FileText size={14} className="text-white" />}
                 </div>
                 <div className="ml-4">
-                  <p className="text-[14px] font-bold text-[#2C1810] leading-snug">{activity.text}</p>
-                  <p className="text-[12px] text-gray-400 font-medium mt-1">{activity.subtext}</p>
+                  <p className="text-[14px] font-bold text-[#2C1810] leading-snug">
+                    {t.status === 'resolved' ? 'Resolved' : 'Active'} ticket {t.ticketNumber} — {(t.category || "").replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-[12px] text-gray-400 font-medium mt-1">{formatDate(t.updatedAt || t.createdAt)}</p>
                 </div>
               </div>
             ))}
+            {tickets.length === 0 && (
+              <p className="text-[14px] text-gray-400 italic">No recent activity found.</p>
+            )}
           </div>
           <p className="text-center text-[12px] text-gray-400 mt-8 italic font-medium">End of activity log</p>
         </div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Bell, Menu, FileText, Users, Radio, User,
-  LogOut, X, LayoutDashboard, Loader2
+  Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText
 } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import { formatTimeAgo } from '../../utils/dateUtils';
 
 const StaffLayout = ({ children }) => {
@@ -15,6 +15,8 @@ const StaffLayout = ({ children }) => {
   const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'Sales Staff', email: '' });
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -31,14 +33,22 @@ const StaffLayout = ({ children }) => {
     } else {
       setUser({ fullName: 'Nadeeka Perera', initials: 'NP', role: 'Sales Staff', email: 'nadeeka.perera@nestle.com' });
     }
-    fetchNotifications();
-  }, []);
+    
+    if (isDevMode) {
+      setNotifications([
+        { _id: '1', text: 'New ticket assigned: TKT-1041', type: 'ticket', createdAt: new Date().toISOString(), read: false },
+        { _id: '2', text: 'SLA Warning: TKT-1037 is nearing deadline', type: 'warning', createdAt: new Date().toISOString(), read: false }
+      ]);
+    } else {
+      fetchNotifications();
+    }
+  }, [isDevMode]);
 
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await axios.get('http://localhost:5001/api/notifications', {
+      const res = await axios.get(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data.notifications || []);
@@ -50,7 +60,7 @@ const StaffLayout = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5001/api/notifications/${id}`, {}, {
+      await axios.put(`${API_URL}/api/notifications/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
@@ -62,7 +72,7 @@ const StaffLayout = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5001/api/notifications/read-all', {}, {
+      await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -84,7 +94,7 @@ const StaffLayout = ({ children }) => {
     { label: 'My Tickets', path: '/staff/tickets', icon: <FileText size={20} /> },
     { label: 'Retailer Directory', path: '/staff/directory', icon: <Users size={20} /> },
     { label: 'Broadcasts', path: '/staff/broadcasts', icon: <Radio size={20} /> },
-    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: 3, action: () => setIsNotificationsOpen(true) },
+    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/staff/profile', icon: <User size={20} /> },
   ];
 

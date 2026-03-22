@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
   getDistributors,
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
+  updateProfile
 } = require('../controllers/userController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
@@ -12,6 +13,9 @@ router.get('/', protect, restrictTo('hq_admin'), getAllUsers);
 
 // Get distributors (Available to staff/admin)
 router.get('/distributors', protect, getDistributors);
+
+// Update own profile
+router.put('/profile', protect, updateProfile);
 
 // Update user status (Admin only)
 router.put('/:id/status', protect, restrictTo('hq_admin'), updateUserStatus);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const UnderDevelopment = ({ pageName }) => {
+const UnderDevelopment = ({ pageName, message }) => {
   const navigate = useNavigate();
 
   return (
@@ -17,7 +17,7 @@ const UnderDevelopment = ({ pageName }) => {
         <h1 className="text-[24px] font-bold text-[#3D2B1F] mb-2">{pageName}</h1>
         
         <p className="text-[#6B7280] text-[15px] mb-1 font-medium italic">
-          This feature is currently under development
+          {message || "This feature is currently under development"}
         </p>
         
         <p className="text-[#9CA3AF] text-[13px] mb-8 font-medium">

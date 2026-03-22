@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import StaffLayout from '../../components/layout/StaffLayout';
 import { Search, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 
@@ -28,22 +29,36 @@ export default function StaffMyTickets() {
   const [activeTab, setActiveTab] = useState('All');
   const [sort, setSort] = useState('Newest First');
 
+  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
+
   useEffect(() => {
     const fetchTickets = async () => {
       const token = localStorage.getItem('token');
       if (!token) { setLoading(false); return; }
+
+      // Skip API if dev mode
+      if (isDevMode) {
+        setTickets([
+          { id: 'TKT-1041', retailer: 'Saman General Stores', issue: 'Stock Out', priority: 'High', status: 'In Progress', sla: 'Mar 15, 2:23 PM', slaBreached: false, _id: '1041' },
+          { id: 'TKT-1037', retailer: 'Chamara Perera', issue: 'Packaging Damage', priority: 'Medium', status: 'Open', sla: 'Mar 18, 5:00 PM', slaBreached: false, _id: '1037' },
+          { id: 'TKT-0992', retailer: 'Aruna Mini Mart', issue: 'Logistics Delay', priority: 'Low', status: 'Resolved', sla: 'Mar 10, 11:00 AM', slaBreached: true, _id: '0992' }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:5001/api/tickets', {
+        const res = await axios.get(`${API_URL}/api/tickets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
           const mapped = res.data.tickets.map(t => ({
             id: t.ticketNumber || t._id,
             retailer: t.retailerId?.businessName || t.retailerId?.fullName || 'Retailer',
-            issue: t.category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-            priority: t.priority.charAt(0).toUpperCase() + t.priority.slice(1),
-            status: t.status === 'in_progress' ? 'In Progress' : t.status.charAt(0).toUpperCase() + t.status.slice(1),
+            issue: (t.category || "unknown").replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            priority: (t.priority || "medium").charAt(0).toUpperCase() + (t.priority || "medium").slice(1),
+            status: (t.status || "open").replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
             sla: t.slaDeadline ? new Date(t.slaDeadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
             slaBreached: t.isEscalated || (t.slaDeadline && new Date(t.slaDeadline) < new Date() && t.status !== 'resolved'),
             _id: t._id,
@@ -59,7 +74,7 @@ export default function StaffMyTickets() {
       }
     };
     fetchTickets();
-  }, []);
+  }, [isDevMode]);
 
   const stats = {
     assigned: tickets.length,
@@ -73,12 +88,18 @@ export default function StaffMyTickets() {
       activeTab === 'All' ||
       (activeTab === 'Overdue' ? t.slaBreached : t.status === activeTab);
     const q = search.toLowerCase();
-    return matchTab && (!q || t.id.toLowerCase().includes(q) || t.retailer.toLowerCase().includes(q));
+    return matchTab && (!q || (t.id || "").toLowerCase().includes(q) || (t.retailer || "").toLowerCase().includes(q));
   });
 
   return (
     <StaffLayout>
       <div className="pb-10 space-y-6">
+        {isDevMode && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center mb-4">
+            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+          </div>
+        )}
+
         <div>
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">My Tickets</h1>
           <p className="text-[15px] font-medium text-gray-500 mt-1">Manage and resolve assigned retailer issues</p>

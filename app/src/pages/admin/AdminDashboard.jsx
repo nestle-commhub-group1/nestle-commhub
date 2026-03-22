@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FileText, CheckCircle, Store, AlertCircle, TrendingUp, Check, Users, Map, Loader2
+  Users, Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, ChevronRight, BarChart3, ShieldAlert
 } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { isToday } from '../../utils/dateUtils';
 
@@ -22,6 +23,8 @@ const AdminDashboard = () => {
     year: 'numeric'
   });
 
+  const [usersCount, setUsersCount] = useState(0);
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -36,12 +39,13 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:5001/api/tickets", {
-          headers: { Authorization: "Bearer " + token }
-        });
+        const [ticketsRes, usersRes] = await Promise.all([
+          axios.get(`${API_URL}/api/tickets`, { headers: { Authorization: "Bearer " + token } }),
+          axios.get(`${API_URL}/api/users`, { headers: { Authorization: "Bearer " + token } })
+        ]);
         
-        if (res.data.success) {
-          const allTickets = res.data.tickets || [];
+        if (ticketsRes.data.success) {
+          const allTickets = ticketsRes.data.tickets || [];
           setTickets(allTickets);
           
           // Calculate stats
@@ -59,6 +63,10 @@ const AdminDashboard = () => {
             slaBreaches,
             resolvedToday
           });
+        }
+
+        if (usersRes.data.success) {
+          setUsersCount(usersRes.data.users?.length || 0);
         }
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -78,7 +86,7 @@ const AdminDashboard = () => {
     { title: 'Total Tickets', count: stats.total, label: 'Across all regions', icon: <FileText size={20} className="text-[#3B82F6]" />, borderColor: 'border-l-[4px] border-l-[#3B82F6]', bgColor: 'bg-blue-50', link: '#' },
     { title: 'Critical Tickets', count: stats.critical, label: 'Needs immediate attention', icon: <AlertCircle size={20} className="text-nestle-danger" />, borderColor: 'border-l-[4px] border-l-nestle-danger', bgColor: 'bg-red-50', link: '#' },
     { title: 'SLA Breaches', count: stats.slaBreaches, label: 'Across all regions', icon: <AlertCircle size={20} className="text-nestle-danger" />, borderColor: 'border-l-[4px] border-l-nestle-danger', bgColor: 'bg-red-50', link: '#' },
-    { title: 'Active Users', count: 87, label: 'On the platform', icon: <Users size={20} className="text-nestle-success" />, borderColor: 'border-l-[4px] border-l-nestle-success', bgColor: 'bg-green-50', link: '/admin/users' },
+    { title: 'Active Users', count: usersCount, label: 'On the platform', icon: <Users size={20} className="text-nestle-success" />, borderColor: 'border-l-[4px] border-l-nestle-success', bgColor: 'bg-green-50', link: '/admin/users' },
     { title: 'Regions', count: 5, label: 'Active regions', icon: <Map size={20} className="text-[#8B5A2B]" />, borderColor: 'border-l-[4px] border-l-nestle-brown', bgColor: 'bg-[#FDF8F3]', link: '#' },
     { title: 'Resolved Today', count: stats.resolvedToday, label: 'Platform wide', icon: <CheckCircle size={20} className="text-nestle-success" />, borderColor: 'border-l-[4px] border-l-nestle-success', bgColor: 'bg-green-50', link: '#' }
   ];
@@ -126,13 +134,15 @@ const AdminDashboard = () => {
     }
   };
 
-  const recentActivity = [
-    { type: 'escalated', text: 'Escalated ticket TKT-1037 — Critical stock shortage', subtext: 'Western Province · 5 hours ago', color: 'bg-nestle-danger', icon: <AlertCircle size={14} className="text-white" /> },
-    { type: 'update', text: 'Updated ticket TKT-1029 — HQ review initiated', subtext: 'Central Province · 6 hours ago', color: 'bg-[#3B82F6]', icon: <FileText size={14} className="text-white" /> },
-    { type: 'resolved', text: 'Resolved ticket TKT-1028 — Promotion Not Applied', subtext: 'Western Province · Yesterday, 2:00 PM', color: 'bg-nestle-success', icon: <Check size={14} className="text-white" /> },
-    { type: 'escalated', text: 'Escalated ticket TKT-1018 — Delivery Delay', subtext: 'Northern Province · Yesterday, 4:22 PM', color: 'bg-nestle-danger', icon: <AlertCircle size={14} className="text-white" /> },
-    { type: 'resolved', text: 'Resolved ticket TKT-1022 — Account verification complete', subtext: 'Southern Province · Yesterday, 11:05 AM', color: 'bg-nestle-success', icon: <Check size={14} className="text-white" /> }
-  ];
+  const recentActivity = tickets.slice(0, 5).map(t => ({
+    type: t.isEscalated ? 'escalated' : t.status === 'resolved' ? 'resolved' : 'update',
+    text: `${t.isEscalated ? 'Escalated' : t.status === 'resolved' ? 'Resolved' : 'Updated'} ticket ${t.ticketNumber} — ${(t.category || "").replace(/_/g, ' ')}`,
+    subtext: `Western · ${new Date(t.updatedAt || t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+    color: t.isEscalated ? 'bg-nestle-danger' : t.status === 'resolved' ? 'bg-nestle-success' : 'bg-[#3B82F6]',
+    icon: t.status === 'resolved' ? <Check size={14} className="text-white" /> : <AlertCircle size={14} className="text-white" />
+  }));
+
+  const overallSLA = stats.total > 0 ? Math.round(((stats.total - stats.slaBreaches) / stats.total) * 100) : 100;
 
   return (
     <AdminLayout>
@@ -172,10 +182,10 @@ const AdminDashboard = () => {
           <div className="mb-8">
             <div className="flex justify-between text-[13px] font-semibold text-gray-500 mb-2">
               <span>Overall SLA Target: 80%</span>
-              <span className="text-nestle-success font-bold">78%</span>
+              <span className={`${overallSLA >= 80 ? 'text-nestle-success' : 'text-nestle-danger'} font-bold`}>{overallSLA}%</span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-3">
-              <div className="bg-nestle-success h-3 rounded-full transition-all" style={{ width: '78%' }}></div>
+              <div className={`${overallSLA >= 80 ? 'bg-nestle-success' : 'bg-nestle-danger'} h-3 rounded-full transition-all`} style={{ width: `${overallSLA}%` }}></div>
             </div>
           </div>
 
@@ -213,7 +223,7 @@ const AdminDashboard = () => {
         <div className="bg-white border text-nestle-brown border-red-200 rounded-[20px] shadow-sm overflow-hidden mt-8">
           <div className="px-6 py-5 flex items-center bg-red-50/30 border-b border-red-100">
             <h2 className="text-[20px] font-extrabold text-[#8B0000]">Escalated to HQ</h2>
-            <span className="ml-3 bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">3</span>
+            <span className="ml-3 bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{escalatedTickets.length}</span>
           </div>
 
           <div className="overflow-x-auto">

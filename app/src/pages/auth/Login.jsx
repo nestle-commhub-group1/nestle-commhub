@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../../config/api";
 import AuthLayout from "../../components/AuthLayout";
 import { useAuth } from "../../context/AuthContext";
 
@@ -48,7 +49,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:5001/api/auth/login", form);
+      const response = await axios.post(`${API_URL}/api/auth/login`, form);
       const { user, token } = response.data;
       
       // Update context and storage

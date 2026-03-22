@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FileText, Tag, Package, Truck, CheckCircle, Clock
+  FileText, Tag, Package, Truck, CheckCircle, Clock, RefreshCw
 } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 import { 
   formatDate, 
@@ -53,6 +54,13 @@ const RetailerDashboard = () => {
     fetchTickets();
   }, []);
 
+  // Refetch when user navigates back to this tab/window
+  useEffect(() => {
+    const handleFocus = () => fetchTickets();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const fetchTickets = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -60,7 +68,7 @@ const RetailerDashboard = () => {
         window.location.href = "/login";
         return;
       }
-      const res = await axios.get("http://localhost:5001/api/tickets/my", {
+      const res = await axios.get(`${API_URL}/api/tickets/my`, {
         headers: { Authorization: "Bearer " + token }
       });
       setTickets(res.data.tickets || []);
@@ -142,9 +150,19 @@ const RetailerDashboard = () => {
         <div className="bg-white border text-nestle-brown border-nestle-border rounded-[20px] shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-nestle-border flex justify-between items-center bg-white">
             <h2 className="text-[18px] font-bold text-nestle-brown tracking-wide">Recent Tickets</h2>
-            <Link to="#" className="text-[14px] font-bold text-nestle-brown-light hover:text-nestle-brown transition-colors flex items-center group">
-              View All <span className="ml-1 text-xl leading-none group-hover:translate-x-1 transition-transform">›</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchTickets}
+                className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
+                title="Refresh tickets"
+              >
+                <RefreshCw size={14} />
+                Refresh
+              </button>
+              <Link to="/retailer/tickets" className="text-[14px] font-bold text-nestle-brown-light hover:text-nestle-brown transition-colors flex items-center group">
+                View All <span className="ml-1 text-xl leading-none group-hover:translate-x-1 transition-transform">›</span>
+              </Link>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[14px] whitespace-nowrap">

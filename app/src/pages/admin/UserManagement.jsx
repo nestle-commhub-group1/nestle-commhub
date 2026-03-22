@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Loader2 } from 'lucide-react';
+import { Search, Filter, UserCheck, UserPlus, UserX, Loader2, Mail, Phone, Calendar } from 'lucide-react';
 import axios from 'axios';
+import API_URL from '../../config/api';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -19,7 +20,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5001/api/users', {
+      const res = await axios.get(`${API_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(res.data.users || []);
@@ -33,7 +34,7 @@ const UserManagement = () => {
   const toggleUserStatus = async (id, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`http://localhost:5001/api/users/${id}/status`, 
+      const res = await axios.put(`${API_URL}/api/users/${id}/status`, 
         { isActive: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );

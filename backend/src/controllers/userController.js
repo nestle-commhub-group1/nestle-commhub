@@ -61,8 +61,37 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { fullName, phone } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { fullName, phone },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   getDistributors,
   getAllUsers,
-  updateUserStatus
+  updateUserStatus,
+  updateProfile
 };

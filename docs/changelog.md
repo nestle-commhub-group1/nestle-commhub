@@ -5,6 +5,34 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
+## [19 March 2026] - Sprint 1
+### Fixed
+- Reverted sci-fi UI redesign back to 
+  original Nestle brown design
+- Restored all original sidebar labels
+  (My Tickets, Submit Issue, Home etc)
+- Fixed image attachments — files now 
+  converted to base64 and stored in DB
+- Staff ticket detail now displays 
+  attached images from retailer
+- Removed hardcoded data from Admin 
+  and Staff dashboards
+- Notification badges now show real 
+  unread count from API
+- Applied mobile responsiveness across 
+  all dashboards without changing design
+- Mobile sidebar now collapses to 
+  hamburger menu overlay
+- Stock Requests, Promotions and 
+  Delivery Tracking replaced with 
+  Coming Soon pages
+- Global Mongoose error handler added 
+  to backend (CastError, ValidationError)
+- All 4 previously failing tests now 
+  pass — test pass rate 100%
+
+---
+
 ## [18 March 2026] - Sprint 1
 ### Fixed
 - BUG-001: Success screen now shows real ticket number from API response

@@ -17,8 +17,10 @@ const hasTicketAccess = (ticket, user) => {
 // ─── POST /api/tickets ─────────────────────────────────────────────────────────
 const createTicket = async (req, res) => {
   try {
-    console.log("Creating ticket for retailer:", req.user._id);
-    const { category, priority, description } = req.body;
+    console.log("Create ticket called");
+    console.log("User:", req.user?._id);
+    console.log("Body:", JSON.stringify(req.body, (key, value) => key === 'attachments' ? `[${value.length} files]` : value, 2));
+    const { category, priority, description, attachments } = req.body;
 
     if (!category || !priority || !description) {
       return res.status(400).json({
@@ -32,30 +34,25 @@ const createTicket = async (req, res) => {
       category,
       priority,
       description,
+      attachments: attachments || [],
     });
 
-    // Auto-assign to sales_staff with fewest open tickets
+    // Auto-assign to primary sales staff (NES002) or fallback to any active staff
     console.log("Starting auto-assignment process...");
-    let assignedTo = null;
-    const staffUsers = await User.find({ 
+    let assignedStaff = await User.findOne({
       role: "sales_staff",
+      employeeId: "NES002",
       isActive: true
     });
-    console.log("Staff users found for assignment:", staffUsers.length);
-    console.log("Staff emails:", staffUsers.map(s => s.email));
 
-    if (staffUsers.length > 0) {
-      const ticketCounts = await Promise.all(
-        staffUsers.map(async (staff) => {
-          const count = await Ticket.countDocuments({
-            assignedTo: staff._id,
-            status: { $in: ["open", "in_progress"] },
-          });
-          return { staff, count };
-        })
-      );
-      ticketCounts.sort((a, b) => a.count - b.count);
-      const assignedStaff = ticketCounts[0].staff;
+    if (!assignedStaff) {
+      assignedStaff = await User.findOne({
+        role: "sales_staff",
+        isActive: true
+      });
+    }
+
+    if (assignedStaff) {
       ticket.assignedTo = assignedStaff._id;
       console.log("Assigned to: " + assignedStaff.email);
     } else {
