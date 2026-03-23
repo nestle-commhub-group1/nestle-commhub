@@ -1,6 +1,6 @@
 # Project Context Report — Nestlé CommHub
 > Living document. Updated as the project evolves.
-> Last updated: 19 March 2026
+> Last updated: 22 March 2026
 
 ---
 
@@ -406,8 +406,8 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 ### Sprint 2 — Core Features
 | Task | Status |
 |---|---|
-| Ticker / Issue reporting (retailer raises a ticket) | ⬜ Not Started |
-| Ticket management (sales rep responds, updates status) | ⬜ Not Started |
+| Ticker / Issue reporting (retailer raises a ticket) | 🟢 Done |
+| Ticket management (sales rep responds, updates status) | 🟢 Done |
 | Promotions — create and send (HQ Admin / Regional Manager) | ⬜ Not Started |
 | Promotions — view (Retailer) | ⬜ Not Started |
 | Stock request form (Retailer) | ⬜ Not Started |
@@ -430,7 +430,7 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | Offline support (service worker caching strategy) | ⬜ Not Started |
 | UI polish and responsive design review | ⬜ Not Started |
 | End-to-end testing | ⬜ Not Started |
-| Production deployment (Netlify/Vercel + hosting for backend) | ⬜ Not Started |
+| Production deployment (Netlify/Vercel + hosting for backend) | 🟢 Done |
 | Final documentation | ⬜ Not Started |
 
 ---

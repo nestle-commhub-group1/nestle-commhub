@@ -37,6 +37,37 @@
 **Date:** 19 March 2026
 ---
 
+## BUG-009 — ReferenceError: token is not defined
+Date: 22 March 2026
+Severity: Critical
+Status: Resolved
+Resolved by: Antigravity
+Date: 22 March 2026
+Fix: Added variable declaration const token = localStorage.getItem("token") at the top of the component scope
+Description: Staff Ticket Detail view crashed and returned a blank white screen because it referenced `token` internally inside the useEffect without declaring it first
+File: app/src/pages/staff/TicketDetail.jsx
+
+## BUG-008 — Retailer dashboard and My Tickets not refetching logic
+Date: 22 March 2026
+Severity: Medium
+Status: Resolved
+Resolved by: Antigravity
+Date: 22 March 2026
+Fix: Added an event listener (window.addEventListener("focus", fetchTickets)) and refactored the fetch logic
+Description: After a user submitted a new ticket and navigated back to the dashboard, the data displayed in recent tickets and charts was stale because React Router didn't trigger a refetch off focus/navigation
+File: app/src/pages/retailer/RetailerDashboard.jsx
+      app/src/pages/retailer/MyTickets.jsx
+
+## BUG-007 — SPA routing 'Not Found' error on Render
+Date: 22 March 2026
+Severity: High
+Status: Resolved
+Resolved by: Antigravity
+Date: 22 March 2026
+Fix: Created `app/public/_redirects` file mapped to `/* /index.html 200`
+Description: Render throws a Not Found exception on refresh or direct-link load because it tries to map client-side routes to physical HTML paths
+File: app/public/_redirects
+
 ## BUG-001 — Hardcoded ticket number on success screen
 Date: 17 March 2026
 Severity: High

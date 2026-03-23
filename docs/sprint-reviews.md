@@ -88,6 +88,16 @@ Completed today:
 
 ---
 
+## Sprint 2 — In Progress — 22 March 2026
+### Progress as of 22 March 2026:
+- Core ticket system refined (fixed Staff crashing bug with `token`)
+- Enhanced ticket viewing and data reloading in the Retailer frontend with a window focus listener and manual refresh
+- Ticket auto-assignment correctly isolates tickets to `sales.agent@nestle.com` to prevent new tickets disappearing
+- Completed deployment preparation checks (verified backend `.env`, CORS, `vite-plugin-pwa` build configurations)
+- Built `.npmrc` file and static routing configurations (`_redirects`) to correctly deploy the app natively to Render and Vercel
+
+---
+
 ## Sprint 2 — In Progress — 19 March 2026
 
 ### Completed so far:

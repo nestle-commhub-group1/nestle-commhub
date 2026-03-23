@@ -5,6 +5,26 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
+## [22 March 2026] - Sprint 1
+### Added
+- Added `window.addEventListener("focus")` on Retailer Dashboard and My Tickets to automatically refetch new tickets after submission without requiring a hard refresh
+- Added manual "Refresh" button next to "Recent Tickets" table on Retailer Dashboard
+- Added "Go to Dashboard" button to the Ticket Submission success screen
+- Added `app/public/_redirects` file for Render SPA routing fallback
+- Added project-level `.npmrc` to enforce `legacy-peer-deps` on the build machine
+
+### Changed
+- Refactored `fetchTickets` in `MyTickets.jsx` to be reusable outside of `useEffect`
+- Updated `createTicket` auto-assignment logic in the backend: It now prioritizes assigning tickets to the primary sales staff (`NES002`). If unavailable, it falls back to any active `sales_staff`
+- Cleaned up database test accounts utilizing a custom backend seed script
+- Downgraded `vite-plugin-pwa` to `^0.21.0` to resolve peer dependency issues with `vite@8.0.0` during deployment builds
+
+### Fixed
+- Fixed critical `ReferenceError: token is not defined` crashing the Staff Ticket Detail view
+- Fixed stale data issue on Retailer portal by refetching tickets on tab focus and navigating back
+
+---
+
 ## [19 March 2026] - Sprint 1
 ### Fixed
 - Reverted sci-fi UI redesign back to 

@@ -23,6 +23,7 @@ Business details for Chamara:
 | Name | Email | Password | Role | Employee ID |
 |------|-------|----------|------|-------------|
 | Dilini Fernando | dilini@nestle.com | password123 | Sales Staff | NES002 |
+| Sales Agent |  sales.agent@nestle.com | password123 | Sales Staff | NES777 |
 | Admin User | admin@nestle.com | password123 | HQ Admin | NES001 |
 | Kamal Jayawardena | kamal@distributor.com | password123 | Distributor | NES004 |
 
