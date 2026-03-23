@@ -18,19 +18,26 @@ if (process.env.MONGO_URI) {
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
+  "http://localhost:3000",
+  "https://nestle-commhub-app.onrender.com",
+  process.env.FRONTEND_URL
+].filter(Boolean)
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (curl, Render health checks, mobile apps)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS blocked: ${origin}`));
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    callback(new Error("CORS blocked: " + origin))
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization"
+  ]
+}))
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
