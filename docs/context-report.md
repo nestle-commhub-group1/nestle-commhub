@@ -459,4 +459,5 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | `sprint-reviews.md` | `docs/sprint-reviews.md` | End-of-sprint review log. One entry per sprint. Entries are never overwritten. Also contains a Pre-Sprint decisions section. |
 | `bug-tracker.md` | `docs/bug-tracker.md` | Bug log. Format: `BUG-001`, `BUG-002`, etc. Status updated in-place. Bugs are never deleted. Currently empty. |
 | `api-documentation.md` | `docs/api-documentation.md` | REST API endpoint reference, grouped by feature (Auth, Tickets, Notifications, etc.). Currently unpopulated — will be filled as endpoints are built. |
+| `for-report.md` | `docs/for-report.md` | **Final Project Report content** — implementation justifications, tool selection, and pain point resolution. |
 | `meeting-minutes/` | `docs/meeting-minutes/` | Per-meeting notes files stored as individual markdown files inside this folder. |

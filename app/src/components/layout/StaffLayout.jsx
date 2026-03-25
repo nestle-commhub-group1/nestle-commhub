@@ -109,7 +109,7 @@ const StaffLayout = ({ children }) => {
     }
   };
 
-  const nestleLogoUrl = "https://www.nestle.com/sites/default/files/asset-library/documents/library/pictures/nestlelogotype.png";
+  const nestleLogoUrl = "/nestle-logo.png";
 
   const TopBar = () => (
     <div className="flex bg-nestle-brown text-white h-16 items-center justify-between px-4 lg:hidden sticky top-0 z-20">

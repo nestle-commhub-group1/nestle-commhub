@@ -3,6 +3,16 @@
 
 ---
 
+### BUG-014: Broken Nestlé logo on Staff/Admin dashboards
+**Status:** Resolved
+**Severity:** Medium
+**Symptom:** The logo in the sidebar was showing as a broken image icon.
+**Fix:** Replaced the unreliable external URL with the local `/nestle-logo.png` asset across all layouts.
+**Resolved by:** Antigravity
+**Date:** 25 March 2026
+
+---
+
 ### BUG-013: Distributor cross-ticket visibility and chat privacy
 **Status:** Resolved
 **Severity:** Critical
