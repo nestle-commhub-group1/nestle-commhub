@@ -34,6 +34,7 @@ export default function TicketDetail() {
   const [error, setError] = useState(null);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [chatRoom, setChatRoom] = useState('staff_retailer');
 
   const token = localStorage.getItem('token');
 
@@ -43,7 +44,7 @@ export default function TicketDetail() {
         setLoading(true);
         const [ticketRes, msgRes] = await Promise.all([
           axios.get(`${API_URL}/api/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${API_URL}/api/tickets/${id}/messages`, { headers: { Authorization: `Bearer ${token}` } })
+          axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
 
         if (ticketRes.data.success) setTicket(ticketRes.data.ticket);
@@ -58,14 +59,27 @@ export default function TicketDetail() {
     };
 
     if (id && token) fetchData();
-  }, [id, token]);
+
+    // Poll for messages
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) setMessages(res.data.messages || []);
+      } catch (err) { console.error("Poll error", err); }
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [id, token, chatRoom]);
 
   const send = async () => {
     if (!input.trim() || sending) return;
     try {
       setSending(true);
       const res = await axios.post(`${API_URL}/api/tickets/${id}/messages`, {
-        message: input.trim()
+        message: input.trim(),
+        chatRoom
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -213,23 +227,38 @@ export default function TicketDetail() {
             )}
 
             {/* Chat */}
-            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[500px]">
-              <div className="px-6 py-4 border-b border-[#E0DBD5] flex-shrink-0">
-                <h3 className="text-[14px] font-extrabold text-[#2C1810]">Messages</h3>
-                <p className="text-[12px] text-gray-500 mt-0.5">{messages.length} messages</p>
+            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[550px]">
+              <div className="border-b border-[#E0DBD5] bg-gray-50/50 flex flex-shrink-0">
+                <button
+                  onClick={() => setChatRoom('staff_retailer')}
+                  className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_retailer' ? 'text-blue-600 bg-white border-b-2 border-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  🏢 Nestlé Support
+                </button>
+                {ticket.distributorId && (
+                  <button
+                    onClick={() => setChatRoom('retailer_distributor')}
+                    className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'retailer_distributor' ? 'text-orange-600 bg-white border-b-2 border-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    🚚 Distributor
+                  </button>
+                )}
+              </div>
+              <div className={`px-5 py-2 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${chatRoom === 'staff_retailer' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-700'}`}>
+                {chatRoom === 'staff_retailer' ? '💬 Chatting with Nestlé HQ' : '🤝 Chatting with Delivery Distributor'}
               </div>
               <div className="p-5 space-y-4 overflow-y-auto bg-[#F8F7F5] flex-1">
                 {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                    <p className="text-[14px] font-medium">No messages yet. Send a message to start chatting.</p>
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
+                    <p className="text-[14px] font-medium">No messages here yet. Send a message to start.</p>
                   </div>
                 ) : (
                   messages.map(m => (
                     <div key={m._id} className={`flex flex-col ${m.senderRole === 'retailer' ? 'items-end' : 'items-start'}`}>
                       <p className="text-[11px] text-gray-500 font-bold mb-1 mx-1">
-                        {m.senderId?.fullName || (m.senderRole === 'retailer' ? 'Me' : 'Staff')}
+                        {m.senderId?.fullName || (m.senderRole === 'retailer' ? 'Me' : (m.senderRole === 'distributor' ? 'Distributor' : 'Staff'))}
                       </p>
-                      <div className={`max-w-[78%] px-4 py-3 rounded-[14px] ${m.senderRole === 'retailer' ? 'bg-[#3D2B1F] text-white rounded-br-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm'}`}>
+                      <div className={`max-w-[80%] px-4 py-3 rounded-[14px] ${m.senderRole === 'retailer' ? 'bg-[#3D2B1F] text-white rounded-br-sm shadow-sm' : (m.senderRole === 'distributor' ? 'bg-orange-50 text-orange-900 border border-orange-200 rounded-bl-sm shadow-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm')}`}>
                         <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{m.message}</p>
                       </div>
                       <p className="text-[11px] text-gray-400 mt-1">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

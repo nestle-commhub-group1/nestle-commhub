@@ -17,12 +17,7 @@ const hasTicketAccess = (ticket, user) => {
 // ─── POST /api/tickets/:id/messages ───────────────────────────────────────────
 const sendMessage = async (req, res) => {
   try {
-    console.log("sendMessage called");
-    console.log("Ticket ID:", req.params.id);
-    console.log("Body:", req.body);
-    console.log("User:", req.user?.email);
-
-    const { message } = req.body;
+    const { message, chatRoom = "staff_retailer" } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({ success: false, message: "Message content is required." });
@@ -30,16 +25,18 @@ const sendMessage = async (req, res) => {
 
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found"
-      });
+      return res.status(404).json({ success: false, message: "Ticket not found" });
     }
 
-    // Simplified permission check: any auth user who can find the ticket can message for now
-    // (As requested to resolve messaging issues before tightening security)
+    // Role-based room access check
+    if (req.user.role === "distributor" && chatRoom === "staff_retailer") {
+      return res.status(403).json({ success: false, message: "Distributor cannot post to staff-retailer room" });
+    }
+    if (req.user.role === "retailer" && chatRoom === "staff_distributor") {
+      return res.status(403).json({ success: false, message: "Retailer cannot post to staff-distributor room" });
+    }
 
-    // Move ticket to in_progress when staff/admin first replies
+    // Move ticket to in_progress when staff/admin first replies in any room
     if (ticket.status === "open" && req.user.role !== "retailer") {
       ticket.status = "in_progress";
       ticket.updatedAt = new Date();
@@ -52,24 +49,26 @@ const sendMessage = async (req, res) => {
       senderName: req.user.fullName,
       senderRole: req.user.role,
       message: message.trim(),
+      chatRoom: chatRoom,
     });
 
-    // Notify the other party
-    if (req.user.role === "retailer" && ticket.assignedTo) {
+    // Notify appropriate party based on room
+    let notificationTarget = null;
+    if (chatRoom === "staff_retailer") {
+      notificationTarget = req.user.role === "retailer" ? ticket.assignedTo : ticket.retailerId;
+    } else if (chatRoom === "retailer_distributor") {
+      notificationTarget = req.user.role === "retailer" ? ticket.distributorId : ticket.retailerId;
+    } else if (chatRoom === "staff_distributor") {
+      notificationTarget = req.user.role === "distributor" ? ticket.assignedTo || ticket.escalatedTo : ticket.distributorId;
+    }
+
+    if (notificationTarget) {
       await Notification.create({
-        userId: ticket.assignedTo,
+        userId: notificationTarget,
         type: "new_message",
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
         message: `${req.user.fullName} sent a message on ticket ${ticket.ticketNumber}`,
-      });
-    } else if (req.user.role !== "retailer") {
-      await Notification.create({
-        userId: ticket.retailerId,
-        type: "new_message",
-        ticketId: ticket._id,
-        ticketNumber: ticket.ticketNumber,
-        message: `${req.user.fullName} replied to your ticket ${ticket.ticketNumber}`,
       });
     }
 
@@ -83,16 +82,22 @@ const sendMessage = async (req, res) => {
 // ─── GET /api/tickets/:id/messages ────────────────────────────────────────────
 const getMessages = async (req, res) => {
   try {
+    const { chatRoom = "staff_retailer" } = req.query;
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({ success: false, message: "Ticket not found." });
     }
 
-    if (!hasTicketAccess(ticket, req.user)) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+    // Privacy logic
+    if (req.user.role === "distributor" && chatRoom === "staff_retailer") {
+      return res.status(403).json({ success: false, message: "Distributors cannot see staff-retailer chat" });
+    }
+    if (req.user.role === "retailer" && chatRoom === "staff_distributor") {
+      return res.status(403).json({ success: false, message: "Retailers cannot see staff-distributor internal chat" });
     }
 
-    const messages = await Message.find({ ticketId: ticket._id }).sort({ createdAt: 1 });
+    const messages = await Message.find({ ticketId: ticket._id, chatRoom })
+      .sort({ createdAt: 1 });
 
     return res.status(200).json({ success: true, count: messages.length, messages });
   } catch (error) {

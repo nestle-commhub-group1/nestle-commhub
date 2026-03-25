@@ -8,6 +8,7 @@ const {
   getTicketById,
   updateTicketStatus,
   escalateTicket,
+  allocateDistributor,
 } = require("../controllers/ticketController");
 const { sendMessage, getMessages } = require("../controllers/messageController");
 
@@ -30,6 +31,9 @@ router.put("/:id/status", protect, restrictTo("sales_staff", "hq_admin"), update
 
 // POST /api/tickets/:id/escalate — staff/admin escalates ticket
 router.post("/:id/escalate", protect, restrictTo("sales_staff", "hq_admin"), escalateTicket);
+
+// PUT /api/tickets/:id/allocate — staff/admin assigns distributor
+router.put("/:id/allocate", protect, restrictTo("sales_staff", "hq_admin"), allocateDistributor);
 
 // ── Message routes ─────────────────────────────────────────────────────────────
 

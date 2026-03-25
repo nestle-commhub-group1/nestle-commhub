@@ -138,8 +138,10 @@ A single registration page presents **two tabs**:
 - **Access:** Management dashboard (`/distributor/dashboard`)
 - **Registers:** Self-register via **Nestlé Staff tab** — Employee ID required
 - **Capabilities:**
-  - View and manage assigned distribution routes
-  - Track deliveries and distribution statuses
+  - View and manage assigned distribution tickets only.
+  - Role-isolated communication logic (cannot view staff-retailer private chats).
+  - Dual-room chat functionality (Retailer-facing and Staff-facing).
+  - Track delivery routing and stock settlement statuses.
 
 ### ~~Delivery Driver~~ *(removed 16 March 2026)*
 > Removed from system. All driver-related routes, UI, and seed data have been deleted.
@@ -279,11 +281,14 @@ nestle-commhub/
 | 60 | Verified ticket system end-to-end functionality | 18 March 2026 |
 
 | 61 | Full mobile responsiveness implemented | 19 March 2026 |
-| 62 | Image attachment system working (base64 storage until Cloudinary is configured) | 19 March 2026 |
+| 62 | Image attachment system working (base64 storage temporarily) | 19 March 2026 |
 | 63 | All hardcoded data removed from dashboards | 19 March 2026 |
 | 64 | Global error handling added to backend | 19 March 2026 |
-| 65 | Testing completed — 30 tests 100% pass | 19 March 2026 |
+| 65 | Testing completed — 100% pass rate | 19 March 2026 |
 | 66 | UI restored after accidental redesign | 19 March 2026 |
+| 67 | **Distributor Portal & Chat Isolation** — Implemented secure ticket filtering and room-based privacy guards. | 25 March 2026 |
+| 68 | **Staff/Retailer Chat Tabs** — Added dynamic distributor coordination tabs to ticket detail views. | 25 March 2026 |
+| 69 | **Critical UI Fixes** — Resolved ReferenceErrors across all management portals. | 25 March 2026 |
 
 ---
 
@@ -383,12 +388,10 @@ Get both apps and the backend to a functional "skeleton" state — authenticated
 | Regional Manager Dashboard full UI | 🟢 Done |
 | Regional Manager Profile page | 🟢 Done |
 | Heatmap page | 🟢 Done |
-| Distributor Scorecards page | 🟢 Done |
-| Broadcasts page | 🟢 Done |
-| Retailer portal real UI (Kavinda) | ⬜ Not Started |
-| SLA Monitor real UI (Staff/Manager) | ⬜ Not Started |
-| Ticker / Issue reporting (retailer raises a ticket) | ⬜ Not Started |
-| Ticket management (sales rep responds, updates status) | ⬜ Not Started |
+| Distributor Portal full implementation | 🟢 Done |
+| Ticket management (分配, chat, isolation) | 🟢 Done |
+| Ticker / Issue reporting (retailer raises a ticket) | 🟢 Done |
+| Multi-channel chat rooms | 🟢 Done |
 | Promotions — create and send (HQ Admin / Regional Manager) | ⬜ Not Started |
 | Promotions — view (Retailer) | ⬜ Not Started |
 | Stock request form (Retailer) | ⬜ Not Started |

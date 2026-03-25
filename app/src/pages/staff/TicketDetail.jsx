@@ -42,6 +42,8 @@ export default function StaffTicketDetail() {
   const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [actionResult, setActionResult] = useState(null); // { type: 'success'|'error', msg }
   const [timeLeft, setTimeLeft] = useState(0);
+  const [chatRoom, setChatRoom] = useState('staff_retailer');
+  const [isMsgsLoading, setIsMsgsLoading] = useState(false);
 
   const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
@@ -59,7 +61,7 @@ export default function StaffTicketDetail() {
 
     Promise.all([
       fetch(`${API_URL}/api/tickets/${id}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
-      fetch(`${API_URL}/api/tickets/${id}/messages`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
+      fetch(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
     ]).then(([ticketData, msgData]) => {
       if (ticketData?.success && ticketData.ticket) {
         const t = ticketData.ticket;
@@ -85,14 +87,16 @@ export default function StaffTicketDetail() {
             initials: (t.retailerId?.fullName || 'R').split(' ').map(n=>n[0]).join('').toUpperCase()
           },
           attachments: t.attachments || [],
+          distributorId: t.distributorId,
           _id: t._id,
         });
         setStatus(t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : 'Open');
       }
       if (msgData?.success) {
         const mapped = (msgData.messages || []).map(m => ({
-          id: m._id, sender: m.senderRole === 'retailer' ? 'retailer' : 'staff',
-          name: m.senderId?.fullName || (m.senderRole==='retailer' ? 'Retailer' : 'Staff'),
+          id: m._id, 
+          sender: m.senderId._id === (JSON.parse(localStorage.getItem('user') || '{}')._id) ? 'staff' : (m.senderRole === 'retailer' ? 'retailer' : (m.senderRole === 'distributor' ? 'distributor' : 'staff')),
+          name: m.senderId?.fullName || m.senderName || (m.senderRole==='retailer' ? 'Retailer' : 'Staff'),
           text: m.message,
           time: new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
         }));
@@ -101,7 +105,30 @@ export default function StaffTicketDetail() {
     }).catch(err => {
       console.log("Ticket detail error:", err.message);
     }).finally(() => setLoading(false));
-  }, [id, token, isDevMode]);
+  }, [id, token, isDevMode, chatRoom]);
+
+  // Poll for messages
+  useEffect(() => {
+    if (!id || !token || isDevMode) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.success) {
+          const mapped = (res.data.messages || []).map(m => ({
+            id: m._id, 
+            sender: m.senderId?._id === (JSON.parse(localStorage.getItem('user') || '{}')._id) ? 'staff' : (m.senderRole === 'retailer' ? 'retailer' : (m.senderRole === 'distributor' ? 'distributor' : 'staff')),
+            name: m.senderId?.fullName || m.senderName || (m.senderRole==='retailer' ? 'Retailer' : 'Staff'),
+            text: m.message,
+            time: new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+          }));
+          setMessages(mapped);
+        }
+      } catch (err) { console.error("Poll error", err); }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [id, token, isDevMode, chatRoom]);
 
   // ── SLA Countdown ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -154,7 +181,7 @@ export default function StaffTicketDetail() {
     try {
       const res = await axios.post(
         `${API_URL}/api/tickets/${id}/messages`,
-        { message: input.trim() },
+        { message: input.trim(), chatRoom },
         { headers: { 
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"
@@ -361,21 +388,42 @@ export default function StaffTicketDetail() {
             </div>
 
             {/* Chat */}
-            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#E0DBD5]">
-                <h3 className="text-[14px] font-extrabold text-[#2C1810]">Messages</h3>
-                <p className="text-[12px] text-gray-500 mt-0.5">{messages.length} messages in thread</p>
+            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[550px]">
+              <div className="border-b border-[#E0DBD5] bg-gray-50/50 flex flex-shrink-0">
+                <button
+                  onClick={() => setChatRoom('staff_retailer')}
+                  className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_retailer' ? 'text-blue-600 bg-white border-b-2 border-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  💬 Retailer Chat
+                </button>
+                {ticket.distributorId && (
+                  <button
+                    onClick={() => setChatRoom('staff_distributor')}
+                    className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_distributor' ? 'text-nestle-brown bg-white border-b-2 border-nestle-brown shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    🚚 Distributor Chat
+                  </button>
+                )}
               </div>
-              <div className="p-5 space-y-4 max-h-96 overflow-y-auto bg-[#F8F7F5]">
-                {messages.map(m => (
-                  <div key={m.id} className={`flex flex-col ${m.sender === 'staff' ? 'items-end' : 'items-start'}`}>
-                    {m.sender === 'retailer' && <p className="text-[11px] text-gray-500 font-bold mb-1 ml-1">{m.name}</p>}
-                    <div className={`max-w-[78%] px-4 py-3 rounded-[14px] ${m.sender === 'staff' ? 'bg-[#3D2B1F] text-white rounded-br-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm'}`}>
-                      <p className="text-[14px] font-medium leading-relaxed">{m.text}</p>
-                    </div>
-                    <p className="text-[11px] text-gray-400 mt-1">{m.time}</p>
+              <div className={`px-5 py-2 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${chatRoom === 'staff_retailer' ? 'bg-blue-50 text-blue-600' : 'bg-[#FDF8F3] text-nestle-brown'}`}>
+                {chatRoom === 'staff_retailer' ? '🛒 External - Visible to Retailer' : '🔒 Internal - Visible to Distributor only'}
+              </div>
+              <div className="p-5 space-y-4 overflow-y-auto bg-[#F8F7F5] flex-1">
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                    <p className="text-[14px] font-bold">No messages here yet.</p>
                   </div>
-                ))}
+                ) : (
+                  messages.map(m => (
+                    <div key={m.id} className={`flex flex-col ${m.sender === 'staff' ? 'items-end' : 'items-start'}`}>
+                      {m.sender !== 'staff' && <p className="text-[11px] text-gray-500 font-bold mb-1 ml-1">{m.name} · {m.sender.toUpperCase()}</p>}
+                      <div className={`max-w-[82%] px-4 py-3 rounded-[14px] ${m.sender === 'staff' ? 'bg-[#3D2B1F] text-white rounded-br-sm' : (m.sender === 'distributor' ? 'bg-orange-50 text-nestle-brown border border-orange-200 shadow-sm rounded-bl-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm')}`}>
+                        <p className="text-[14px] font-medium leading-relaxed">{m.text}</p>
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-1">{m.time}</p>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="p-4 border-t border-[#E0DBD5] flex gap-3 bg-white">
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==='Enter' && sendMessage()} placeholder="Type your response..." className="flex-1 border border-[#E0DBD5] rounded-[10px] px-4 py-3 text-[14px] font-medium placeholder-gray-400 text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20"/>

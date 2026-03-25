@@ -3,6 +3,46 @@
 
 ---
 
+### BUG-013: Distributor cross-ticket visibility and chat privacy
+**Status:** Resolved
+**Severity:** Critical
+**Symptom:** Distributors were able to see all tickets in the system and read private conversations between Nestlé staff and retailers.
+**Fix:** Implemented role-based room isolation (`chatRoom`) on the backend. Updated `getAllTickets` and `getTicketById` to filter by `distributorId` for the distributor role.
+**Resolved by:** Antigravity
+**Date:** 25 March 2026
+
+---
+
+### BUG-012: User Management white screen on Admin Portal
+**Status:** Resolved
+**Severity:** High
+**Symptom:** Navigating to User Management in the Admin Dashboard resulted in a blank white screen.
+**Fix:** Imported missing `Plus` icon from `lucide-react` in `UserManagement.jsx`.
+**Resolved by:** Antigravity
+**Date:** 25 March 2026
+
+---
+
+### BUG-011: Notification status resets to unread on navigation
+**Status:** Resolved
+**Severity:** Medium
+**Symptom:** Clicking "Mark all as read" appeared to work, but navigating to a new page reset the unread badges.
+**Fix:** Aligned frontend `isRead` property with backend `read` field and updated state management in layouts.
+**Resolved by:** Antigravity
+**Date:** 25 March 2026
+
+---
+
+### BUG-010: Admin Dashboard / Retailer Profile white screen crash
+**Status:** Resolved
+**Severity:** Critical
+**Symptom:** Critical UI pages were crashing due to `ReferenceError: FileText is not defined` and `Camera is not defined`.
+**Fix:** Added missing icon imports (`FileText`, `Map`, `Check`, `Loader2`, `Camera`) across `AdminDashboard.jsx` and `RetailerProfile.jsx`.
+**Resolved by:** Antigravity
+**Date:** 25 March 2026
+
+---
+
 ### BLK-01: MongoDB Atlas not set up
 **Status:** Resolved
 **Fix:** Connected to MongoDB Atlas using correct srv connection string

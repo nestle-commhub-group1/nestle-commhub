@@ -28,6 +28,12 @@ const messageSchema = new mongoose.Schema({
     required: [true, "Message content is required"],
   },
 
+  chatRoom: {
+    type: String,
+    default: "staff_retailer",
+    enum: ["staff_retailer", "retailer_distributor", "staff_distributor"],
+  },
+
   attachments: {
     type: [String],
     default: [],

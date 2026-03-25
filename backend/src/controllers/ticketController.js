@@ -107,6 +107,9 @@ const getAllTickets = async (req, res) => {
         { assignedTo: null },
         { assignedTo: { $exists: false } }
       ];
+    } else if (req.user.role === "distributor") {
+      // Distributor should ONLY see tickets allocated directly to them
+      filter.distributorId = req.user._id;
     }
 
     // Apply optional query filters
@@ -146,8 +149,13 @@ const getTicketById = async (req, res) => {
       if (ownerId !== userId) {
         return res.status(403).json({ success: false, message: "Not authorized to view this ticket" });
       }
+    } else if (role === "distributor") {
+      const distId = ticket.distributorId ? ticket.distributorId.toString() : null;
+      if (distId !== userId) {
+        return res.status(403).json({ success: false, message: "Not authorized to view this ticket as distributor" });
+      }
     }
-    // sales_staff, hq_admin, distributor can see for now
+    // sales_staff, hq_admin can see
 
     return res.status(200).json({ success: true, ticket });
   } catch (error) {
@@ -230,6 +238,39 @@ const escalateTicket = async (req, res) => {
   }
 };
 
+// ─── PUT /api/tickets/:id/allocate ────────────────────────────────────────────
+const allocateDistributor = async (req, res) => {
+  try {
+    const { distributorId } = req.body;
+    if (!distributorId) {
+      return res.status(400).json({ success: false, message: "distributorId is required." });
+    }
+
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: "Ticket not found." });
+    }
+
+    ticket.distributorId = distributorId;
+    ticket.updatedAt = new Date();
+    await ticket.save();
+
+    // Notify distributor
+    await Notification.create({
+      userId: distributorId,
+      type: "ticket_assigned",
+      ticketId: ticket._id,
+      ticketNumber: ticket.ticketNumber,
+      message: `A new ticket ${ticket.ticketNumber} has been allocated to you for delivery handling.`,
+    });
+
+    return res.status(200).json({ success: true, ticket });
+  } catch (error) {
+    console.error("allocateDistributor error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createTicket,
   getMyTickets,
@@ -237,4 +278,5 @@ module.exports = {
   getTicketById,
   updateTicketStatus,
   escalateTicket,
+  allocateDistributor,
 };

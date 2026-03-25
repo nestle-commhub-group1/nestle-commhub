@@ -18,6 +18,12 @@ const ticketSchema = new mongoose.Schema({
     default: null,
   },
 
+  distributorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+
   category: {
     type: String,
     required: [true, "Category is required"],
