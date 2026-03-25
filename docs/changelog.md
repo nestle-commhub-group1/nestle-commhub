@@ -5,7 +5,36 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
-## [22 March 2026] - Sprint 1
+## [25 March 2026] - Sprint 2
+
+### Added
+- **Distributor Dashboard** (`app/src/pages/distributor/DistributorDashboard.jsx`) — full portal with sidebar, 3 stats cards (Total Allocated / Active / Resolved), and a responsive grid of allocated ticket cards. Distributors only see tickets allocated specifically to them.
+- **Distributor Ticket Detail** (`app/src/pages/distributor/DistributorTicketDetail.jsx`) — dedicated ticket detail page with **two separate isolated chat rooms**:
+  - 🛒 `retailer_distributor` — chat visible to distributor + retailer only
+  - 🔒 `staff_distributor` — internal chat visible to distributor + Nestlé staff only
+- **`PUT /api/tickets/:id/allocate`** backend endpoint — allows sales staff or HQ admin to allocate a distributor to a ticket. Sends a notification to the distributor.
+- **`distributorId` field** on `Ticket` model — references the distributor assigned to the ticket.
+- **`chatRoom` field** on `Message` model — enum `general | staff_distributor | retailer_distributor`; messages are now scoped by room and filterable via `?chatRoom=` query param.
+- **Universal Dev IDs** seeded: `NES-DEV-999` (admin), `NES-DEV-888` (staff), `NES-DEV-777` (distributor) — always reset by `npm run seed` so they can be re-registered.
+- **`npm run clean`** script added — resets `isUsed=false` on all `ValidEmployee` records without dropping registrations.
+- **Render Keep-Alive** (`backend/src/index.js`) — self-ping to `/api/health` every 14 minutes using `RENDER_EXTERNAL_URL` env var (auto-set by Render). Prevents free-tier server from sleeping. No effect locally.
+
+### Fixed
+- **Retailer Profile page blank screen** — `Camera` icon from `lucide-react` was used but not imported, causing a silent crash. Import added.
+- **Staff TicketDetail "Assign to Distributor"** — was calling non-existent `PUT /api/tickets/:id/assign`. Now correctly calls `PUT /api/tickets/:id/allocate` and shows real success/error feedback.
+
+### Changed
+- `getAllTickets` controller — distributors now only see tickets where `distributorId` matches their own ID (previously saw all tickets).
+- `getTicketById` controller — distributors are blocked from viewing tickets not allocated to them.
+- `messageController.js` — `sendMessage` now extracts `chatRoom` from request body and stores it. `getMessages` filters by `?chatRoom=` query param. Notifications routed correctly per chat room.
+- `seedEmployees.js` — completely rewritten: wipes entire `ValidEmployee` collection and all registered `User` accounts for dev IDs before re-inserting fresh seed data.
+- `cleanTestAccounts.js` — updated to also reset `isUsed=false` on all `ValidEmployee` records.
+- `backend/package.json` — `dev` script now uses `nodemon`; added `clean` script.
+- `App.jsx` — added `/distributor/tickets/:id` route with `ProtectedRoute` guard.
+
+---
+
+
 ### Added
 - Added `window.addEventListener("focus")` on Retailer Dashboard and My Tickets to automatically refetch new tickets after submission without requiring a hard refresh
 - Added manual "Refresh" button next to "Recent Tickets" table on Retailer Dashboard

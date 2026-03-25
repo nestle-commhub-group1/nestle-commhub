@@ -1,54 +1,115 @@
 # Test Accounts — Nestlé CommHub
-> For development and testing use only.
-> Never commit real passwords to production.
+> For development and testing use only. Never commit real passwords to production.
 
 ---
 
-## Retailer Accounts
+## ⚡ Quick Start Commands
 
-| Name | Email | Password | Role |
-|------|-------|----------|------|
-| Chamara Perera | chamara@test.com | password123 | Retailer |
-| Dilshan Fernando | dilshan@test.com | password123 | Retailer |
+> ⚠️ Commands must be run from the **`backend/`** subfolder, NOT the project root.
 
-Business details for Chamara:
-- Business: Perera Grocery
-- Address: 123 Kandy Road
-- Tax ID: TAX123456
+```bash
+# Step 1 — go into the backend folder
+cd "/Users/malcs/Desktop/APIIT/Comercial Computing/repo-001/nestle-commhub/backend"
+
+# Step 2 — install dependencies (first time only)
+npm install
+
+# Step 3 — reset and seed test employee IDs
+npm run seed
+
+# Step 4 — start the backend server
+npm run dev
+```
+
+Then in a second terminal tab:
+```bash
+cd "/Users/malcs/Desktop/APIIT/Comercial Computing/repo-001/nestle-commhub/app"
+npm install   # first time only
+npm run dev
+```
+
+Frontend: http://localhost:5173  
+Backend:  http://localhost:5001  
+Dev Launcher: http://localhost:5173/dev
 
 ---
 
-## Nestlé Staff Accounts
+## 🔑 Universal Dev IDs (Permanent Testing Accounts)
 
-| Name | Email | Password | Role | Employee ID |
-|------|-------|----------|------|-------------|
-| Dilini Fernando | dilini@nestle.com | password123 | Sales Staff | NES002 |
-| Sales Agent |  sales.agent@nestle.com | password123 | Sales Staff | NES777 |
-| Admin User | admin@nestle.com | password123 | HQ Admin | NES001 |
-| Kamal Jayawardena | kamal@distributor.com | password123 | Distributor | NES004 |
+These IDs are reset every time you run `npm run seed`, so you can always re-register with them fresh.
+
+| Role | Employee ID | Use to test... |
+|------|-------------|----------------|
+| **HQ Admin** | `NES-DEV-999` | Admin dashboard, user management, SLA monitor, allocating distributors |
+| **Sales Staff** | `NES-DEV-888` | Staff dashboard, ticket handling, escalations, assigning distributors |
+| **Distributor** | `NES-DEV-777` | Distributor dashboard, dual chat with retailer + staff |
+
+**How to register with these IDs:**
+1. Go to http://localhost:5173/register
+2. Select **Nestlé Staff** tab
+3. Enter the Employee ID above (e.g. `NES-DEV-999`)
+4. Fill in the rest of the form and register
+
+**Recommended test password:** `password123`
 
 ---
 
-## Valid Employee IDs (for registration)
+## 👤 Retailer Accounts (No Employee ID needed)
+
+Register at http://localhost:5173/register → **Retailer** tab.
+
+| Suggested Email | Password | Purpose |
+|----------------|----------|---------|
+| retailer1@test.com | password123 | Submit tickets, use retailer chat |
+| retailer2@test.com | password123 | Second retailer for multi-user testing |
+
+Business details (use any for testing):
+- Business Name: Test Store
+- Address: 123 Test Road, Colombo
+- Tax ID: TAX-TEST-001
+
+---
+
+## 🔧 All Valid Employee IDs (for registration)
 
 | Employee ID | Role |
 |-------------|------|
-| NES001 | HQ Admin |
-| NES002 | Sales Staff |
-| NES004 | Distributor |
-| NES100 | HQ Admin |
-| NES200 | Sales Staff |
-| NES400 | Distributor |
-| NES123456 | Sales Staff |
+| `NES-DEV-999` | HQ Admin (**Universal Dev ID**) |
+| `NES-DEV-888` | Sales Staff (**Universal Dev ID**) |
+| `NES-DEV-777` | Distributor (**Universal Dev ID**) |
+| `NES001` | HQ Admin |
+| `NES002` | Sales Staff |
+| `NES004` | Distributor |
+| `NES100` | HQ Admin |
+| `NES111` | HQ Admin |
+| `NES200` | Sales Staff |
+| `NES400` | Distributor |
+| `NES123456` | Sales Staff |
 
 ---
 
-## Quick Access (Dev Launcher)
-URL: http://localhost:5173/dev
+## ♻️ Resetting Accounts
+
+| Command | What it does |
+|---------|-------------|
+| `npm run seed` | Wipes all dev ID registrations + re-seeds ValidEmployee collection. Run this to get a fresh start. |
+| `npm run clean` | Resets `isUsed=false` on all employee IDs without deleting registrations. |
 
 ---
 
-## Notes
-- All passwords are password123 for testing
+## 🧪 Testing the Distributor Feature
+
+1. Register a **Retailer** account → submit a ticket
+2. Log in as **Sales Staff** (`NES-DEV-888`) → open the ticket → click **"Assign to Distributor"** → select the distributor
+3. Log in as **Distributor** (`NES-DEV-777`) → see the ticket on their dashboard → open it
+4. Inside the ticket you'll see **two separate chat tabs**:
+   - 🛒 **Chat with Retailer** — visible to retailer + distributor only
+   - 🔒 **Internal (Nestlé)** — visible to staff + distributor only
+
+---
+
+## 📌 Notes
+- All test passwords should be `password123`
 - Do not use these accounts in production
-- Run npm run seed to reset employee IDs
+- Employee IDs are case-sensitive (e.g. `NES-DEV-999` must be typed exactly)
+- The seed script completely resets the `ValidEmployee` collection each run

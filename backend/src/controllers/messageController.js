@@ -101,7 +101,7 @@ const getMessages = async (req, res) => {
   }
 };
 
-module.exports = { sendMessage, getMessages };
-};
+
+
 
 module.exports = { sendMessage, getMessages };
