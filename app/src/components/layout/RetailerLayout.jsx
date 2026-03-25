@@ -54,7 +54,7 @@ const RetailerLayout = ({ children }) => {
       await axios.put(`${API_URL}/api/notifications/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -66,13 +66,13 @@ const RetailerLayout = ({ children }) => {
       await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -274,19 +274,19 @@ const RetailerLayout = ({ children }) => {
                   notifications.map((notif) => (
                     <div 
                       key={notif._id} 
-                      onClick={() => !notif.read && markAsRead(notif._id)}
-                      className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.read ? 'bg-blue-50/30' : ''}`}
+                      onClick={() => !notif.isRead && markAsRead(notif._id)}
+                      className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
                     >
-                      <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.read ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+                      <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.isRead ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
                         {getNotificationIcon(notif.type)}
                       </div>
                       <div className="flex-1 min-w-0 pr-2">
-                        <p className={`text-[14px] text-nestle-brown ${!notif.read ? 'font-medium' : ''} leading-snug`}>
+                        <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
                           {notif.text}
                         </p>
                         <p className="text-[12px] text-gray-500 mt-1.5">{formatTimeAgo(notif.createdAt)}</p>
                       </div>
-                      {!notif.read && (
+                      {!notif.isRead && (
                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
                       )}
                     </div>

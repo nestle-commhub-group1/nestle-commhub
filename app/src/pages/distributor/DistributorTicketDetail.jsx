@@ -6,14 +6,15 @@ import {
   ArrowLeft, Send, Truck, MessageSquare, Briefcase, Clock,
   User, AlertCircle, CheckCircle, Loader2
 } from 'lucide-react';
+import DistributorLayout from '../../components/layout/DistributorLayout';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const priCls = p => ({
-  critical: 'bg-red-100 text-red-700 border-red-200',
-  high:     'bg-orange-100 text-orange-700 border-orange-200',
-  medium:   'bg-yellow-100 text-yellow-700 border-yellow-200',
-  low:      'bg-gray-100 text-gray-600 border-gray-200',
-}[p?.toLowerCase()] || 'bg-gray-100 text-gray-600');
+  critical: 'bg-red-50 text-red-700 border-red-200',
+  high:     'bg-orange-50 text-orange-700 border-orange-200',
+  medium:   'bg-yellow-50 text-yellow-700 border-yellow-200',
+  low:      'bg-gray-50 text-gray-600 border-gray-200',
+}[p?.toLowerCase()] || 'bg-gray-50 text-gray-600');
 
 const staCls = s => ({
   open:        'bg-red-50 text-red-700 border-red-200',
@@ -44,7 +45,6 @@ function ChatPane({ ticketId, token, chatRoom, currentUser, accentColor, emptyLa
     }
   };
 
-  // Poll every 8 seconds
   useEffect(() => {
     if (!ticketId) return;
     fetchMessages();
@@ -92,7 +92,6 @@ function ChatPane({ ticketId, token, chatRoom, currentUser, accentColor, emptyLa
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#F8F7F5]/60">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400 py-16">
@@ -105,17 +104,17 @@ function ChatPane({ ticketId, token, chatRoom, currentUser, accentColor, emptyLa
             const mine = isMe(msg);
             return (
               <div key={idx} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[76%] rounded-[16px] px-5 py-3 shadow-sm ${
+                <div className={`max-w-[80%] rounded-[16px] px-5 py-3 shadow-sm ${
                   mine
                     ? `${accentColor} text-white rounded-br-none`
-                    : 'bg-white text-[#2C1810] border border-[#E0DBD5] rounded-bl-none'
+                    : 'bg-white text-nestle-brown border border-nestle-border rounded-bl-none'
                 }`}>
-                  <p className={`text-[11px] font-extrabold mb-1 tracking-wider uppercase ${
+                  <p className={`text-[11px] font-bold mb-1 tracking-wider uppercase ${
                     mine ? 'text-white/70' : 'text-gray-400'
                   }`}>
                     {msg.senderName} · {msg.senderRole.replace('_', ' ')}
                   </p>
-                  <p className="text-[14px] leading-relaxed">{msg.message}</p>
+                  <p className="text-[14px] leading-relaxed font-medium">{msg.message}</p>
                   <p className={`text-[10px] mt-1.5 text-right ${mine ? 'text-white/50' : 'text-gray-400'}`}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -127,20 +126,19 @@ function ChatPane({ ticketId, token, chatRoom, currentUser, accentColor, emptyLa
         <div ref={bottomRef}/>
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSend} className="p-4 bg-white border-t border-[#E0DBD5]">
-        <div className="flex bg-[#F8F7F5] border border-[#E0DBD5] rounded-full p-1 focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-blue-300 transition-all">
+      <form onSubmit={handleSend} className="p-4 bg-white border-t border-nestle-border">
+        <div className="flex bg-[#F8F7F5] border border-nestle-border rounded-full p-1 focus-within:ring-2 focus-within:ring-nestle-brown/20 transition-all">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 bg-transparent px-4 py-2.5 text-[14px] text-[#2C1810] font-medium focus:outline-none"
+            className="flex-1 bg-transparent px-5 py-2.5 text-[14px] text-nestle-brown font-medium focus:outline-none"
             disabled={sending}
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className={`ml-1 p-3 rounded-full flex items-center justify-center transition-colors ${
+            className={`ml-1 p-3 rounded-full flex items-center justify-center transition-colors shadow-sm ${
               !input.trim() || sending
                 ? 'bg-gray-200 text-gray-400'
                 : `${accentColor} text-white hover:opacity-90`
@@ -157,7 +155,6 @@ function ChatPane({ ticketId, token, chatRoom, currentUser, accentColor, emptyLa
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DistributorTicketDetail() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -181,184 +178,151 @@ export default function DistributorTicketDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F7F5]">
-        <Loader2 className="animate-spin text-[#3D2B1F]" size={36}/>
+      <div className="min-h-screen flex items-center justify-center bg-nestle-gray">
+        <Loader2 className="animate-spin text-nestle-brown" size={36}/>
       </div>
     );
   }
 
   if (!ticket) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F7F5]">
-        <AlertCircle size={48} className="text-red-400 mb-4"/>
-        <p className="text-xl font-bold text-[#2C1810]">Ticket not found</p>
-        <button onClick={() => navigate('/distributor/dashboard')} className="mt-4 text-sm font-bold text-[#3D2B1F] underline">
-          Back to Dashboard
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-nestle-gray px-4">
+        <div className="bg-white p-10 rounded-[24px] border border-nestle-border shadow-sm text-center max-w-md w-full">
+          <AlertCircle size={48} className="text-nestle-danger mb-4 mx-auto"/>
+          <p className="text-xl font-bold text-nestle-brown">Ticket Not Found</p>
+          <p className="text-gray-500 mt-2 font-medium">This allocation may have been removed or assigned to someone else.</p>
+          <button onClick={() => navigate('/distributor/dashboard')} className="mt-8 bg-nestle-brown text-white font-bold py-3 px-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
 
-  const statusNorm = ticket.status?.replace('_', ' ') || 'open';
-
   return (
-    <div className="min-h-screen bg-[#F8F7F5] font-sans flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E0DBD5] px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-20">
-        <button
-          onClick={() => navigate('/distributor/dashboard')}
-          className="flex items-center space-x-2 font-extrabold text-[#3D2B1F] hover:opacity-70 transition-opacity"
-        >
-          <ArrowLeft size={18}/>
-          <span className="hidden sm:inline">Back to Dashboard</span>
-        </button>
-        <div className="flex items-center space-x-2">
-          <Truck size={18} className="text-[#E72A2E]"/>
-          <span className="font-extrabold text-[#3D2B1F] text-[15px]">Distributor Portal</span>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
-
-        {/* Ticket Header Card */}
-        <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-1">Allocated Ticket</p>
-            <h1 className="text-[28px] font-extrabold text-[#2C1810]">{ticket.ticketNumber}</h1>
-            <p className="text-[14px] text-gray-500 font-medium mt-1">
-              {ticket.retailerId?.businessName || ticket.retailerId?.fullName || 'Retailer'} ·{' '}
-              {(ticket.category || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[12px] font-bold px-3 py-1.5 rounded-full border ${staCls(ticket.status)}`}>
-              {statusNorm.toUpperCase()}
-            </span>
-            <span className={`text-[12px] font-bold px-3 py-1.5 rounded-md border ${priCls(ticket.priority)}`}>
-              {(ticket.priority || '').toUpperCase()}
-            </span>
+    <DistributorLayout>
+      <div className="space-y-6 pb-10">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate('/distributor/dashboard')}
+            className="p-2.5 bg-white rounded-full border border-nestle-border shadow-sm text-nestle-brown hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft size={20}/>
+          </button>
+          <div className="flex-1 min-w-0">
+             <div className="flex items-center space-x-3 mb-1">
+                <h1 className="text-[26px] font-extrabold text-nestle-brown truncate">{ticket.ticketNumber}</h1>
+                <span className={`px-2.5 py-1 rounded-[6px] text-[11px] font-bold border ${priCls(ticket.priority)}`}>
+                  {ticket.priority?.toUpperCase()}
+                </span>
+             </div>
+             <p className="text-[14px] text-gray-500 font-medium">
+               {(ticket.category || '').replace(/_/g, ' ')} · {ticket.retailerId?.businessName || 'Retailer'}
+             </p>
           </div>
         </div>
 
-        {/* Main grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* Left: Ticket details sidebar */}
-          <div className="space-y-6">
-            {/* Description */}
-            <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6">
-              <h3 className="text-[11px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-3">Issue Description</h3>
-              <p className="text-[14px] text-[#2C1810] font-medium leading-relaxed">{ticket.description}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Details Sidebar */}
+          <div className="space-y-6 lg:col-span-1">
+            <div className="bg-white rounded-[20px] border border-nestle-border shadow-sm p-6">
+               <div className="flex items-center space-x-2 mb-4">
+                 <div className={`px-3 py-1 rounded-full text-[12px] font-bold border ${staCls(ticket.status)}`}>
+                    {ticket.status?.replace('_', ' ').toUpperCase()}
+                 </div>
+               </div>
+               <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-2">Issue Description</h3>
+               <p className="text-[14px] text-nestle-brown font-medium leading-relaxed">{ticket.description}</p>
             </div>
 
-            {/* Retailer info */}
-            <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6">
-              <h3 className="text-[11px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-4 flex items-center gap-2">
-                <User size={13}/> Retailer Info
+            <div className="bg-white rounded-[20px] border border-nestle-border shadow-sm p-6">
+              <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <User size={14}/> Retailer Details
               </h3>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#2C1810] text-white flex items-center justify-center text-[13px] font-bold flex-shrink-0">
-                  {(ticket.retailerId?.fullName || 'R').split(' ').map(n => n[0]).join('').toUpperCase()}
+              <div className="flex items-center space-x-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-nestle-brown text-white flex items-center justify-center text-[15px] font-bold flex-shrink-0 shadow-sm">
+                  {(ticket.retailerId?.fullName || 'R')[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-[14px] font-extrabold text-[#2C1810]">{ticket.retailerId?.fullName || '—'}</p>
-                  <p className="text-[12px] text-gray-500">{ticket.retailerId?.businessName || '—'}</p>
+                  <p className="text-[15px] font-bold text-nestle-brown truncate max-w-[150px]">{ticket.retailerId?.fullName}</p>
+                  <p className="text-[12px] text-gray-400 font-medium">{ticket.retailerId?.businessName}</p>
                 </div>
               </div>
-              <div className="space-y-1.5 text-[13px] font-medium text-gray-600">
-                <p>📞 {ticket.retailerId?.phone || 'N/A'}</p>
-                <p className="text-blue-600">✉️ {ticket.retailerId?.email || 'N/A'}</p>
+              <div className="space-y-3 text-[13px] font-medium border-t border-gray-50 pt-4">
+                <p className="flex items-center text-gray-600 truncate"><span className="text-gray-400 w-6">📞</span> {ticket.retailerId?.phone || 'N/A'}</p>
+                <p className="flex items-center text-[#3B82F6] truncate"><span className="text-gray-400 w-6">✉️</span> {ticket.retailerId?.email || 'N/A'}</p>
               </div>
             </div>
 
-            {/* Assigned staff */}
-            <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6">
-              <h3 className="text-[11px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Briefcase size={13}/> Nestlé Staff Handler
-              </h3>
-              {ticket.assignedTo ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded-full bg-[#3D2B1F] text-white flex items-center justify-center text-[12px] font-bold flex-shrink-0">
-                    {(ticket.assignedTo.fullName || 'S').split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-extrabold text-[#2C1810]">{ticket.assignedTo.fullName}</p>
-                    <p className="text-[12px] text-gray-500">{ticket.assignedTo.email}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[13px] text-gray-400 italic">No staff assigned yet.</p>
-              )}
-            </div>
-
-            {/* SLA */}
-            <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6">
-              <h3 className="text-[11px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Clock size={13}/> SLA Deadline
+            <div className="bg-white rounded-[20px] border border-nestle-border shadow-sm p-6">
+              <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Clock size={14}/> SLA Deadline
               </h3>
               {ticket.slaDeadline ? (
                 <div>
-                  <p className={`text-[14px] font-bold ${new Date(ticket.slaDeadline) < new Date() && ticket.status !== 'resolved' ? 'text-red-600' : 'text-[#2C1810]'}`}>
-                    {new Date(ticket.slaDeadline).toLocaleString()}
+                  <p className={`text-[15px] font-bold ${new Date(ticket.slaDeadline) < new Date() && ticket.status !== 'resolved' ? 'text-nestle-danger' : 'text-nestle-brown'}`}>
+                    {new Date(ticket.slaDeadline).toLocaleDateString()} at {new Date(ticket.slaDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   {new Date(ticket.slaDeadline) < new Date() && ticket.status !== 'resolved' && (
-                    <p className="text-[12px] text-red-500 font-bold mt-1">⚠️ SLA Breached</p>
+                    <div className="flex items-center space-x-1.5 mt-2 bg-red-50 text-red-600 px-2.5 py-1 rounded-md w-max border border-red-100">
+                      <AlertCircle size={12}/>
+                      <span className="text-[11px] font-bold uppercase tracking-tight">SLA Breached</span>
+                    </div>
                   )}
                 </div>
               ) : (
-                <p className="text-[13px] text-gray-400 italic">No deadline set.</p>
+                <p className="text-[14px] text-gray-400 italic">No deadline set.</p>
               )}
             </div>
           </div>
 
-          {/* Right: Dual Chat */}
-          <div className="lg:col-span-2 bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm flex flex-col overflow-hidden" style={{ minHeight: '600px' }}>
-            {/* Tab bar */}
-            <div className="flex border-b border-[#E0DBD5] bg-gray-50/50 flex-shrink-0">
-              <button
+          {/* Chat Section */}
+          <div className="lg:col-span-2 bg-white rounded-[20px] border border-nestle-border shadow-sm flex flex-col overflow-hidden h-[650px]">
+            {/* Tabs */}
+            <div className="flex border-b border-gray-100 bg-gray-50/30 flex-shrink-0">
+               <button
                 onClick={() => setTab('retailer')}
-                className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-colors flex items-center justify-center gap-2 ${
+                className={`flex-1 py-4 text-[13px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                   tab === 'retailer'
-                    ? 'text-blue-600 bg-white border-b-2 border-blue-600'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-[#3B82F6] bg-white border-b-2 border-[#3B82F6]'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
                 }`}
               >
-                <MessageSquare size={15}/> Chat with Retailer
+                <MessageSquare size={16}/> Chat with Retailer
               </button>
               <button
                 onClick={() => setTab('staff')}
-                className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-colors flex items-center justify-center gap-2 ${
+                className={`flex-1 py-4 text-[13px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                   tab === 'staff'
-                    ? 'text-[#3D2B1F] bg-white border-b-2 border-[#3D2B1F]'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-nestle-brown bg-white border-b-2 border-nestle-brown'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
                 }`}
               >
-                <Briefcase size={15}/> Internal (Nestlé Staff)
+                <Briefcase size={16}/> Internal Staff
               </button>
             </div>
 
-            {/* Tab label context */}
-            <div className={`px-5 py-2 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 ${
-              tab === 'retailer' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-700'
+            {/* Context Info */}
+            <div className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${
+              tab === 'retailer' ? 'bg-blue-50 text-[#3B82F6]' : 'bg-[#FDF8F3] text-[#8B5A2B]'
             }`}>
               {tab === 'retailer'
-                ? '🛒 Visible to you and the Retailer only'
-                : '🔒 Internal — visible to you and Nestlé Staff only'}
+                ? '💬 Direct communication with the Retailer'
+                : '🔒 Locked channel with Nestlé Management'}
             </div>
 
-            {/* The chat pane itself — key forces remount on tab change */}
             <ChatPane
               key={tab}
               ticketId={id}
               token={token}
               chatRoom={tab === 'retailer' ? 'retailer_distributor' : 'staff_distributor'}
               currentUser={currentUser}
-              accentColor={tab === 'retailer' ? 'bg-blue-600' : 'bg-[#3D2B1F]'}
+              accentColor={tab === 'retailer' ? 'bg-[#3B82F6]' : 'bg-nestle-brown'}
               emptyLabel={tab === 'retailer' ? 'No messages with retailer yet.' : 'No internal messages yet.'}
             />
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DistributorLayout>
   );
 }

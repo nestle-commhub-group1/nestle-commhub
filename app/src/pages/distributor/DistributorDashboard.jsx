@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Truck, ClipboardList, LogOut, ArrowRight,
+  ClipboardList, ArrowRight,
   Clock, CheckCircle, AlertCircle
 } from 'lucide-react';
 import API_URL from '../../config/api';
+import DistributorLayout from '../../components/layout/DistributorLayout';
 
 const priClass = p => ({
   critical: 'bg-red-50 text-red-700 border-red-200',
@@ -28,16 +29,11 @@ function formatDate(d) {
 
 const DistributorDashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser]       = useState({});
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (!stored) { navigate('/login'); return; }
-    try { setUser(JSON.parse(stored)); } catch {}
-
     (async () => {
       try {
         const token = localStorage.getItem('token');
@@ -54,12 +50,6 @@ const DistributorDashboard = () => {
       }
     })();
   }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
 
   const stats = [
     {
@@ -83,134 +73,95 @@ const DistributorDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex bg-[#F8F7F5] font-sans">
-      {/* Sidebar */}
-      <aside className="w-20 md:w-64 bg-white border-r border-[#E0DBD5] flex flex-col items-center md:items-start md:px-6 py-8 shadow-sm flex-shrink-0">
-        <div className="flex items-center mb-12 gap-2">
-          <Truck size={30} strokeWidth={2.5} className="text-[#E72A2E] flex-shrink-0"/>
-          <span className="hidden md:block font-black text-[20px] tracking-tight text-[#3D2B1F]">
-            Hub<span className="text-[#E72A2E]">Logistics</span>
-          </span>
+    <DistributorLayout>
+      <div className="space-y-8 pb-10">
+        <div>
+          <h1 className="text-[26px] font-extrabold text-[#2C1810]">Distributor Dashboard</h1>
+          <p className="text-[15px] font-medium text-gray-500 mt-1">Manage and update your allocated issues</p>
         </div>
 
-        <nav className="flex-1 w-full space-y-2">
-          <div className="flex items-center justify-center md:justify-start gap-3 p-3 rounded-[12px] bg-[#3D2B1F]/10 text-[#3D2B1F] font-bold cursor-default">
-            <ClipboardList size={20}/>
-            <span className="hidden md:inline text-[14px]">My Allocations</span>
-          </div>
-        </nav>
-
-        <div className="w-full pt-6 border-t border-[#E0DBD5]">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center justify-center md:justify-start gap-3 p-3 rounded-[12px] text-red-600 font-bold hover:bg-red-50 transition-colors"
-          >
-            <LogOut size={20}/>
-            <span className="hidden md:inline text-[14px]">Log Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-[#E0DBD5] px-8 py-5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div>
-            <h1 className="text-[22px] font-extrabold text-[#2C1810]">Distributor Dashboard</h1>
-            <p className="text-[13px] text-gray-500 font-medium">Welcome back, {user.fullName || 'Distributor'}</p>
-          </div>
-          <div className="flex items-center gap-3 bg-white border border-[#E0DBD5] px-4 py-2 rounded-full shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-[#E72A2E] text-white flex items-center justify-center font-bold text-[14px]">
-              {user.fullName ? user.fullName[0].toUpperCase() : 'D'}
-            </div>
-            <span className="hidden sm:block font-extrabold text-[13px] text-[#3D2B1F]">{user.fullName}</span>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {stats.map(s => (
-              <div key={s.label} className="bg-white rounded-[16px] border border-[#E0DBD5] shadow-sm p-6 flex items-center gap-5">
-                <div className={`p-3.5 rounded-2xl ${s.bg}`}>{s.icon}</div>
-                <div>
-                  <p className="text-[13px] text-gray-500 font-semibold">{s.label}</p>
-                  <p className="text-[32px] font-extrabold text-[#3D2B1F] leading-none">{s.count}</p>
-                </div>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {stats.map(s => (
+            <div key={s.label} className="bg-white rounded-[16px] border border-nestle-border shadow-sm p-6 flex items-center gap-5">
+              <div className={`p-3.5 rounded-2xl ${s.bg}`}>{s.icon}</div>
+              <div>
+                <p className="text-[13px] text-gray-500 font-semibold">{s.label}</p>
+                <p className="text-[32px] font-extrabold text-nestle-brown leading-none">{s.count}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-[12px] px-5 py-4 font-medium text-[14px]">
-              ⚠️ {error}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-[12px] px-5 py-4 font-medium text-[14px]">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* Ticket cards */}
+        <div>
+          <h2 className="text-[20px] font-extrabold text-nestle-brown mb-5 flex items-center">
+            Active Allocations
+            <span className="ml-3 bg-nestle-danger text-white text-[12px] font-bold px-2 py-0.5 rounded-full">
+              {tickets.length}
+            </span>
+          </h2>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+              <div className="w-10 h-10 border-4 border-nestle-brown border-t-transparent rounded-full animate-spin mb-4"/>
+              <p className="font-medium">Loading your allocations...</p>
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="bg-white border border-dashed border-nestle-border rounded-[24px] py-24 flex flex-col items-center text-gray-400">
+              <CheckCircle size={48} className="mb-4 text-gray-300"/>
+              <p className="text-[18px] font-extrabold text-gray-500 mb-1">No Active Allocations</p>
+              <p className="text-[14px] font-medium">HQ hasn't allocated any issues to you yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {tickets.map(ticket => (
+                <button
+                  key={ticket._id}
+                  onClick={() => navigate(`/distributor/tickets/${ticket._id}`)}
+                  className="text-left bg-white border border-nestle-border rounded-[20px] p-6 shadow-sm hover:shadow-md transition-all group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-50 to-transparent rounded-bl-[100px]"/>
+
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="font-bold text-[15px] text-nestle-brown tracking-tight">{ticket.ticketNumber}</span>
+                    <span className={`px-2 py-1 rounded-[6px] text-[10px] font-bold tracking-widest uppercase border ${priClass(ticket.priority)}`}>
+                      {ticket.priority}
+                    </span>
+                  </div>
+
+                  <p className="font-extrabold text-[15px] text-nestle-brown mb-1">
+                    {(ticket.category || '').replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-[13px] text-gray-500 font-medium mb-5 capitalize">
+                    {ticket.retailerId?.businessName || ticket.retailerId?.fullName || 'Retailer'}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${staClass(ticket.status)}`}>
+                      {(ticket.status || '').replace('_', ' ').toUpperCase()}
+                    </span>
+                    <span className="flex items-center gap-1 text-[12px] font-bold text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200">
+                      View Details <ArrowRight size={13}/>
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-gray-400 font-medium mt-3 flex items-center gap-1">
+                    <Clock size={11}/> {formatDate(ticket.createdAt)}
+                  </p>
+                </button>
+              ))}
             </div>
           )}
-
-          {/* Ticket cards */}
-          <div>
-            <h2 className="text-[18px] font-extrabold text-[#2C1810] mb-5">
-              Active Allocations
-              <span className="ml-2 bg-[#E72A2E] text-white text-[12px] font-black px-2 py-0.5 rounded-full">
-                {tickets.length}
-              </span>
-            </h2>
-
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                <div className="w-10 h-10 border-4 border-[#3D2B1F] border-t-transparent rounded-full animate-spin mb-4"/>
-                <p className="font-medium">Loading your allocations...</p>
-              </div>
-            ) : tickets.length === 0 ? (
-              <div className="bg-white border border-dashed border-[#E0DBD5] rounded-[24px] py-24 flex flex-col items-center text-gray-400">
-                <CheckCircle size={48} className="mb-4 text-gray-300"/>
-                <p className="text-[18px] font-extrabold text-gray-500 mb-1">No Active Allocations</p>
-                <p className="text-[14px] font-medium">HQ hasn't allocated any issues to you yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {tickets.map(ticket => (
-                  <button
-                    key={ticket._id}
-                    onClick={() => navigate(`/distributor/tickets/${ticket._id}`)}
-                    className="text-left bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#E72A2E]/6 to-transparent rounded-bl-[100px]"/>
-
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="font-black text-[15px] text-[#2C1810] tracking-tight">{ticket.ticketNumber}</span>
-                      <span className={`px-2 py-1 rounded-[6px] text-[10px] font-bold tracking-widest uppercase border ${priClass(ticket.priority)}`}>
-                        {ticket.priority}
-                      </span>
-                    </div>
-
-                    <p className="font-extrabold text-[14px] text-[#3D2B1F] mb-1">
-                      {(ticket.category || '').replace(/_/g, ' ').toUpperCase()}
-                    </p>
-                    <p className="text-[13px] text-gray-500 font-medium mb-5">
-                      {ticket.retailerId?.businessName || ticket.retailerId?.fullName || 'Retailer'}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-[#E0DBD5]">
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${staClass(ticket.status)}`}>
-                        {(ticket.status || '').replace('_', ' ').toUpperCase()}
-                      </span>
-                      <span className="flex items-center gap-1 text-[12px] font-extrabold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-200">
-                        Open Chat <ArrowRight size={13}/>
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-gray-400 font-medium mt-3 flex items-center gap-1">
-                      <Clock size={11}/> {formatDate(ticket.createdAt)}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
-    </div>
+    </DistributorLayout>
   );
 };
 

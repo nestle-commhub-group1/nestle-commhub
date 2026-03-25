@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Home, Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, AlertCircle, BarChart2, Star
+  Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, Truck, ClipboardList
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
-import { useAuth } from '../../context/AuthContext';
 import { formatTimeAgo } from '../../utils/dateUtils';
 
-const AdminLayout = ({ children }) => {
+const DistributorLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [loadingNotifs, setLoadingNotifs] = useState(false);
-  const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'HQ Admin', email: '' });
+  const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'Distributor', email: '' });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,8 +27,6 @@ const AdminLayout = ({ children }) => {
       } catch (e) {
         console.error('Failed to parse user', e);
       }
-    } else {
-      setUser({ fullName: 'Admin User', initials: 'AU', role: 'HQ Admin', email: 'admin@nestle.com' });
     }
     fetchNotifications();
   }, []);
@@ -81,23 +77,16 @@ const AdminLayout = ({ children }) => {
   };
 
   const navItems = [
-    { label: 'Home', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
-    { label: 'All Tickets', path: '/admin/dashboard', icon: <FileText size={20} /> }, // Redirect for now
-    { label: 'User Management', path: '/admin/users', icon: <Users size={20} /> },
-    { label: 'Broadcasts', path: '/admin/broadcasts', icon: <Radio size={20} /> },
-    { label: 'Analytics', path: '/admin/analytics', icon: <BarChart2 size={20} /> },
-    { label: 'SLA Monitor', path: '/admin/sla', icon: <AlertCircle size={20} /> },
-    { label: 'Distributor Evaluations', path: '/admin/evaluations', icon: <Star size={20} /> },
+    { label: 'Dashboard', path: '/distributor/dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'My Allocations', path: '/distributor/dashboard', icon: <ClipboardList size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
-    { label: 'Profile', path: '/admin/profile', icon: <User size={20} /> },
+    { label: 'Profile', path: '/distributor/profile', icon: <User size={20} /> },
   ];
 
-
   const getNotificationIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'ticket': return <FileText size={16} className="text-blue-500" />;
-      case 'danger': return <div className="text-red-500"><AlertCircle size={16} /></div>;
-      case 'user': return <Users size={16} className="text-purple-500" />;
+      case 'warning': return <div className="text-red-500"><AlertCircle size={16} /></div>;
       default: return <Bell size={16} className="text-gray-500" />;
     }
   };
@@ -127,7 +116,7 @@ const AdminLayout = ({ children }) => {
     <div className="flex h-screen bg-nestle-gray font-sans overflow-hidden">
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -150,18 +139,18 @@ const AdminLayout = ({ children }) => {
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="font-semibold truncate text-[15px]">{user.fullName}</span>
-            <span className="bg-[#FFE4E4] text-[#8B0000] text-[10px] font-bold px-2 py-0.5 rounded-full w-max mt-1 tracking-wide border border-[#8B0000]/20">
-              HQ Admin
+            <span className="bg-[#FFEDD5] text-[#C2410C] text-[10px] font-bold px-2 py-0.5 rounded-full w-max mt-1 tracking-wide border border-[#C2410C]/20">
+              Distributor
             </span>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 pb-4">
           {navItems.map((item, idx) => {
-            const isActive = location.pathname === item.path || (item.label === 'Home' && location.pathname === '/admin/dashboard');
+            const isActive = location.pathname === item.path;
             return item.path === '#' ? (
-              <button 
-                key={idx} 
+              <button
+                key={idx}
                 onClick={item.action}
                 className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors text-gray-300 hover:bg-nestle-brown-hover hover:text-white"
               >
@@ -169,15 +158,15 @@ const AdminLayout = ({ children }) => {
                   {item.icon}
                   <span className="font-medium text-[15px]">{item.label}</span>
                 </div>
-                {item.badge && (
+                {item.badge > 0 && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
                 )}
               </button>
             ) : (
-              <Link 
-                key={idx} 
+              <Link
+                key={idx}
                 to={item.path}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-[#3D2B1F] text-white shadow-sm' : 'text-gray-300 hover:bg-nestle-brown-hover hover:text-white'}`}
                 onClick={() => setIsSidebarOpen(false)}
@@ -186,18 +175,13 @@ const AdminLayout = ({ children }) => {
                   {item.icon}
                   <span className="font-medium text-[15px]">{item.label}</span>
                 </div>
-                {item.label === 'Notifications' && unreadCount > 0 && (
-                  <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {unreadCount}
-                  </span>
-                )}
               </Link>
             )
           })}
         </nav>
 
         <div className="p-4 mt-auto">
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-nestle-brown-hover hover:text-white rounded-xl transition-colors"
           >
@@ -208,9 +192,10 @@ const AdminLayout = ({ children }) => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative overflow-hidden">
+      <div className="flex-1 flex flex-col relative overflow-hidden text-nestle-brown">
         <TopBar />
-        
+
+        {/* Top Right Desktop Notifications Icon */}
         <div className="hidden lg:flex absolute top-6 right-8 z-10">
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
@@ -232,7 +217,7 @@ const AdminLayout = ({ children }) => {
       {/* Notifications Panel */}
       {isNotificationsOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-black/30 z-40 transition-opacity backdrop-blur-sm"
             onClick={() => setIsNotificationsOpen(false)}
           />
@@ -258,7 +243,7 @@ const AdminLayout = ({ children }) => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto">
               <div className="divide-y divide-nestle-border">
                 {notifications.length === 0 ? (
@@ -297,4 +282,4 @@ const AdminLayout = ({ children }) => {
   );
 };
 
-export default AdminLayout;
+export default DistributorLayout;
