@@ -57,18 +57,34 @@ require('./jobs/slaChecker');
 
 // Root
 app.get('/', (req, res) => {
-    res.json({ message: 'Nestlé CommHub API is running 🚀' });
+  res.json({ message: 'Nestlé CommHub API is running 🚀' });
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        message: 'Nestlé CommHub API is running',
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-    });
+  res.json({
+    status: 'ok',
+    message: 'Nestlé CommHub API is running',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
+
+  // ─── Render Keep-Alive (prevents free-tier sleep) ──────────────────────────
+  // Render sets RENDER_EXTERNAL_URL automatically; this check means it only
+  // runs in production on Render, never locally.
+  const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+  if (RENDER_EXTERNAL_URL) {
+    const https = require('https');
+    console.log(`Keep-alive ping enabled → ${RENDER_EXTERNAL_URL}/api/health (every 14 min)`);
+    setInterval(() => {
+      https.get(`${RENDER_EXTERNAL_URL}/api/health`, res => {
+        console.log(`Keep-alive ping: ${res.statusCode}`);
+      }).on('error', err => {
+        console.error('Keep-alive ping failed:', err.message);
+      });
+    }, 14 * 60 * 1000); // 14 minutes
+  }
 });

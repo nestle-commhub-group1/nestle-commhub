@@ -38,6 +38,7 @@ import DistributorEvaluations from "./pages/admin/DistributorEvaluations";
 
 // Distributor pages
 import DistributorDashboard from "./pages/distributor/DistributorDashboard";
+import DistributorTicketDetail from "./pages/distributor/DistributorTicketDetail";
 
 // Dev tools (only used in development)
 import DevLauncher from "./pages/DevLauncher";
@@ -157,6 +158,14 @@ function App() {
             element={
               <ProtectedRoute roles="distributor">
                 <DistributorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/distributor/tickets/:id"
+            element={
+              <ProtectedRoute roles="distributor">
+                <DistributorTicketDetail />
               </ProtectedRoute>
             }
           />

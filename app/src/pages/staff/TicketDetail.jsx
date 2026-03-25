@@ -199,25 +199,27 @@ export default function StaffTicketDetail() {
     }
   }
 
-  // ── Assign to Distributor ──────────────────────────────────────────────────
+  // ── Allocate Distributor ──────────────────────────────────────────────────
   async function assignToDistributor() {
     if (!selectedDistributor) return;
     try {
       const res = await axios.put(
-        `${API_URL}/api/tickets/${id}/assign`,
-        { assignedTo: selectedDistributor },
+        `${API_URL}/api/tickets/${id}/allocate`,
+        { distributorId: selectedDistributor },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
-        setActionResult({ type: 'success', msg: "Ticket assigned to distributor" });
-        setTicket(p => ({ ...p, assignedTo: distributors.find(d => d._id === selectedDistributor) }));
+        const dist = distributors.find(d => d._id === selectedDistributor);
+        setActionResult({ type: 'success', msg: `Ticket allocated to ${dist?.fullName || 'distributor'}` });
+        setTicket(p => ({ ...p, distributorId: dist }));
+      } else {
+        setActionResult({ type: 'error', msg: res.data.message || 'Allocation failed.' });
       }
     } catch (err) {
-      console.log("Assignment failed, logging to console as fallback.");
-      setActionResult({ type: 'success', msg: "Ticket assigned to distributor" });
+      setActionResult({ type: 'error', msg: err.response?.data?.message || 'Failed to allocate distributor.' });
     } finally {
       setShowAssignModal(false);
-      setTimeout(() => setActionResult(null), 3000);
+      setTimeout(() => setActionResult(null), 4000);
     }
   }
 

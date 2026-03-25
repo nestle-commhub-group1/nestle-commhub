@@ -110,13 +110,13 @@ const getAllTickets = async (req, res) => {
     }
 
     // Apply optional query filters
-    if (req.query.status)   filter.status   = req.query.status;
+    if (req.query.status) filter.status = req.query.status;
     if (req.query.priority) filter.priority = req.query.priority;
     if (req.query.category) filter.category = req.query.category;
 
     const tickets = await Ticket.find(filter)
-      .populate("retailerId",  "fullName businessName email")
-      .populate("assignedTo",  "fullName email")
+      .populate("retailerId", "fullName businessName email")
+      .populate("assignedTo", "fullName email")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({ success: true, count: tickets.length, tickets });

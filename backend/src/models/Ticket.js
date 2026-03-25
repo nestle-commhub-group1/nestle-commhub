@@ -89,10 +89,10 @@ ticketSchema.pre("save", async function () {
     // Auto-set SLA deadline by priority
     const now = Date.now();
     const slaMap = {
-      critical: 2  * 60 * 60 * 1000,
-      high:     4  * 60 * 60 * 1000,
-      medium:   8  * 60 * 60 * 1000,
-      low:      24 * 60 * 60 * 1000,
+      critical: 2 * 60 * 60 * 1000,
+      high: 4 * 60 * 60 * 1000,
+      medium: 8 * 60 * 60 * 1000,
+      low: 24 * 60 * 60 * 1000,
     };
     this.slaDeadline = new Date(now + (slaMap[this.priority] || slaMap.low));
   }

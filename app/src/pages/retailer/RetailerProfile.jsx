@@ -5,9 +5,9 @@ import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 
 const RetailerProfile = () => {
-  const [user, setUser] = useState({ 
-    fullName: 'Chaminda Jayawardena', 
-    initials: 'CJ', 
+  const [user, setUser] = useState({
+    fullName: 'Chaminda Jayawardena',
+    initials: 'CJ',
     email: 'chaminda@samanstores.lk',
     phone: '+94 77 123 4567',
     businessName: 'Saman General Stores',
@@ -28,7 +28,7 @@ const RetailerProfile = () => {
         const name = parsedUser.fullName || parsedUser.name || 'User';
         const parts = name.split(' ');
         const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
-        
+
         const phone = parsedUser.phone || parsedUser.contactNumber || '+94 77 123 4567';
 
         setUser(prev => ({
@@ -97,12 +97,12 @@ const RetailerProfile = () => {
         {/* Top Card */}
         <div className="bg-white border border-nestle-border rounded-[20px] p-6 shadow-sm mb-6 flex items-center space-x-6">
           <div className="relative">
-             <div className="h-[90px] w-[90px] rounded-full bg-nestle-brown text-white flex items-center justify-center text-[32px] font-bold shadow-inner">
+            <div className="h-[90px] w-[90px] rounded-full bg-nestle-brown text-white flex items-center justify-center text-[32px] font-bold shadow-inner">
               {user.initials}
-             </div>
-             <button className="absolute bottom-0 right-0 bg-white border border-nestle-border shadow-sm p-1.5 rounded-full text-gray-600 hover:text-nestle-brown transition-colors">
-               <Camera size={16} />
-             </button>
+            </div>
+            <button className="absolute bottom-0 right-0 bg-white border border-nestle-border shadow-sm p-1.5 rounded-full text-gray-600 hover:text-nestle-brown transition-colors">
+              <Camera size={16} />
+            </button>
           </div>
           <div>
             <h2 className="text-[20px] font-extrabold text-nestle-brown">{user.fullName}</h2>
@@ -116,35 +116,35 @@ const RetailerProfile = () => {
         {/* Personal Info */}
         <div className="bg-white border border-nestle-border rounded-[20px] p-8 shadow-sm mb-6">
           <h3 className="text-[13px] font-extrabold text-[#3D2B1F] tracking-widest uppercase mb-6">PERSONAL INFORMATION</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">FULL NAME <span className="text-nestle-danger">*</span></label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="fullName"
-                value={formData.fullName} 
+                value={formData.fullName}
                 onChange={handleChange}
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
               />
             </div>
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">PHONE NUMBER <span className="text-nestle-danger">*</span></label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="phone"
-                value={formData.phone} 
+                value={formData.phone}
                 onChange={handleChange}
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">EMAIL ADDRESS</label>
-            <input 
-              type="text" 
-              value={user.email} 
+            <input
+              type="text"
+              value={user.email}
               disabled
               className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-500 bg-[#F8F7F5] cursor-not-allowed"
             />
@@ -156,40 +156,40 @@ const RetailerProfile = () => {
           <h3 className="text-[13px] font-extrabold text-[#3D2B1F] tracking-widest uppercase mb-6 flex items-center">
             BUSINESS INFORMATION <span className="text-gray-400 font-medium ml-2 text-[12px] normal-case tracking-normal hover:bg-gray-100 px-2 py-0.5 rounded-md">(Read only)</span>
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">BUSINESS NAME</label>
-              <input 
-                type="text" 
-                value={user.businessName} 
+              <input
+                type="text"
+                value={user.businessName}
                 disabled
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
               />
             </div>
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">TAX ID / REG. NUMBER</label>
-              <input 
-                type="text" 
-                value={user.taxId} 
+              <input
+                type="text"
+                value={user.taxId}
                 disabled
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">BUSINESS ADDRESS</label>
-            <input 
-              type="text" 
-              value={user.address} 
+            <input
+              type="text"
+              value={user.address}
               disabled
               className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
             />
           </div>
         </div>
 
-        <button 
+        <button
           onClick={handleSave}
           className="w-full md:w-auto bg-[#3D2B1F] text-white font-bold text-[15px] px-8 py-3.5 rounded-[12px] hover:bg-nestle-brown transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
         >
