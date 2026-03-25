@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, ChevronRight, BarChart3, ShieldAlert
+  Users, Ticket, AlertCircle, Clock, CheckCircle, TrendingUp, ChevronRight, BarChart3, ShieldAlert,
+  FileText, Map, Check, Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';

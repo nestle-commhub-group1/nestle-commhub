@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, User, MapPin, Phone, Mail, Loader2, LogOut, CheckCircle2 } from 'lucide-react';
+import { Save, User, MapPin, Phone, Mail, Loader2, LogOut, CheckCircle2, Camera } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
