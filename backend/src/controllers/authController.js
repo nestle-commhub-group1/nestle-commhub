@@ -91,16 +91,30 @@ const registerUser = async (req, res) => {
         return res.status(500).json({ message: "ValidEmployee model is not configured." });
       }
 
-      const validEmp = await ValidEmployee.findOne({ employeeId });
+      const trimmedEmpId = (employeeId || "").trim();
+      console.log(`[Register] Looking up employeeId: "${trimmedEmpId}" role: "${role}"`);
+
+      const validEmp = await ValidEmployee.findOne({
+        employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' }
+      });
+
+      console.log(`[Register] ValidEmployee lookup result:`, validEmp ? `Found (isUsed=${validEmp.isUsed})` : 'NOT FOUND');
+
       if (!validEmp) {
-        return res
-          .status(400)
-          .json({ message: "Invalid Employee ID. Contact HQ Admin to register." });
+        return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
       }
 
-      const existingEmp = await User.findOne({ employeeId });
+      if (validEmp.isUsed) {
+        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" has already been used to register an account.` });
+      }
+
+      if (validEmp.role !== role) {
+        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${validEmp.role}", but you selected "${role}".` });
+      }
+
+      const existingEmp = await User.findOne({ employeeId: trimmedEmpId });
       if (existingEmp) {
-        return res.status(400).json({ message: "This Employee ID is already registered." });
+        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is already registered. Run npm run seed to reset.` });
       }
     }
 
@@ -128,6 +142,15 @@ const registerUser = async (req, res) => {
     // 5. Save user to database
     try {
       await newUser.save();
+      // Mark the employee ID as used so it can't be re-registered
+      if (employeeRoles.includes(role) && ValidEmployee) {
+        const trimmedEmpId = (employeeId || "").trim();
+        await ValidEmployee.findOneAndUpdate(
+          { employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' } },
+          { isUsed: true }
+        );
+        console.log(`[Register] Marked employeeId "${trimmedEmpId}" as used`);
+      }
     } catch (saveError) {
       console.log("Save error details:", saveError);
       return res.status(500).json({
