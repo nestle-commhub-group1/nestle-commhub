@@ -1,6 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const ValidEmployee = require("../models/ValidEmployee");
+const User = require("../models/User");
 
 const sampleEmployees = [
   { employeeId: "NES001", role: "hq_admin" },
@@ -26,6 +27,11 @@ const seedEmployees = async () => {
     // Clear existing records
     await ValidEmployee.deleteMany({});
     console.log("Cleared existing ValidEmployee records");
+
+    // Clear corresponding User records to make IDs available for registration again
+    const employeeIds = sampleEmployees.map(emp => emp.employeeId);
+    const deleteResult = await User.deleteMany({ employeeId: { $in: employeeIds } });
+    console.log(`Cleared ${deleteResult.deletedCount} existing User records for these employee IDs`);
 
     // Insert new sample records
     await ValidEmployee.insertMany(sampleEmployees);
