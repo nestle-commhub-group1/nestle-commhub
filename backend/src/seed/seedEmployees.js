@@ -8,6 +8,7 @@ const sampleEmployees = [
   { employeeId: "NES002", role: "sales_staff" },
   { employeeId: "NES004", role: "distributor" },
   { employeeId: "NES100", role: "hq_admin" },
+  { employeeId: "NES111", role: "hq_admin" },
   { employeeId: "NES200", role: "sales_staff" },
   { employeeId: "NES400", role: "distributor" },
   { employeeId: "NES123456", role: "sales_staff" },
