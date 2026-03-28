@@ -263,7 +263,7 @@ const DistributorLayout = ({ children }) => {
                       </div>
                       <div className="flex-1 min-w-0 pr-2">
                         <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
-                          {notif.text}
+                          {notif.message}
                         </p>
                         <p className="text-[12px] text-gray-500 mt-1.5">{formatTimeAgo(notif.createdAt)}</p>
                       </div>

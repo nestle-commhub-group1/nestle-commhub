@@ -106,11 +106,8 @@ const RetailerLayout = ({ children }) => {
       <button onClick={() => setIsSidebarOpen(true)} className="p-2">
         <Menu size={24} />
       </button>
-      <div className="flex items-center space-x-2 font-bold text-xl">
-        <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center overflow-hidden overflow-hidden shrink-0">
-          <img src="/nestle-logo.png" alt="Nestlé" className="w-5 h-5 object-contain" draggable="false" />
-        </div>
-        <span>Nestlé</span>
+      <div className="flex items-center justify-center h-full py-2">
+        <img src="/nestle-logo.png" alt="Nestlé" className="h-full w-auto object-contain invert brightness-0" draggable="false" />
       </div>
       <button className="p-2 relative" onClick={() => setIsNotificationsOpen(true)}>
         <Bell size={24} />
@@ -135,14 +132,11 @@ const RetailerLayout = ({ children }) => {
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-40 w-72 bg-nestle-brown text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 flex items-center justify-between lg:justify-center">
-          <div className="flex items-center space-x-3 font-bold text-2xl">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-              <img src="/nestle-logo.png" alt="Nestlé" className="w-7 h-7 object-contain" draggable="false" />
-            </div>
-            <span className="tracking-wide">Nestlé</span>
+        <div className="p-6 flex items-center justify-between lg:justify-center h-[90px]">
+          <div className="flex items-center justify-center w-full h-full">
+            <img src="/nestle-logo.png" alt="Nestlé" className="h-12 w-auto object-contain invert brightness-0" draggable="false" />
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-300 hover:text-white">
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-gray-300 hover:text-white absolute right-4">
             <X size={24} />
           </button>
         </div>
@@ -282,7 +276,7 @@ const RetailerLayout = ({ children }) => {
                       </div>
                       <div className="flex-1 min-w-0 pr-2">
                         <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
-                          {notif.text}
+                          {notif.message}
                         </p>
                         <p className="text-[12px] text-gray-500 mt-1.5">{formatTimeAgo(notif.createdAt)}</p>
                       </div>

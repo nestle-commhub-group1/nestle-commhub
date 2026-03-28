@@ -215,7 +215,7 @@ const ManagerLayout = ({ children }) => {
                     </div>
                     <div className="flex-1 min-w-0 pr-2">
                       <p className={`text-[14px] text-nestle-brown ${!notif.read ? 'font-medium' : ''} leading-snug`}>
-                        {notif.text}
+                        {notif.message}
                       </p>
                       <p className="text-[12px] text-gray-500 mt-1.5">{notif.time}</p>
                     </div>

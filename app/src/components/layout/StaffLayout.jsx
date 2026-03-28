@@ -36,8 +36,8 @@ const StaffLayout = ({ children }) => {
     
     if (isDevMode) {
       setNotifications([
-        { _id: '1', text: 'New ticket assigned: TKT-1041', type: 'ticket', createdAt: new Date().toISOString(), isRead: false },
-        { _id: '2', text: 'SLA Warning: TKT-1037 is nearing deadline', type: 'warning', createdAt: new Date().toISOString(), isRead: false }
+        { _id: '1', message: 'New ticket assigned: TKT-1041', type: 'ticket', createdAt: new Date().toISOString(), isRead: false },
+        { _id: '2', message: 'SLA Warning: TKT-1037 is nearing deadline', type: 'warning', createdAt: new Date().toISOString(), isRead: false }
       ]);
     } else {
       fetchNotifications();
@@ -286,7 +286,7 @@ const StaffLayout = ({ children }) => {
                       </div>
                       <div className="flex-1 min-w-0 pr-2">
                         <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
-                          {notif.text}
+                          {notif.message}
                         </p>
                         <p className="text-[12px] text-gray-500 mt-1.5">{formatTimeAgo(notif.createdAt)}</p>
                       </div>
