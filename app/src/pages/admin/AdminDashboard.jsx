@@ -92,13 +92,30 @@ const AdminDashboard = () => {
     { title: 'Resolved Today', count: stats.resolvedToday, label: 'Platform wide', icon: <CheckCircle size={20} className="text-nestle-success" />, borderColor: 'border-l-[4px] border-l-nestle-success', bgColor: 'bg-green-50', link: '#' }
   ];
 
-  const regionalSLA = [
-    { region: 'Western Province', total: 48, resolved: 41, sla: '85%', status: 'On Track', statusColor: 'text-nestle-success bg-green-50 border-green-200' },
-    { region: 'Central Province', total: 31, resolved: 24, sla: '77%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
-    { region: 'Southern Province', total: 27, resolved: 21, sla: '78%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
-    { region: 'Northern Province', total: 22, resolved: 15, sla: '68%', status: 'Breached', statusColor: 'text-nestle-danger bg-red-50 border-red-200' },
-    { region: 'Eastern Province', total: 14, resolved: 10, sla: '71%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' }
-  ];
+  // Derive regional SLA from real ticket data.
+  // The data model has no region field, so we group by assignedTo staff name as a proxy,
+  // or fall back to a single platform-wide row.
+  const regionalSLA = React.useMemo(() => {
+    if (!tickets.length) return [];
+    const groups = {};
+    tickets.forEach(t => {
+      const key = t.assignedTo?.officeLocation || t.assignedTo?.department || 'Unassigned';
+      if (!groups[key]) groups[key] = { total: 0, resolved: 0, breached: 0 };
+      groups[key].total++;
+      if (t.status === 'resolved') groups[key].resolved++;
+      if (t.slaDeadline && new Date(t.slaDeadline) < new Date() && t.status !== 'resolved') groups[key].breached++;
+    });
+    return Object.entries(groups).map(([region, g]) => {
+      const slaRate = g.total > 0 ? Math.round(((g.total - g.breached) / g.total) * 100) : 100;
+      const status = slaRate >= 80 ? 'On Track' : slaRate >= 70 ? 'At Risk' : 'Breached';
+      const statusColor = slaRate >= 80
+        ? 'text-nestle-success bg-green-50 border-green-200'
+        : slaRate >= 70
+        ? 'text-nestle-warning bg-yellow-50 border-yellow-200'
+        : 'text-nestle-danger bg-red-50 border-red-200';
+      return { region, total: g.total, resolved: g.resolved, sla: `${slaRate}%`, status, statusColor };
+    });
+  }, [tickets]);
 
   const escalatedTickets = tickets.filter(t => t.isEscalated);
 
@@ -244,7 +261,7 @@ const AdminDashboard = () => {
                 {escalatedTickets.length > 0 ? escalatedTickets.map((ticket, idx) => (
                   <tr key={idx} className="hover:bg-red-50/20 transition-colors">
                     <td className="px-6 py-4 font-bold text-nestle-brown">{ticket.ticketNumber}</td>
-                    <td className="px-6 py-4 text-gray-600 font-bold">Western</td>
+                    <td className="px-6 py-4 text-gray-600 font-bold">{ticket.retailerId?.businessAddress || ticket.assignedTo?.officeLocation || '—'}</td>
                     <td className="px-6 py-4 text-nestle-brown">{ticket.retailerId?.businessName || ticket.retailerId?.fullName || 'Retailer'}</td>
                     <td className="px-6 py-4 text-gray-600">{formatType(ticket.category)}</td>
                     <td className="px-6 py-4 text-gray-600">{ticket.assignedTo?.fullName || 'Unassigned'}</td>
@@ -316,7 +333,7 @@ const AdminDashboard = () => {
                 ) : filteredTickets.length > 0 ? filteredTickets.map((ticket, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 font-bold text-nestle-brown">{ticket.ticketNumber}</td>
-                    <td className="px-6 py-4 text-gray-600 font-bold">Western</td>
+                    <td className="px-6 py-4 text-gray-600 font-bold">{ticket.retailerId?.businessAddress || ticket.assignedTo?.officeLocation || '—'}</td>
                     <td className="px-6 py-4 text-nestle-brown">{ticket.retailerId?.businessName || ticket.retailerId?.fullName || "Retailer"}</td>
                     <td className="px-6 py-4 text-gray-600">{formatType(ticket.category)}</td>
                     <td className="px-6 py-4 text-gray-600">{ticket.assignedTo?.fullName || 'Unassigned'}</td>
