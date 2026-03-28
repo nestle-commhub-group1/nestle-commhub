@@ -35,6 +35,7 @@ import SLAMonitor from "./pages/admin/SLAMonitor";
 import Analytics from "./pages/admin/Analytics";
 import AdminBroadcasts from "./pages/admin/Broadcasts";
 import DistributorEvaluations from "./pages/admin/DistributorEvaluations";
+import AdminTicketDetail from "./pages/admin/AdminTicketDetail";
 
 // Distributor pages
 import DistributorDashboard from "./pages/distributor/DistributorDashboard";
@@ -148,6 +149,14 @@ function App() {
             element={
               <ProtectedRoute roles="hq_admin">
                 <DistributorEvaluations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tickets/:id"
+            element={
+              <ProtectedRoute roles="hq_admin">
+                <AdminTicketDetail />
               </ProtectedRoute>
             }
           />
