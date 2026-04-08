@@ -33,8 +33,11 @@ const isValidEmail = (email) => {
 /* ─── POST /api/auth/register ────────────────────────────────────────────── */
 
 const registerUser = async (req, res) => {
-  console.log("Request body received:", req.body);
-  console.log("Extracted role:", req.body.role);
+  // Log registration attempts in dev only — never log passwords in production
+  if (process.env.NODE_ENV !== 'production') {
+    const safe = { ...req.body, password: '[REDACTED]', confirmPassword: '[REDACTED]' };
+    console.log("Register attempt:", safe);
+  }
   try {
     const {
       fullName,
@@ -97,8 +100,8 @@ const registerUser = async (req, res) => {
     // Nestlé employees (staff, admin, distributor) must supply their employee ID
     const employeeRoles = ["sales_staff", "hq_admin", "distributor"];
     if (employeeRoles.includes(role)) {
-      if (!employeeId || !department) {
-        return res.status(400).json({ message: "Employee role requires employeeId and department." });
+      if (!employeeId) {
+        return res.status(400).json({ message: "Employee role requires employeeId." });
       }
 
       // Sales staff must also supply their specialisation category
@@ -106,52 +109,52 @@ const registerUser = async (req, res) => {
         return res.status(400).json({ message: "Sales staff must select a staff category." });
       }
 
-      const validStaffCategories = [
-        "Stockout Staff", "Product Quality Staff",
-        "Logistics Staff", "Pricing Staff", "General Support",
-      ];
-      if (role === "sales_staff" && !validStaffCategories.includes(staffCategory)) {
-        return res.status(400).json({ message: "Invalid staff category." });
-      }
-
       /* ── Step 3: Employee ID verification ────────────────────────────── */
 
-      // The ValidEmployee collection is pre-seeded with legitimate Nestlé employee IDs.
-      // This check prevents random people from registering as "HQ Admin" just
-      // by guessing a role name in the form.
-      if (!ValidEmployee) {
-        return res.status(500).json({ message: "ValidEmployee model is not configured." });
-      }
-
       const trimmedEmpId = (employeeId || "").trim();
-      console.log(`[Register] Looking up employeeId: "${trimmedEmpId}" role: "${role}"`);
+      const isDevMode    = process.env.NODE_ENV === "development";
+      const devId        = (process.env.DEV_EMPLOYEE_ID || "").trim();
 
-      // Case-insensitive lookup — "NES001" matches "nes001", "Nes001", etc.
-      const validEmp = await ValidEmployee.findOne({
-        employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' }
-      });
+      // DEV BYPASS: If running in development and the submitted ID matches
+      // DEV_EMPLOYEE_ID, skip the DB lookup entirely so testers can register
+      // unlimited accounts without re-seeding or worrying about isUsed flags.
+      const usingDevId = isDevMode && devId && trimmedEmpId.toUpperCase() === devId.toUpperCase();
 
-      console.log(`[Register] ValidEmployee lookup result:`, validEmp ? `Found (isUsed=${validEmp.isUsed})` : 'NOT FOUND');
+      if (!usingDevId) {
+        // PRODUCTION PATH: verify against the ValidEmployee seed collection
+        if (!ValidEmployee) {
+          return res.status(500).json({ message: "ValidEmployee model is not configured." });
+        }
 
-      if (!validEmp) {
-        // The ID doesn't exist in the seed list at all
-        return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
-      }
+        console.log(`[Register] Looking up employeeId: "${trimmedEmpId}" role: "${role}"`);
 
-      if (validEmp.isUsed) {
-        // The ID was already used to create an account — each ID can only register once
-        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" has already been used to register an account.` });
-      }
+        // Case-insensitive lookup — "NES001" matches "nes001", "Nes001", etc.
+        const validEmp = await ValidEmployee.findOne({
+          employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' }
+        });
 
-      if (validEmp.role !== role) {
-        // The ID is real but the selected role doesn't match the seeded role for that ID
-        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${validEmp.role}", but you selected "${role}".` });
-      }
+        console.log(`[Register] ValidEmployee lookup result:`, validEmp ? `Found (isUsed=${validEmp.isUsed})` : 'NOT FOUND');
 
-      // Extra guard: check the User collection too, in case of data inconsistency
-      const existingEmp = await User.findOne({ employeeId: trimmedEmpId });
-      if (existingEmp) {
-        return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is already registered. Run npm run seed to reset.` });
+        if (!validEmp) {
+          return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
+        }
+
+        if (validEmp.isUsed) {
+          return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" has already been used to register an account.` });
+        }
+
+        if (validEmp.role !== role) {
+          return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${validEmp.role}", but you selected "${role}".` });
+        }
+
+        // Extra guard: check the User collection too, in case of data inconsistency
+        const existingEmp = await User.findOne({ employeeId: trimmedEmpId });
+        if (existingEmp) {
+          return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is already registered. Run npm run seed to reset.` });
+        }
+      } else {
+        // DEV BYPASS ACTIVE: log and continue, no DB check, no isUsed restriction
+        console.log(`[Register] ⚡ Dev bypass active — skipping ValidEmployee check for ID "${trimmedEmpId}"`);
       }
     }
 
@@ -180,7 +183,6 @@ const registerUser = async (req, res) => {
       district,
       // Employee-specific
       employeeId,
-      department,
       officeLocation,
       staffCategory,
     });
@@ -188,8 +190,11 @@ const registerUser = async (req, res) => {
     try {
       await newUser.save();
 
-      // Mark the employee ID as used so no one else can register with the same ID
-      if (employeeRoles.includes(role) && ValidEmployee) {
+      // Only mark the ID as used when using a real (non-dev) employee ID
+      const usingDevBypass = process.env.NODE_ENV === 'development' &&
+        (employeeId || '').trim().toUpperCase() === (process.env.DEV_EMPLOYEE_ID || '').trim().toUpperCase();
+
+      if (employeeRoles.includes(role) && ValidEmployee && !usingDevBypass) {
         const trimmedEmpId = (employeeId || "").trim();
         await ValidEmployee.findOneAndUpdate(
           { employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' } },

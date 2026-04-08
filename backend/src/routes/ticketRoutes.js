@@ -41,10 +41,11 @@ router.put("/:id/priority", protect, restrictTo("sales_staff", "hq_admin"), upda
 
 // ── Message routes ─────────────────────────────────────────────────────────────
 
-// POST /api/tickets/:id/messages — any authenticated user sends a message
-router.post("/:id/messages", protect, sendMessage);
+// POST /api/tickets/:id/messages — staff, admin, distributor only (retailers blocked)
+// Route-level guard + controller-level check for defense-in-depth
+router.post("/:id/messages", protect, restrictTo("sales_staff", "hq_admin", "distributor"), sendMessage);
 
-// GET /api/tickets/:id/messages — any authenticated user reads messages
-router.get("/:id/messages", protect, getMessages);
+// GET /api/tickets/:id/messages — any authenticated non-retailer
+router.get("/:id/messages", protect, restrictTo("sales_staff", "hq_admin", "distributor"), getMessages);
 
 module.exports = router;

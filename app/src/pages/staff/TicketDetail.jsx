@@ -17,7 +17,7 @@ import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import StaffLayout from '../../components/layout/StaffLayout';
-import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle, Loader2 } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateUtils';
 
 // Hardcoded fallback data used in development mode when the backend is not available.
@@ -58,8 +58,12 @@ export default function StaffTicketDetail() {
   const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [actionResult, setActionResult] = useState(null); // { type: 'success'|'error', msg }
   const [timeLeft, setTimeLeft] = useState(0);
-  const [chatRoom, setChatRoom] = useState('staff_retailer');
   const [isMsgsLoading, setIsMsgsLoading] = useState(false);
+
+  // Priority & Time-to-Resolve state (staff-editable)
+  const [editPriority, setEditPriority] = useState('');
+  const [editTTR, setEditTTR] = useState('');
+  const [savingPriority, setSavingPriority] = useState(false);
 
   const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
@@ -81,10 +85,11 @@ export default function StaffTicketDetail() {
     ]).then(([ticketData, msgData]) => {
       if (ticketData?.success && ticketData.ticket) {
         const t = ticketData.ticket;
+        const mappedPriority = t.priority ? t.priority.charAt(0).toUpperCase()+t.priority.slice(1) : 'Low';
         setTicket({
           id: t.ticketNumber || 'TKT-PENDING',
           category: t.category?.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) || 'General',
-          priority: t.priority ? t.priority.charAt(0).toUpperCase()+t.priority.slice(1) : 'Medium',
+          priority: mappedPriority,
           status: t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : 'Open',
           description: t.description || '',
           submitted: new Date(t.createdAt).toLocaleString(),
@@ -104,9 +109,13 @@ export default function StaffTicketDetail() {
           },
           attachments: t.attachments || [],
           distributorId: t.distributorId,
+          timeToResolve: t.timeToResolve || '',
           _id: t._id,
         });
         setStatus(t.status === 'in_progress' ? 'In Progress' : t.status ? t.status.charAt(0).toUpperCase()+t.status.slice(1) : 'Open');
+        // Pre-populate the staff-editable priority and TTR fields
+        setEditPriority(t.priority || 'low');
+        setEditTTR(t.timeToResolve || '');
       }
       if (msgData?.success) {
         const mapped = (msgData.messages || []).map(m => ({
@@ -123,19 +132,19 @@ export default function StaffTicketDetail() {
     }).finally(() => setLoading(false));
   }, [id, token, isDevMode, chatRoom]);
 
-  // Poll for messages
+  // Poll for messages — staff_distributor channel only
   useEffect(() => {
-    if (!id || !token || isDevMode) return;
+    if (!id || !token || isDevMode || !ticket.distributorId) return;
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, {
+        const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=staff_distributor`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
           const mapped = (res.data.messages || []).map(m => ({
             id: m._id, 
-            sender: m.senderId?._id === (JSON.parse(localStorage.getItem('user') || '{}')._id) ? 'staff' : (m.senderRole === 'retailer' ? 'retailer' : (m.senderRole === 'distributor' ? 'distributor' : 'staff')),
-            name: m.senderId?.fullName || m.senderName || (m.senderRole==='retailer' ? 'Retailer' : 'Staff'),
+            sender: m.senderRole === 'distributor' ? 'distributor' : 'staff',
+            name: m.senderId?.fullName || m.senderName || 'Staff',
             text: m.message,
             time: new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
           }));
@@ -144,7 +153,7 @@ export default function StaffTicketDetail() {
       } catch (err) { console.error("Poll error", err); }
     }, 8000);
     return () => clearInterval(interval);
-  }, [id, token, isDevMode, chatRoom]);
+  }, [id, token, isDevMode, ticket.distributorId]);
 
   // ── SLA Countdown ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -191,13 +200,13 @@ export default function StaffTicketDetail() {
     }
   }, [showAssignModal, token]);
 
-  // ── Send message ──────────────────────────────────────────────────────────
+  // ── Send message (staff_distributor room only) ────────────────────────────
   async function sendMessage() {
     if (!input.trim()) return;
     try {
       const res = await axios.post(
         `${API_URL}/api/tickets/${id}/messages`,
-        { message: input.trim(), chatRoom },
+        { message: input.trim(), chatRoom: 'staff_distributor' },
         { headers: { 
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"
@@ -216,6 +225,29 @@ export default function StaffTicketDetail() {
       }
     } catch (err) {
       console.error("Error sending message:", err);
+    }
+  }
+
+  // ── Update Priority + Time to Resolve (staff only) ────────────────────────
+  async function savePriorityAndTTR() {
+    if (!editPriority) return;
+    setSavingPriority(true);
+    try {
+      const res = await axios.put(
+        `${API_URL}/api/tickets/${id}/priority`,
+        { priority: editPriority, timeToResolve: editTTR || undefined },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        const p = editPriority.charAt(0).toUpperCase() + editPriority.slice(1);
+        setTicket(prev => ({ ...prev, priority: p, timeToResolve: editTTR }));
+        setActionResult({ type: 'success', msg: `Priority set to ${p}${editTTR ? ` · Resolve by ${editTTR}` : ''}` });
+      }
+    } catch (err) {
+      setActionResult({ type: 'error', msg: err.response?.data?.message || 'Failed to update priority.' });
+    } finally {
+      setSavingPriority(false);
+      setTimeout(() => setActionResult(null), 3000);
     }
   }
 
@@ -411,54 +443,96 @@ export default function StaffTicketDetail() {
               <button onClick={() => setShowAssignModal(true)} className="flex items-center gap-2 border-2 border-gray-300 text-gray-600 text-[13px] font-bold px-5 py-3 rounded-[10px] hover:bg-gray-50 transition-colors">Assign to Distributor</button>
             </div>
 
-            {/* Chat */}
-            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[550px]">
-              <div className="border-b border-[#E0DBD5] bg-gray-50/50 flex flex-shrink-0">
-                <button
-                  onClick={() => setChatRoom('staff_retailer')}
-                  className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_retailer' ? 'text-blue-600 bg-white border-b-2 border-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  💬 Retailer Chat
-                </button>
-                {ticket.distributorId && (
-                  <button
-                    onClick={() => setChatRoom('staff_distributor')}
-                    className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_distributor' ? 'text-nestle-brown bg-white border-b-2 border-nestle-brown shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    🚚 Distributor Chat
-                  </button>
-                )}
-              </div>
-              <div className={`px-5 py-2 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${chatRoom === 'staff_retailer' ? 'bg-blue-50 text-blue-600' : 'bg-[#FDF8F3] text-nestle-brown'}`}>
-                {chatRoom === 'staff_retailer' ? '🛒 External - Visible to Retailer' : '🔒 Internal - Visible to Distributor only'}
-              </div>
-              <div className="p-5 space-y-4 overflow-y-auto bg-[#F8F7F5] flex-1">
-                {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
-                    <p className="text-[14px] font-bold">No messages here yet.</p>
-                  </div>
-                ) : (
-                  messages.map(m => (
-                    <div key={m.id} className={`flex flex-col ${m.sender === 'staff' ? 'items-end' : 'items-start'}`}>
-                      {m.sender !== 'staff' && <p className="text-[11px] text-gray-500 font-bold mb-1 ml-1">{m.name} · {m.sender.toUpperCase()}</p>}
-                      <div className={`max-w-[82%] px-4 py-3 rounded-[14px] ${m.sender === 'staff' ? 'bg-[#3D2B1F] text-white rounded-br-sm' : (m.sender === 'distributor' ? 'bg-orange-50 text-nestle-brown border border-orange-200 shadow-sm rounded-bl-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm')}`}>
-                        <p className="text-[14px] font-medium leading-relaxed">{m.text}</p>
-                      </div>
-                      <p className="text-[11px] text-gray-400 mt-1">{m.time}</p>
+            {/* Distributor Chat — only shown when a distributor is assigned */}
+            {ticket.distributorId ? (
+              <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[520px]">
+                <div className="px-6 py-4 border-b border-[#E0DBD5] bg-[#FDF8F3] flex-shrink-0">
+                  <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest flex items-center gap-2">
+                    🚚 Staff ↔ Distributor Chat
+                  </h3>
+                  <p className="text-[11px] text-gray-400 font-medium mt-0.5">🔒 Internal — visible to assigned distributor only</p>
+                </div>
+                <div className="p-5 space-y-4 overflow-y-auto bg-[#F8F7F5] flex-1">
+                  {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
+                      <p className="text-[14px] font-bold">No messages yet.</p>
+                      <p className="text-[12px] mt-1">Start the conversation with the distributor.</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    messages.map(m => (
+                      <div key={m.id} className={`flex flex-col ${m.sender === 'staff' ? 'items-end' : 'items-start'}`}>
+                        {m.sender !== 'staff' && <p className="text-[11px] text-gray-500 font-bold mb-1 ml-1">{m.name} · DISTRIBUTOR</p>}
+                        <div className={`max-w-[82%] px-4 py-3 rounded-[14px] ${
+                          m.sender === 'staff'
+                            ? 'bg-[#3D2B1F] text-white rounded-br-sm'
+                            : 'bg-orange-50 text-nestle-brown border border-orange-200 shadow-sm rounded-bl-sm'
+                        }`}>
+                          <p className="text-[14px] font-medium leading-relaxed">{m.text}</p>
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-1">{m.time}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="p-4 border-t border-[#E0DBD5] flex gap-3 bg-white">
+                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==='Enter' && sendMessage()} placeholder="Message distributor..." className="flex-1 border border-[#E0DBD5] rounded-[10px] px-4 py-3 text-[14px] font-medium placeholder-gray-400 text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20"/>
+                  <button onClick={sendMessage} className="bg-[#3D2B1F] text-white p-3 rounded-[10px] hover:bg-[#2C1810] transition-colors flex-shrink-0"><Send size={18}/></button>
+                </div>
               </div>
-              <div className="p-4 border-t border-[#E0DBD5] flex gap-3 bg-white">
-                <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==='Enter' && sendMessage()} placeholder="Type your response..." className="flex-1 border border-[#E0DBD5] rounded-[10px] px-4 py-3 text-[14px] font-medium placeholder-gray-400 text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20"/>
-                <button onClick={sendMessage} className="bg-[#3D2B1F] text-white p-3 rounded-[10px] hover:bg-[#2C1810] transition-colors flex-shrink-0"><Send size={18}/></button>
+            ) : (
+              <div className="bg-[#F8F7F5] border border-dashed border-[#D5CFC8] rounded-[20px] p-8 text-center">
+                <p className="text-[13px] font-bold text-gray-400">No distributor assigned yet.</p>
+                <p className="text-[12px] text-gray-400 mt-1">Assign a distributor above to enable the chat channel.</p>
               </div>
-            </div>
+            )}
           </div>
 
           {/* RIGHT */}
           <div className="space-y-5">
-            {/* Status Timeline */}
+            {/* Priority & Resolution — staff-editable */}
+            <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">
+              <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-5">Priority & Resolution</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Priority Level</label>
+                  <select
+                    value={editPriority}
+                    onChange={e => setEditPriority(e.target.value)}
+                    className="w-full border border-[#E0DBD5] rounded-[10px] px-3 py-2.5 text-[14px] font-medium text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 bg-white"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Time to Resolve</label>
+                  <select
+                    value={editTTR}
+                    onChange={e => setEditTTR(e.target.value)}
+                    className="w-full border border-[#E0DBD5] rounded-[10px] px-3 py-2.5 text-[14px] font-medium text-[#2C1810] focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 bg-white"
+                  >
+                    <option value="">Not set</option>
+                    <option value="1 hour">1 hour</option>
+                    <option value="4 hours">4 hours</option>
+                    <option value="8 hours">8 hours</option>
+                    <option value="24 hours">24 hours</option>
+                    <option value="48 hours">48 hours</option>
+                  </select>
+                </div>
+                <button
+                  onClick={savePriorityAndTTR}
+                  disabled={savingPriority}
+                  className="w-full bg-[#3D2B1F] text-white font-bold text-[13px] py-3 rounded-[10px] hover:bg-[#2C1810] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {savingPriority ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Saving...</span></> : 'Save Priority & TTR'}
+                </button>
+                {ticket.timeToResolve && (
+                  <p className="text-[12px] text-gray-500 font-medium text-center">Current TTR: <strong className="text-[#2C1810]">{ticket.timeToResolve}</strong></p>
+                )}
+              </div>
+            </div>
             <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">
               <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-5">Ticket Progress</h3>
               {(() => {

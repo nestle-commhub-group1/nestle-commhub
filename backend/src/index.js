@@ -62,9 +62,9 @@ app.use(cors({
 
 /* ─── Body Parsers ────────────────────────────────────────────────────────── */
 
-// Parse incoming JSON bodies — limit is 50mb to support base64-encoded file attachments
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Parse incoming JSON bodies — 10mb supports ~7.5MB raw files after base64 encoding
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 /* ─── Route Groups ────────────────────────────────────────────────────────── */
 
@@ -90,14 +90,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Nestlé CommHub API is running 🚀' });
 });
 
-// Health check endpoint — returns database connection status.
-// Used by the keep-alive ping below and by deployment monitoring tools.
+// Health check — returns minimal status only (no internal info exposed)
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Nestlé CommHub API is running',
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+  res.json({ status: 'ok' });
 });
 
 /* ─── Server Start ────────────────────────────────────────────────────────── */

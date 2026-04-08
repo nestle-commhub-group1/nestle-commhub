@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import {
-  ArrowLeft, Send, Truck, MessageSquare, Briefcase, Clock,
+  ArrowLeft, Send, Truck, Clock,
   User, AlertCircle, CheckCircle, Loader2
 } from 'lucide-react';
 import DistributorLayout from '../../components/layout/DistributorLayout';
@@ -165,7 +165,6 @@ export default function DistributorTicketDetail() {
 
   const [ticket,  setTicket]  = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab,     setTab]     = useState('retailer'); // 'retailer' | 'staff'
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
@@ -278,47 +277,21 @@ export default function DistributorTicketDetail() {
 
           {/* Chat Section */}
           <div className="lg:col-span-2 bg-white rounded-[20px] border border-nestle-border shadow-sm flex flex-col overflow-hidden h-[650px]">
-            {/* Tabs */}
-            <div className="flex border-b border-gray-100 bg-gray-50/30 flex-shrink-0">
-               <button
-                onClick={() => setTab('retailer')}
-                className={`flex-1 py-4 text-[13px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                  tab === 'retailer'
-                    ? 'text-[#3B82F6] bg-white border-b-2 border-[#3B82F6]'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                }`}
-              >
-                <MessageSquare size={16}/> Chat with Retailer
-              </button>
-              <button
-                onClick={() => setTab('staff')}
-                className={`flex-1 py-4 text-[13px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                  tab === 'staff'
-                    ? 'text-nestle-brown bg-white border-b-2 border-nestle-brown'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                }`}
-              >
-                <Briefcase size={16}/> Internal Staff
-              </button>
-            </div>
-
-            {/* Context Info */}
-            <div className={`px-5 py-2.5 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${
-              tab === 'retailer' ? 'bg-blue-50 text-[#3B82F6]' : 'bg-[#FDF8F3] text-[#8B5A2B]'
-            }`}>
-              {tab === 'retailer'
-                ? '💬 Direct communication with the Retailer'
-                : '🔒 Locked channel with Nestlé Management'}
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#E0DBD5] bg-[#FDF8F3] flex-shrink-0">
+              <h3 className="text-[12px] font-extrabold text-[#8B5A2B] uppercase tracking-widest flex items-center gap-2">
+                🚚 Staff ↔ Distributor Chat
+              </h3>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5">🔒 Internal channel with assigned Nestlé Staff</p>
             </div>
 
             <ChatPane
-              key={tab}
               ticketId={id}
               token={token}
-              chatRoom={tab === 'retailer' ? 'retailer_distributor' : 'staff_distributor'}
+              chatRoom="staff_distributor"
               currentUser={currentUser}
-              accentColor={tab === 'retailer' ? 'bg-[#3B82F6]' : 'bg-nestle-brown'}
-              emptyLabel={tab === 'retailer' ? 'No messages with retailer yet.' : 'No internal messages yet.'}
+              accentColor="bg-nestle-brown"
+              emptyLabel="No messages with staff yet."
             />
           </div>
         </div>

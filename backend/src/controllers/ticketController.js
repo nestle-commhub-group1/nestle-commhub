@@ -19,7 +19,7 @@ const Notification = require("../models/Notification");
 // Returns true if the user is allowed to see this ticket based on their role.
 // hq_admin and distributor have broad access; retailers and staff have scoped access.
 const hasTicketAccess = (ticket, user) => {
-  if (user.role === "hq_admin" || user.role === "distributor") return true;
+  if (user.role === "hq_admin") return true;
   if (user.role === "retailer") {
     // Retailers can only see tickets they personally submitted
     return ticket.retailerId.toString() === user._id.toString();
@@ -28,6 +28,10 @@ const hasTicketAccess = (ticket, user) => {
     // Sales staff can only see tickets assigned specifically to them
     return ticket.assignedTo && ticket.assignedTo.toString() === user._id.toString();
   }
+  if (user.role === "distributor") {
+    // Distributors can only see tickets allocated to them — not all tickets
+    return ticket.distributorId?.toString() === user._id.toString();
+  }
   return false;
 };
 
@@ -35,9 +39,10 @@ const hasTicketAccess = (ticket, user) => {
 
 const createTicket = async (req, res) => {
   try {
-    console.log("Create ticket called");
-    console.log("User:", req.user?._id);
-    console.log("Body:", JSON.stringify(req.body, (key, value) => key === 'attachments' ? `[${value.length} files]` : value, 2));
+    // Dev-only debug log — never logs full bodies in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Create ticket called, user:", req.user?._id);
+    }
 
     const { category, description, attachments, priority } = req.body;
 
@@ -345,13 +350,21 @@ const updateTicketPriority = async (req, res) => {
       });
     }
 
-    const { priority } = req.body;
+    const { priority, timeToResolve } = req.body;
     const validPriorities = ['low', 'medium', 'high', 'critical'];
+    const validTTR = ['1 hour', '4 hours', '8 hours', '24 hours', '48 hours'];
 
     if (!priority || !validPriorities.includes(priority)) {
       return res.status(400).json({
         success: false,
         message: 'Valid priority is required: low, medium, high, critical',
+      });
+    }
+
+    if (timeToResolve && !validTTR.includes(timeToResolve)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid timeToResolve value.',
       });
     }
 
@@ -361,6 +374,7 @@ const updateTicketPriority = async (req, res) => {
     }
 
     ticket.priority  = priority;
+    if (timeToResolve) ticket.timeToResolve = timeToResolve;
     ticket.updatedAt = new Date();
     await ticket.save();
 

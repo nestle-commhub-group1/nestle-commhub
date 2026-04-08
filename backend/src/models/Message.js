@@ -28,10 +28,12 @@ const messageSchema = new mongoose.Schema({
     required: [true, "Message content is required"],
   },
 
+  // Sprint 2: only staff_distributor channel is valid.
+  // staff_retailer and retailer_distributor rooms have been removed.
   chatRoom: {
     type: String,
-    default: "staff_retailer",
-    enum: ["staff_retailer", "retailer_distributor", "staff_distributor"],
+    default: "staff_distributor",
+    enum: ["staff_distributor"],
   },
 
   attachments: {

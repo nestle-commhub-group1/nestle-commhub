@@ -63,7 +63,13 @@ const updateUserStatus = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { fullName, phone } = req.body;
+    // Sanitise and cap field lengths to prevent oversized input
+    const fullName = (req.body.fullName || '').trim().slice(0, 100);
+    const phone    = (req.body.phone    || '').trim().slice(0, 20);
+
+    if (!fullName) {
+      return res.status(400).json({ success: false, message: 'Full name is required.' });
+    }
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { fullName, phone },

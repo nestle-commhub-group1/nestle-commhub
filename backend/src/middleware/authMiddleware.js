@@ -46,10 +46,9 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Step 2: Dev token bypass (only used during local development)
-    // The DevLauncher page issues tokens like "dev-token-retailer" to simulate
-    // different roles without needing a real login. This block intercepts those.
-    if (token.startsWith("dev-token-")) {
+    // Step 2: Dev token bypass — ONLY active in local development, never in production.
+    // DevLauncher issues tokens like "dev-token-retailer" to simulate roles without login.
+    if (process.env.NODE_ENV !== 'production' && token.startsWith("dev-token-")) {
       const role = token.replace("dev-token-", ""); // Extract role from token string
 
       // Map each role to a known test account email in the database

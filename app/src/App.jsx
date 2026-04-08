@@ -35,7 +35,6 @@ import StaffDashboard    from "./pages/staff/StaffDashboard";
 import StaffProfile      from "./pages/staff/StaffProfile";
 import StaffMyTickets    from "./pages/staff/MyTickets";
 import StaffTicketDetail from "./pages/staff/TicketDetail";
-import RetailerDirectory from "./pages/staff/RetailerDirectory";
 import StaffBroadcasts   from "./pages/staff/Broadcasts";
 
 // ── Admin pages (role: "hq_admin") ────────────────────────────────────────
@@ -108,7 +107,6 @@ function App() {
           <Route path="/staff/profile"    element={<ProtectedRoute roles="sales_staff"><StaffProfile /></ProtectedRoute>} />
           <Route path="/staff/tickets"    element={<ProtectedRoute roles="sales_staff"><StaffMyTickets /></ProtectedRoute>} />
           <Route path="/staff/tickets/:id" element={<ProtectedRoute roles="sales_staff"><StaffTicketDetail /></ProtectedRoute>} />
-          <Route path="/staff/directory"  element={<ProtectedRoute roles="sales_staff"><RetailerDirectory /></ProtectedRoute>} />
           <Route path="/staff/broadcasts" element={<ProtectedRoute roles="sales_staff"><StaffBroadcasts /></ProtectedRoute>} />
 
           {/* ── HQ Admin routes — only accessible with role="hq_admin" ──────────── */}

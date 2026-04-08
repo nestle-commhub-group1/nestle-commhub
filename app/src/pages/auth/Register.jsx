@@ -147,7 +147,7 @@ const retailerDefaults = {
 
 const employeeDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", employeeId: "", department: "", officeLocation: "",
+  phone: "", employeeId: "", officeLocation: "",
   staffCategory: "",
   role: "sales_staff"
 };
@@ -258,7 +258,6 @@ export default function Register() {
     } else if (tab === "employee") {
       // Employee ID is verified server-side against the ValidEmployee seed list
       req("employeeId",  "Employee ID");
-      req("department",  "Department");
       // Sales staff must also specify their specialisation category
       if (form.role === "sales_staff") {
         req("staffCategory", "Staff Category");
@@ -474,7 +473,7 @@ export default function Register() {
                   onChange={handleChange}
                   className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${errors.role ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"}`}
                 >
-                  <option value="sales_staff">Sales Staff</option>
+                  <option value="sales_staff">Staff</option>
                   <option value="hq_admin">HQ Admin</option>
                   <option value="distributor">Distributor</option>
                 </select>
@@ -503,9 +502,6 @@ export default function Register() {
                 <Field label="Employee ID" required error={errors.employeeId}>
                   {/* Employee ID must exist in backend ValidEmployee collection */}
                   <TextInput name="employeeId" placeholder="NES123456" value={form.employeeId} onChange={handleChange} error={errors.employeeId} />
-                </Field>
-                <Field label="Department" required error={errors.department}>
-                  <TextInput name="department" placeholder="Sales & Marketing" value={form.department} onChange={handleChange} error={errors.department} />
                 </Field>
               </div>
               <Field label="Office Location" error={errors.officeLocation}>

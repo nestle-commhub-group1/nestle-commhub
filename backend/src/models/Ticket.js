@@ -54,6 +54,15 @@ const ticketSchema = new mongoose.Schema({
     default: "low",
   },
 
+  // Time to resolve — set by Staff/Admin after reviewing the ticket.
+  // Options match the frontend dropdown. When set, the SLA job uses this
+  // value for escalation timing instead of the default priority-based deadline.
+  timeToResolve: {
+    type: String,
+    enum: ["1 hour", "4 hours", "8 hours", "24 hours", "48 hours"],
+    default: null,
+  },
+
   status: {
     type: String,
     // Ticket lifecycle: open → in_progress → resolved (or escalated at any point)
