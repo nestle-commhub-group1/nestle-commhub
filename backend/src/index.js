@@ -37,11 +37,8 @@ if (process.env.MONGO_URI) {
 // We include localhost ports for development, plus the deployed Render frontend URL.
 // FRONTEND_URL can be set in .env to support other hosted environments.
 const allowedOrigins = [
-  "http://localhost:5173",           // Vite dev server default
-  "http://localhost:3000",           // Alternative local dev port
-  "https://nestle-commhub.onrender.com",     // Standard Render URL
-  "https://nestle-commhub-app.onrender.com", // App-suffixed Render URL
-  process.env.FRONTEND_URL           // Optional override from .env
+  "https://nestle-commhub-app.onrender.com",
+  process.env.FRONTEND_URL
 ].filter(Boolean) // Remove undefined/null values if FRONTEND_URL is not set
 
 app.use(cors({
