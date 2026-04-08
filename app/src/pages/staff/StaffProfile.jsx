@@ -9,7 +9,6 @@ const StaffProfile = () => {
     email: 'nadeeka.perera@nestle.com',
     phone: '+94 71 456 7890',
     employeeId: 'NSL-4421',
-    department: 'Sales & Distribution',
     officeLocation: 'Colombo Head Office',
     staffCategory: '',
   });
@@ -17,7 +16,6 @@ const StaffProfile = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
-    department: '',
     officeLocation: ''
   });
 
@@ -46,7 +44,6 @@ const StaffProfile = () => {
         setFormData({
           fullName: name,
           phone: parsedUser.contactNumber || '+94 71 456 7890',
-          department: parsedUser.department || 'Sales & Distribution',
           officeLocation: parsedUser.officeLocation || 'Colombo Head Office'
         });
       } catch (e) {}
@@ -54,7 +51,6 @@ const StaffProfile = () => {
       setFormData({
         fullName: 'Nadeeka Perera',
         phone: '+94 71 456 7890',
-        department: 'Sales & Distribution',
         officeLocation: 'Colombo Head Office'
       });
     }
@@ -156,26 +152,15 @@ const StaffProfile = () => {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">DEPARTMENT <span className="text-nestle-danger">*</span></label>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">OFFICE LOCATION</label>
               <input 
                 type="text" 
-                name="department"
-                value={formData.department} 
+                name="officeLocation"
+                value={formData.officeLocation} 
                 onChange={handleChange}
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
               />
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">OFFICE LOCATION</label>
-            <input 
-              type="text" 
-              name="officeLocation"
-              value={formData.officeLocation} 
-              onChange={handleChange}
-              className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
-            />
           </div>
 
           {/* Staff Category — read-only, set at registration */}

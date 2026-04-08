@@ -33,10 +33,14 @@ const isValidEmail = (email) => {
 /* ─── POST /api/auth/register ────────────────────────────────────────────── */
 
 const registerUser = async (req, res) => {
+  console.log("-----------------------------------------");
+  console.log("📍 REGISTRATION REQUEST RECEIVED");
+  console.log("📍 NODE_ENV:", process.env.NODE_ENV);
+  
   // Log registration attempts in dev only — never log passwords in production
   if (process.env.NODE_ENV !== 'production') {
     const safe = { ...req.body, password: '[REDACTED]', confirmPassword: '[REDACTED]' };
-    console.log("Register attempt:", safe);
+    console.log("📍 Payload:", safe);
   }
   try {
     const {
@@ -54,7 +58,6 @@ const registerUser = async (req, res) => {
       district,
       // Employee-only fields
       employeeId,
-      department,
       officeLocation,
       staffCategory,
     } = req.body;
@@ -169,26 +172,17 @@ const registerUser = async (req, res) => {
 
     // The password is NOT hashed here — the User model's pre-save hook handles that
     // automatically before the document is written to the database.
+    console.log("📍 Step 5: Creating User document...");
     const newUser = new User({
-      fullName,
-      email,
-      password, // Will be hashed by the pre-save hook in User.js
-      phone,
-      role,
-      // Retailer-specific
-      businessName,
-      businessAddress,
-      taxId,
-      province,
-      district,
-      // Employee-specific
-      employeeId,
-      officeLocation,
-      staffCategory,
+      fullName, email, password, phone, role,
+      businessName, businessAddress, taxId, province, district,
+      employeeId, officeLocation, staffCategory,
     });
 
+    console.log("📍 Saving user to MongoDB...");
     try {
       await newUser.save();
+      console.log("✅ User saved successfully. ID:", newUser._id);
 
       // Only mark the ID as used when using a real (non-dev) employee ID
       const usingDevBypass = process.env.NODE_ENV === 'development' &&
@@ -234,9 +228,8 @@ const registerUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("REGISTRATION ERROR:", error.message);
-    console.log("FULL ERROR STACK:", error.stack);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("⛔ [authController] Unexpected registration error:", error);
+    return res.status(500).json({ success: false, message: "Unexpected server error: " + error.message });
   }
 };
 
