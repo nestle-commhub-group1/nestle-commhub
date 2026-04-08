@@ -33,30 +33,13 @@ if (process.env.MONGO_URI) {
 
 /* ─── CORS Configuration ──────────────────────────────────────────────────── */
 
-// Whitelist of origins that are allowed to call this API.
-// We include localhost ports for development, plus the deployed Render frontend URL.
-// FRONTEND_URL can be set in .env to support other hosted environments.
-const allowedOrigins = [
-  "https://nestle-commhub-app.onrender.com",
-  process.env.FRONTEND_URL
-].filter(Boolean) // Remove undefined/null values if FRONTEND_URL is not set
-
+// ─── Simplifed CORS configuration for production troubleshooting ──────────────────
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin header (e.g., Postman, mobile apps, same-origin)
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)  // Origin is on the whitelist → allow it
-    }
-    callback(new Error("CORS blocked: " + origin)) // Origin not allowed → block it
-  },
-  credentials: true,  // Allow cookies and Authorization headers to be sent cross-origin
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",    // For JSON request bodies
-    "Authorization"    // For the JWT Bearer token
-  ]
-}))
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 /* ─── Body Parsers ────────────────────────────────────────────────────────── */
 
