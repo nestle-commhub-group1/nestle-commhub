@@ -176,6 +176,18 @@ const UserManagement = () => {
                           <div className="flex flex-col">
                             <span className="font-bold text-nestle-brown">{u.fullName}</span>
                             {u.businessName && <span className="text-[11px] text-gray-400 font-medium">{u.businessName}</span>}
+                            {/* Province/District for retailers */}
+                            {u.role === 'retailer' && (u.province || u.district) && (
+                              <span className="text-[11px] text-blue-500 font-medium">
+                                {[u.province, u.district].filter(Boolean).join(', ')}
+                              </span>
+                            )}
+                            {/* Staff Category badge for sales_staff */}
+                            {u.role === 'sales_staff' && u.staffCategory && (
+                              <span className="mt-1 inline-block text-[10px] font-bold bg-[#DBEAFE] text-[#1D4ED8] px-2 py-0.5 rounded w-fit">
+                                {u.staffCategory}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-500">{u.email}</td>

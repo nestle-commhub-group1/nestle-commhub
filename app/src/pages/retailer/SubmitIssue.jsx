@@ -1,60 +1,77 @@
+/**
+ * SubmitIssue.jsx
+ *
+ * The ticket submission form for retailers to report issues to Nestlé support.
+ *
+ * Key responsibilities:
+ * - Lets the retailer select a category, add a description, and attach optional files
+ * - Priority is NOT set by the retailer — it defaults to 'low' and is assigned by HQ/Staff
+ * - Converts uploaded files to base64 strings before sending (avoids multipart/form-data complexity)
+ * - Posts the completed ticket to /api/tickets and shows a success confirmation screen
+ * - In development mode, simulates submission without calling the real API
+ */
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
-import { AlertCircle, AlertTriangle, Camera, CheckCircle, Clock, Loader2, Send, Upload, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
+/* ─── Category constants ──────────────────────────────────────────────────── */
+
+// Category options shown in the dropdown — values match the backend enum exactly
 const CATEGORIES = [
   { value: '', label: 'Select a category...' },
-  { value: 'stock_out', label: 'Stock Out' },
+  { value: 'stock_out',       label: 'Stock Out' },
   { value: 'product_quality', label: 'Product Quality' },
   { value: 'logistics_delay', label: 'Logistics Delay' },
-  { value: 'pricing_issue', label: 'Pricing Issue' },
+  { value: 'pricing_issue',   label: 'Pricing Issue' },
 ];
-
-const PRIORITIES = [
-  { value: 'low',      label: 'Low',      border: 'border-gray-300',   sel: 'bg-gray-100 border-gray-400 text-gray-800',   dot: 'bg-gray-400' },
-  { value: 'medium',   label: 'Medium',   border: 'border-yellow-400', sel: 'bg-yellow-50 border-yellow-500 text-yellow-800', dot: 'bg-yellow-400' },
-  { value: 'high',     label: 'High',     border: 'border-orange-400', sel: 'bg-orange-50 border-orange-500 text-orange-800', dot: 'bg-orange-400' },
-  { value: 'critical', label: 'Critical', border: 'border-red-400',    sel: 'bg-red-50 border-red-500 text-red-700',      dot: 'bg-red-500' },
-];
-
-const SLA_LABELS = { low: '24 hours', medium: '8 hours', high: '4 hours', critical: '2 hours' };
 
 const defaultForm = {
-  category: '', priority: '', description: '',
-  sms: true, push: true, email: false, files: [],
+  category: '', description: '', files: [],
 };
 
 export default function SubmitIssue() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm]   = useState(defaultForm);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  // When submitted=true, the form is replaced by a success confirmation screen
   const [submitted, setSubmitted] = useState(false);
+  // Store the ticket number returned by the server to display in the confirmation
   const [submittedTicketNumber, setSubmittedTicketNumber] = useState('');
-  const [charCount, setCharCount] = useState(0);
-  const [dragging, setDragging] = useState(false);
+  const [charCount, setCharCount] = useState(0); // Live character counter for the description field
+  const [dragging, setDragging]   = useState(false); // Visual feedback during file drag-and-drop
+
+  /* ── Form validation ──────────────────────────────────────────────────── */
 
   function validate() {
     const e = {};
-    if (!form.category)    e.category    = 'Please select a category.';
-    if (!form.priority)    e.priority    = 'Please select a priority level.';
+    if (!form.category)           e.category    = 'Please select a category.';
     if (!form.description.trim()) e.description = 'Please describe your issue.';
     return e;
   }
 
+  /* ── File to base64 converter ─────────────────────────────────────────── */
+
+  // Converts a File object (from the file input) into a base64 data URL string.
+  // Base64 allows files to be sent as part of a regular JSON request body,
+  // avoiding the need for multipart/form-data handling on the backend.
   const toBase64 = (file) => new Promise(
     (resolve, reject) => {
       const reader = new FileReader()
       reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result)
+      reader.onload  = () => resolve(reader.result)
       reader.onerror = reject
     }
   )
 
+  // True when in dev mode AND using a dev token — disables real API calls
   const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
+
+  /* ── Form submission ─────────────────────────────────────────────────── */
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -64,42 +81,33 @@ export default function SubmitIssue() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
+      // These maps convert the human-readable label (e.g., "Stock Out")
+      // back to the backend enum value (e.g., "stock_out") in case the
+      // form value somehow contains the label instead of the slug.
       const categoryMap = {
-        "Stock Out": "stock_out",
+        "Stock Out":       "stock_out",
         "Product Quality": "product_quality",
         "Logistics Delay": "logistics_delay",
-        "Pricing Issue": "pricing_issue"
-      };
-
-      const priorityMap = {
-        "Low": "low",
-        "Medium": "medium",
-        "High": "high",
-        "Critical": "critical"
+        "Pricing Issue":   "pricing_issue"
       };
 
       const selectedCategoryLabel = CATEGORIES.find(c => c.value === form.category)?.label;
-      const selectedPriorityLabel = PRIORITIES.find(p => p.value === form.priority)?.label;
 
+      // Convert all attached files to base64 arrays — this runs in parallel using Promise.all
       const base64Files = await Promise.all((form.files || []).map(file => toBase64(file)));
 
       const payload = {
-        category: categoryMap[selectedCategoryLabel] || form.category,
-        priority: priorityMap[selectedPriorityLabel] || form.priority,
+        category:    categoryMap[selectedCategoryLabel] || form.category,
+        // priority is intentionally omitted — backend defaults to 'low'
+        // and only HQ Admin / Sales Staff can change it
         description: form.description.trim(),
         attachments: base64Files || []
       };
 
-      console.log("Submitting:", {
-        categoryLabel: selectedCategoryLabel,
-        priorityLabel: selectedPriorityLabel,
-        payload,
-        API_URL,
-        token: !!token
-      });
+      console.log("Submitting:", { categoryLabel: selectedCategoryLabel, payload, API_URL, token: !!token });
 
-      // Simulation for dev mode
+      // Dev mode simulation — return a fake ticket number without calling the API
       if (isDevMode) {
         setTimeout(() => {
           setSubmittedTicketNumber('TKT-VERIFY');
@@ -109,12 +117,15 @@ export default function SubmitIssue() {
         return;
       }
 
+      // Real API call — send the ticket to the backend
       const response = await axios.post(`${API_URL}/api/tickets`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
+        // Get the auto-generated ticket number from the backend response
         setSubmittedTicketNumber(response.data.ticket.ticketNumber);
+        // Switch to the success screen — the form disappears
         setSubmitted(true);
       }
     } catch (err) {
@@ -125,14 +136,19 @@ export default function SubmitIssue() {
     }
   }
 
+  // Add newly selected/dropped files to the existing file list
   function handleFiles(fileList) {
     const arr = Array.from(fileList);
     setForm(f => ({ ...f, files: [...f.files, ...arr] }));
   }
 
+  // Reset everything back to the empty form state (used by "Submit Another Issue" button)
   function reset() { setForm(defaultForm); setCharCount(0); setSubmitted(false); setSubmittedTicketNumber(''); setErrors({}); }
 
-  // ── Success State ─────────────────────────────────────────────────────────────
+  /* ── Success State ────────────────────────────────────────────────────── */
+
+  // Once the ticket is created, replace the form with a confirmation card
+  // showing the ticket number, SLA response time, and navigation options
   if (submitted) {
     return (
       <RetailerLayout>
@@ -145,7 +161,7 @@ export default function SubmitIssue() {
             <p className="text-[15px] text-gray-500 font-medium mb-1">Your ticket number is</p>
             <p className="text-[28px] font-extrabold text-[#2563EB] mb-4">{submittedTicketNumber}</p>
             <p className="text-[14px] text-gray-500 mb-8">
-              Our team will respond within <strong>{SLA_LABELS[form.priority] || '4 hours'}</strong>. You'll be notified when there's an update.
+              Our team will review and respond to your ticket shortly. You'll be notified when there's an update.
             </p>
             <Link
               to="/retailer/tickets"
@@ -171,18 +187,19 @@ export default function SubmitIssue() {
     );
   }
 
-  // ── Form State ────────────────────────────────────────────────────────────────
+  /* ── Form State ─────────────────────────────────────────────────────────── */
+
   return (
     <RetailerLayout>
       <div className="pb-10">
-        {/* Dev Mode Banner */}
+        {/* Dev mode banner — warnings developers they are seeing simulated data */}
         {isDevMode && (
           <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center">
             <span className="mr-2">ℹ️</span> Dev mode — showing sample data
           </div>
         )}
 
-        {/* Header */}
+        {/* Page header */}
         <div className="mb-8">
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">Submit an Issue</h1>
           <p className="text-[15px] font-medium text-gray-500 mt-1">Report a problem and our team will get back to you</p>
@@ -190,7 +207,8 @@ export default function SubmitIssue() {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm p-8 space-y-8">
-            
+
+            {/* Backend error message (e.g., server down) */}
             {errors.submit && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-[12px] text-[14px] font-medium flex items-center space-x-2">
                 <AlertCircle size={18} />
@@ -198,7 +216,7 @@ export default function SubmitIssue() {
               </div>
             )}
 
-            {/* Category */}
+            {/* Category dropdown */}
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-2">
                 Issue Category <span className="text-red-500">*</span>
@@ -213,34 +231,9 @@ export default function SubmitIssue() {
               {errors.category && <p className="text-red-500 text-[12px] mt-1.5 font-medium">{errors.category}</p>}
             </div>
 
-            {/* Priority */}
-            <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-3">
-                Priority Level <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PRIORITIES.map(p => {
-                  const isSelected = form.priority === p.value;
-                  return (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => { setForm(f => ({ ...f, priority: p.value })); setErrors(er => ({ ...er, priority: undefined, submit: undefined })); }}
-                      className={`border-2 rounded-[12px] py-4 px-3 flex flex-col items-center transition-all ${isSelected ? p.sel + ' shadow-md scale-[1.02]' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                    >
-                      <div className={`w-3 h-3 rounded-full mb-2 ${p.dot}`} />
-                      <span className="text-[14px] font-bold">{p.label}</span>
-                      {p.value !== 'low' && (
-                        <span className="text-[11px] text-gray-500 mt-0.5">{SLA_LABELS[p.value]}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.priority && <p className="text-red-500 text-[12px] mt-1.5 font-medium">{errors.priority}</p>}
-            </div>
+            {/* Priority is managed by HQ Admin / Sales Staff — not shown to retailers */}
 
-            {/* Description */}
+            {/* Description textarea with live character counter */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest">
@@ -259,7 +252,7 @@ export default function SubmitIssue() {
               {errors.description && <p className="text-red-500 text-[12px] mt-1.5 font-medium">{errors.description}</p>}
             </div>
 
-            {/* Attach Evidence */}
+            {/* File attachment area — supports both click-to-upload and drag-and-drop */}
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-3">
                 Attach Evidence <span className="text-gray-400 font-medium normal-case tracking-normal">(optional)</span>
@@ -267,20 +260,24 @@ export default function SubmitIssue() {
               <div
                 onDragOver={e => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
+                // When files are dropped, add them to the form's file list
                 onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
                 className={`border-2 border-dashed rounded-[14px] p-8 text-center transition-colors cursor-pointer ${dragging ? 'border-[#3D2B1F] bg-[#F5F3F0]' : 'border-[#D5CFC8] hover:border-[#3D2B1F] hover:bg-[#F8F7F5]'}`}
                 onClick={() => document.getElementById('file-upload').click()}
               >
+                {/* Hidden native file input — triggered by the visible upload area above */}
                 <input id="file-upload" type="file" multiple accept="image/*,video/*,audio/*" className="hidden" onChange={e => handleFiles(e.target.files)} />
                 <div className="text-4xl mb-3">📎</div>
                 <p className="text-[14px] font-semibold text-[#3D2B1F]">Click to upload or drag and drop</p>
                 <p className="text-[12px] text-gray-500 mt-1">Photos, videos, voice notes. Max 10MB per file</p>
               </div>
+              {/* Show list of selected files with individual remove buttons */}
               {form.files.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {form.files.map((f, i) => (
                     <div key={i} className="bg-[#F5F3F0] border border-[#E0DBD5] rounded-lg px-3 py-1.5 flex items-center space-x-2">
                       <span className="text-[13px] font-medium text-[#2C1810] max-w-[140px] truncate">{f.name}</span>
+                      {/* Remove this specific file from the list */}
                       <button type="button" onClick={() => setForm(ff => ({ ...ff, files: ff.files.filter((_, j) => j !== i) }))} className="text-gray-400 hover:text-red-500 transition-colors text-xs font-bold">✕</button>
                     </div>
                   ))}
@@ -288,40 +285,12 @@ export default function SubmitIssue() {
               )}
             </div>
 
-            {/* Contact Preference */}
-            <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-4">Contact Preference</label>
-              <div className="space-y-3">
-                {[
-                  { key: 'sms',   label: 'SMS Notifications',   desc: 'Receive updates via text message' },
-                  { key: 'push',  label: 'Push Notifications',  desc: 'Receive updates in-app' },
-                  { key: 'email', label: 'Email Notifications', desc: 'Receive updates via email' },
-                ].map(({ key, label, desc }) => (
-                  <div key={key} className="flex items-center justify-between bg-[#F8F7F5] border border-[#E0DBD5] rounded-[12px] px-5 py-4">
-                    <div>
-                      <p className="text-[14px] font-bold text-[#2C1810]">{label}</p>
-                      <p className="text-[12px] text-gray-500 font-medium mt-0.5">{desc}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setForm(f => ({ ...f, [key]: !f[key] }))}
-                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${form[key] ? 'bg-[#2D7A4F]' : 'bg-gray-300'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form[key] ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+
           </div>
 
-          {/* Warning notice */}
-          {form.priority === 'critical' && (
-            <div className="mt-4 bg-red-50 border border-red-200 rounded-[12px] px-5 py-4 flex items-start space-x-3">
-              <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-[13px] text-red-700 font-medium">Critical priority tickets will be escalated to HQ Admin automatically if not resolved within 2 hours.</p>
-            </div>
-          )}
+
+
+          {/* Submit button — disabled while submitting to prevent duplicate tickets */}
           <button
             type="submit"
             disabled={loading}

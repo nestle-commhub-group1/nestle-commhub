@@ -10,7 +10,8 @@ const StaffProfile = () => {
     phone: '+94 71 456 7890',
     employeeId: 'NSL-4421',
     department: 'Sales & Distribution',
-    officeLocation: 'Colombo Head Office'
+    officeLocation: 'Colombo Head Office',
+    staffCategory: '',
   });
 
   const [formData, setFormData] = useState({
@@ -38,7 +39,8 @@ const StaffProfile = () => {
           phone: parsedUser.contactNumber || prev.phone,
           employeeId: parsedUser.employeeId || prev.employeeId,
           department: parsedUser.department || prev.department,
-          officeLocation: parsedUser.officeLocation || prev.officeLocation
+          officeLocation: parsedUser.officeLocation || prev.officeLocation,
+          staffCategory: parsedUser.staffCategory || prev.staffCategory,
         }));
 
         setFormData({
@@ -175,6 +177,19 @@ const StaffProfile = () => {
               className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
             />
           </div>
+
+          {/* Staff Category — read-only, set at registration */}
+          {user.staffCategory && (
+            <div>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">STAFF CATEGORY</label>
+              <div className="flex items-center space-x-3">
+                <span className="inline-block bg-[#DBEAFE] text-[#1D4ED8] text-[13px] font-bold px-4 py-2 rounded-lg border border-[#1D4ED8]/20">
+                  {user.staffCategory}
+                </span>
+                <span className="text-[12px] text-gray-400 font-medium">(Set at registration — contact HQ Admin to change)</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <button 

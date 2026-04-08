@@ -12,7 +12,9 @@ const RetailerProfile = () => {
     phone: '+94 77 123 4567',
     businessName: 'Saman General Stores',
     taxId: 'PV-00087412',
-    address: '12/A, Baseline Road, Colombo 09'
+    address: '12/A, Baseline Road, Colombo 09',
+    province: '',
+    district: '',
   });
 
   const [formData, setFormData] = useState({
@@ -182,11 +184,35 @@ const RetailerProfile = () => {
             <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">BUSINESS ADDRESS</label>
             <input
               type="text"
-              value={user.address}
+              value={user.businessAddress || user.address}
               disabled
               className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
             />
           </div>
+
+          {/* Province and District — Sprint 2 fields */}
+          {(user.province || user.district) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <div>
+                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">PROVINCE</label>
+                <input
+                  type="text"
+                  value={user.province || '—'}
+                  disabled
+                  className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">DISTRICT</label>
+                <input
+                  type="text"
+                  value={user.district || '—'}
+                  disabled
+                  className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-gray-600 bg-[#F8F7F5] cursor-not-allowed"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <button

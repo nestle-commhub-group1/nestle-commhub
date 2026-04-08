@@ -7,6 +7,7 @@ const {
   getAllTickets,
   getTicketById,
   updateTicketStatus,
+  updateTicketPriority,
   escalateTicket,
   allocateDistributor,
 } = require("../controllers/ticketController");
@@ -34,6 +35,9 @@ router.post("/:id/escalate", protect, restrictTo("sales_staff", "hq_admin"), esc
 
 // PUT /api/tickets/:id/allocate — staff/admin assigns distributor
 router.put("/:id/allocate", protect, restrictTo("sales_staff", "hq_admin"), allocateDistributor);
+
+// PUT /api/tickets/:id/priority — ONLY staff/admin can set priority (retailers blocked)
+router.put("/:id/priority", protect, restrictTo("sales_staff", "hq_admin"), updateTicketPriority);
 
 // ── Message routes ─────────────────────────────────────────────────────────────
 

@@ -1,3 +1,17 @@
+/**
+ * TicketDetail.jsx  (staff)
+ *
+ * Detailed ticket view for Nestlé sales staff, with tools to manage the ticket.
+ *
+ * Key responsibilities:
+ * - Loads ticket data and chat messages from the API (with fallback to hardcoded data in dev mode)
+ * - Polls for new messages every 8 seconds for a near-real-time chat experience
+ * - Lets staff update the ticket status (in_progress / resolved) with a confirmation modal
+ * - Lets staff manually escalate a ticket to HQ Admin with a confirmation modal
+ * - Lets staff allocate the ticket to a distributor (fetched from /api/users/distributors)
+ * - Shows a live SLA countdown updated every minute
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -6,7 +20,8 @@ import StaffLayout from '../../components/layout/StaffLayout';
 import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateUtils';
 
-// ─── Hardcoded fallback ───────────────────────────────────────────────────────
+// Hardcoded fallback data used in development mode when the backend is not available.
+// This lets UI development continue without a running server or database.
 const FALLBACK = {
   id:'TKT-1041', category:'Stock Out', priority:'High', status:'In Progress',
   retailer:'Saman General Stores', submitted:'March 15, 2026 10:23 AM',
@@ -15,6 +30,7 @@ const FALLBACK = {
   retailerInfo:{ name:'Saman Perera', business:'Saman General Stores', phone:'+94 77 123 4567', email:'saman@samanstores.lk', address:'12/A Baseline Rd, Colombo 09', initials:'SP' }
 };
 
+// Sample messages for dev mode fallback
 const INIT_MSGS = [
   { id:1, sender:'retailer', name:'Saman Perera',    text:'We have completely run out of Milo 400g. Customers asking daily. Please help urgently.', time:'10:23 AM' },
   { id:2, sender:'staff',    name:'Nadeeka Perera',  text:"Thank you for reporting. I have noted your issue and will check with the distribution team right away.", time:'11:45 AM' },
@@ -47,11 +63,11 @@ export default function StaffTicketDetail() {
 
   const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
-  // ── Fetch ticket + messages ───────────────────────────────────────────────
+  // ── Fetch ticket + messages on mount ────────────────────────────────────
   useEffect(() => {
     if (!token || !id) { setLoading(false); return; }
 
-    // Skip API if dev mode
+    // In dev mode, skip the API and use the hardcoded FALLBACK data
     if (isDevMode) {
       setTicket(FALLBACK);
       setMessages(INIT_MSGS);
@@ -203,9 +219,11 @@ export default function StaffTicketDetail() {
     }
   }
 
-  // ── Update status ─────────────────────────────────────────────────────────
+  // ── Update status flow ────────────────────────────────────────────────
+  // Shows a confirmation modal first, then calls /api/tickets/:id/status
+  // Updates local ticket state immediately on success to avoid a re-fetch
   async function confirmStatusUpdate() {
-    const apiStatus = showStatusConfirm;
+    const apiStatus = showStatusConfirm; // 'in_progress' | 'resolved'
     const label = apiStatus === 'in_progress' ? 'In Progress' : 'Resolved';
     try {
       const res = await axios.put(
@@ -214,6 +232,7 @@ export default function StaffTicketDetail() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
+        // Update local state so the UI reflects the new status without a full page reload
         setTicket(p => ({ ...p, status: label, resolvedAt: apiStatus === 'resolved' ? new Date() : p.resolvedAt }));
         setStatus(label);
         setActionResult({ type: 'success', msg: `Status updated to ${label}` });
@@ -222,11 +241,14 @@ export default function StaffTicketDetail() {
       setActionResult({ type: 'error', msg: "Failed to update status." });
     } finally {
       setShowStatusConfirm(null);
-      setTimeout(() => setActionResult(null), 3000);
+      setTimeout(() => setActionResult(null), 3000); // Auto-dismiss the toast after 3 seconds
     }
   }
 
-  // ── Allocate Distributor ──────────────────────────────────────────────────
+  // ── Allocate Distributor ──────────────────────────────────────────────
+  // Sends the selected distributor's ID to /api/tickets/:id/allocate.
+  // Once allocated, the distributor can see this ticket and the distributor
+  // chat tab becomes visible in both the staff and retailer views.
   async function assignToDistributor() {
     if (!selectedDistributor) return;
     try {
@@ -250,7 +272,9 @@ export default function StaffTicketDetail() {
     }
   }
 
-  // ── Escalate ──────────────────────────────────────────────────────────────
+  // ── Escalate to HQ Admin ──────────────────────────────────────────────
+  // A confirmation modal is shown first (showEscalateModal), then this function runs.
+  // On success, updates local status to 'Escalated' and shows a success toast.
   async function escalate() {
     setShowEscalateModal(false);
     try {

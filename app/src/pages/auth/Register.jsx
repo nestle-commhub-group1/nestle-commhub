@@ -1,11 +1,24 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import API_URL from "../../config/api";
-import AuthLayout from "../../components/AuthLayout";
+/**
+ * Register.jsx
+ *
+ * The account registration page for all user types.
+ *
+ * Key responsibilities:
+ * - Provides a two-tab UI: "Retailer" tab and "Nestlé Staff" tab
+ * - Shows different form fields depending on the selected tab
+ * - Validates all fields before submitting and shows per-field error messages
+ * - Posts the completed form to /api/auth/register and redirects to login on success
+ */
 
-// ── Reusable field components ─────────────────────────────────────────────────
+import { useState }          from "react";
+import { Link, useNavigate }  from "react-router-dom";
+import axios                  from "axios";
+import API_URL                from "../../config/api";
+import AuthLayout             from "../../components/AuthLayout";
 
+/* ─── Reusable field wrapper components ────────────────────────────────────── */
+
+// Field wraps a label, the input element (passed as children), and an error message
 function Field({ label, required, error, children }) {
   return (
     <div>
@@ -19,6 +32,7 @@ function Field({ label, required, error, children }) {
   );
 }
 
+// Standard text input with consistent styling — red border on validation error
 function TextInput({ name, placeholder, value, onChange, error, type = "text", autoComplete }) {
   return (
     <input
@@ -34,6 +48,7 @@ function TextInput({ name, placeholder, value, onChange, error, type = "text", a
   );
 }
 
+// Password input with a built-in show/hide toggle button
 function PasswordInput({ name, value, onChange, error, autoComplete }) {
   const [show, setShow] = useState(false);
   return (
@@ -69,7 +84,7 @@ function PasswordInput({ name, value, onChange, error, autoComplete }) {
   );
 }
 
-// ── Tab icons ─────────────────────────────────────────────────────────────────
+/* ─── Tab icon components ────────────────────────────────────────────────── */
 
 function ShopIcon() {
   return (
@@ -96,16 +111,45 @@ function TruckIcon() {
   );
 }
 
-// ── Default form state ────────────────────────────────────────────────────────
+/* ─── Sri Lanka Province / District data ─────────────────────────────────── */
 
+const SL_PROVINCES = {
+  "Western Province":       ["Colombo", "Gampaha", "Kalutara"],
+  "Central Province":       ["Kandy", "Matale", "Nuwara Eliya"],
+  "Southern Province":      ["Galle", "Matara", "Hambantota"],
+  "Northern Province":      ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+  "Eastern Province":       ["Batticaloa", "Ampara", "Trincomalee"],
+  "North Western Province": ["Kurunegala", "Puttalam"],
+  "North Central Province": ["Anuradhapura", "Polonnaruwa"],
+  "Uva Province":           ["Badulla", "Monaragala"],
+  "Sabaragamuwa Province":  ["Ratnapura", "Kegalle"],
+};
+
+/* ─── Staff Category options ─────────────────────────────────────────────── */
+
+const STAFF_CATEGORIES = [
+  "Stockout Staff",
+  "Product Quality Staff",
+  "Logistics Staff",
+  "Pricing Staff",
+  "General Support",
+];
+
+/* ─── Default form state for each tab ────────────────────────────────────── */
+
+// Separate state objects so switching tabs doesn't mix up field values
 const retailerDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", businessName: "", businessAddress: "", taxId: "", role: "retailer"
+  phone: "", businessName: "", businessAddress: "", taxId: "",
+  province: "", district: "",
+  role: "retailer"
 };
 
 const employeeDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", employeeId: "", department: "", officeLocation: "", role: "sales_staff"
+  phone: "", employeeId: "", department: "", officeLocation: "",
+  staffCategory: "",
+  role: "sales_staff"
 };
 
 const distributorDefaults = {
@@ -113,42 +157,54 @@ const distributorDefaults = {
   phone: "", businessName: "", businessAddress: "", assignedRegion: "", role: "distributor"
 };
 
-// ── Tabs config ───────────────────────────────────────────────────────────────
+/* ─── Tab configuration ──────────────────────────────────────────────────── */
 
+// Two tabs: "Retailer" for external business partners, "Nestlé Staff" for employees.
+// The staff tab allows selecting sales_staff, hq_admin, or distributor as the exact role.
 const TABS = [
-  { id: "retailer", label: "Retailer",     sub: "Business partner", Icon: ShopIcon },
-  { id: "employee", label: "Nestlé Staff", sub: "Employee",          Icon: OfficeIcon },
+  { id: "retailer",  label: "Retailer",      sub: "Business partner", Icon: ShopIcon },
+  { id: "employee",  label: "Nestlé Staff",  sub: "Employee",          Icon: OfficeIcon },
 ];
 
-// ── Main component ────────────────────────────────────────────────────────────
+/* ─── Main component ─────────────────────────────────────────────────────── */
 
 export default function Register() {
   const navigate = useNavigate();
-  const [tab, setTab]               = useState("retailer");
-  const [retailerForm, setRetailer]       = useState(retailerDefaults);
-  const [employeeForm, setEmployee]       = useState(employeeDefaults);
-  const [distributorForm, setDistributor] = useState(distributorDefaults);
-  const [errors, setErrors]               = useState({});
-  const [globalError, setGlobalError] = useState("");
-  const [successMsg, setSuccessMsg]   = useState("");
 
+  // Which tab is currently selected ("retailer" or "employee")
+  const [tab, setTab] = useState("retailer");
+
+  // Each tab has its own independent form state so switching tabs doesn't lose data
+  const [retailerForm,   setRetailer]   = useState(retailerDefaults);
+  const [employeeForm,   setEmployee]   = useState(employeeDefaults);
+  const [distributorForm, setDistributor] = useState(distributorDefaults);
+
+  const [errors,      setErrors]      = useState({});
+  const [globalError, setGlobalError] = useState("");
+  const [successMsg,  setSuccessMsg]  = useState("");
+
+  // Map tab ID to its [form state, setState] pair — makes it easy to read/write the active form
   const formMap = {
     retailer: [retailerForm, setRetailer],
     employee: [employeeForm, setEmployee],
   };
   const [form, setForm] = formMap[tab];
 
+  // Update only the changed field within the current tab's form object
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   }
 
+  /* ── Form validation ──────────────────────────────────────────────────── */
+
   function validate() {
     console.log("=== STARTING VALIDATION ===");
-    
+
     const e = {};
-    const req = (field, label) => { 
+    // Reusable helper: checks if a required field is empty and records the error
+    const req = (field, label) => {
       if (!form[field]?.trim()) {
         e[field] = `${label} is required.`;
         console.log(`❌ Validation Failed: ${field} (${label}) is missing or empty`);
@@ -159,6 +215,7 @@ export default function Register() {
 
     req("fullName", "Full Name");
 
+    // Email gets extra format checking beyond just "is it empty"
     if (!form.email?.trim()) {
       e.email = "Email is required.";
       console.log(`❌ Validation Failed: email is missing or empty`);
@@ -191,20 +248,28 @@ export default function Register() {
 
     req("phone", "Phone Number");
 
+    // Additional fields required depending on which tab is selected
     if (tab === "retailer") {
       req("businessName",    "Business Name");
       req("businessAddress", "Business Address");
       req("taxId",           "Tax ID / Business Registration Number");
+      req("province",        "Province");
+      req("district",        "District");
     } else if (tab === "employee") {
+      // Employee ID is verified server-side against the ValidEmployee seed list
       req("employeeId",  "Employee ID");
       req("department",  "Department");
+      // Sales staff must also specify their specialisation category
+      if (form.role === "sales_staff") {
+        req("staffCategory", "Staff Category");
+      }
     } else if (tab === "distributor") {
-      req("businessName",    "Business Name");
-      req("businessAddress", "Business Address");
-      req("assignedRegion",  "Assigned Region");
+      req("businessName",   "Business Name");
+      req("businessAddress","Business Address");
+      req("assignedRegion", "Assigned Region");
     }
-    
-    // Validate role is set
+
+    // The role field is always set by the tab/dropdown, but check anyway as a safety net
     if (!form.role) {
       e.role = "Role is required.";
       console.log(`❌ Validation Failed: role is missing or empty`);
@@ -216,37 +281,40 @@ export default function Register() {
     return e;
   }
 
+  /* ── Form submission ─────────────────────────────────────────────────── */
+
   async function handleSubmit(e) {
     e.preventDefault();
     setGlobalError("");
     setSuccessMsg("");
-    
+
     console.log("=========================================");
     console.log("FORM SUBMISSION TRIGGERED");
     console.log("Current Tab:", tab);
     console.log("Entire Form State Object right before validation:");
     console.log(JSON.parse(JSON.stringify(form)));
-    
+
     const validation = validate();
-    if (Object.keys(validation).length > 0) { 
-      setErrors(validation); 
+    if (Object.keys(validation).length > 0) {
+      setErrors(validation);
       console.log("Validation Errors:", validation);
       console.log("Submission stopped due to validation errors.");
       console.log("=========================================");
-      return; 
+      return;
     }
-    
+
     try {
-      // Note: using 5001 because macOS AirPlay occupies 5000
+      // Note: using 5001 because macOS AirPlay occupies port 5000
       console.log("Sending POST payload to backend:", form);
       const response = await axios.post(`${API_URL}/api/auth/register`, form);
       console.log("Registration Success:", response.data);
       setSuccessMsg("Account created successfully");
-      
+
+      // Wait 1.5 seconds so the user can see the success message before being redirected
       setTimeout(() => {
         navigate("/login");
       }, 1500);
-      
+
     } catch (err) {
       console.error("Registration Error:", err);
       if (err.response && err.response.data && err.response.data.message) {
@@ -258,8 +326,10 @@ export default function Register() {
     console.log("=========================================");
   }
 
+  // Clear all errors and messages when the user switches tabs
   function switchTab(next) { setTab(next); setErrors({}); setGlobalError(""); setSuccessMsg(""); }
 
+  // Tailwind class for two-column layout rows
   const row2 = "grid grid-cols-1 md:grid-cols-2 gap-4";
 
   return (
@@ -270,11 +340,11 @@ export default function Register() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#3D2B1F]">Create Account</h1>
           <p className="text-sm text-gray-500 mt-1">
-          Register as a Nestlé employee or Retailer partner
+            Register as a Nestlé employee or Retailer partner
           </p>
         </div>
 
-        {/* Tab selector — 2 columns */}
+        {/* Tab selector — two buttons for the two registration types */}
         <p className="text-sm font-semibold text-[#3D2B1F] mb-3">I am a</p>
         <div className="grid grid-cols-2 gap-2 mb-7">
           {TABS.map(({ id, label, sub, Icon }) => (
@@ -284,8 +354,8 @@ export default function Register() {
               onClick={() => switchTab(id)}
               className={`rounded-xl border-2 py-4 px-2 text-center transition-all
                 ${tab === id
-                  ? "border-[#3D2B1F] bg-[#F5F0EC]"
-                  : "border-gray-200 bg-white hover:bg-gray-50"
+                  ? "border-[#3D2B1F] bg-[#F5F0EC]"    // Active tab — highlighted
+                  : "border-gray-200 bg-white hover:bg-gray-50" // Inactive tab
                 }`}
             >
               <Icon />
@@ -295,22 +365,24 @@ export default function Register() {
           ))}
         </div>
 
-        {/* Form */}
+        {/* Form — the fields shown depend on which tab is active */}
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
+          {/* Global error from the server (e.g., "Employee ID already used") */}
           {globalError && (
             <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-200">
               {globalError}
             </div>
           )}
 
+          {/* Success message — shown briefly before redirecting to /login */}
           {successMsg && (
             <div className="bg-green-50 text-green-600 p-3 rounded-lg text-sm text-center border border-green-200">
               {successMsg}
             </div>
           )}
 
-          {/* Common: Full Name + Email */}
+          {/* Common fields — shown for both tabs */}
           <div className={row2}>
             <Field label="Full Name" required error={errors.fullName}>
               <TextInput name="fullName" placeholder="John Doe" value={form.fullName} onChange={handleChange} error={errors.fullName} autoComplete="name" />
@@ -320,7 +392,6 @@ export default function Register() {
             </Field>
           </div>
 
-          {/* Common: Password + Confirm Password */}
           <div className={row2}>
             <Field label="Password" required error={errors.password}>
               <PasswordInput name="password" value={form.password} onChange={handleChange} error={errors.password} autoComplete="new-password" />
@@ -330,12 +401,11 @@ export default function Register() {
             </Field>
           </div>
 
-          {/* Common: Phone */}
           <Field label="Phone Number" required error={errors.phone}>
             <TextInput name="phone" type="tel" placeholder="+94 77 000 0000" value={form.phone} onChange={handleChange} error={errors.phone} autoComplete="tel" />
           </Field>
 
-          {/* ── Retailer-only ── */}
+          {/* ── Retailer-only fields ────────────────────────────────────────── */}
           {tab === "retailer" && (
             <>
               <Field label="Business Name" required error={errors.businessName}>
@@ -347,10 +417,54 @@ export default function Register() {
               <Field label="Tax ID / Business Registration Number" required error={errors.taxId}>
                 <TextInput name="taxId" placeholder="XX-XXXXXXX" value={form.taxId} onChange={handleChange} error={errors.taxId} />
               </Field>
+
+              {/* Province + District — Sprint 2: replaces old single location field */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Province" required error={errors.province}>
+                  <select
+                    name="province"
+                    value={form.province}
+                    onChange={(e) => {
+                      handleChange(e);
+                      // Reset district when province changes
+                      setForm((prev) => ({ ...prev, province: e.target.value, district: "" }));
+                      if (errors.province) setErrors((prev) => ({ ...prev, province: undefined }));
+                    }}
+                    className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${
+                      errors.province ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"
+                    }`}
+                  >
+                    <option value="">Select province...</option>
+                    {Object.keys(SL_PROVINCES).map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field label="District" required error={errors.district}>
+                  <select
+                    name="district"
+                    value={form.district}
+                    onChange={handleChange}
+                    disabled={!form.province}
+                    className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${
+                      errors.district ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"
+                    } ${!form.province ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <option value="">Select district...</option>
+                    {(SL_PROVINCES[form.province] || []).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
             </>
           )}
 
-          {/* ── Employee-only ── */}
+          {/* ── Employee-only fields ────────────────────────────────────────── */}
+          {/* The role dropdown lets employees select their exact role.           */}
+          {/* The selected role is sent to the backend where the employee ID      */}
+          {/* is verified to match that role in the ValidEmployee collection.     */}
           {tab === "employee" && (
             <>
               <Field label="Employee Role" required error={errors.role}>
@@ -365,8 +479,29 @@ export default function Register() {
                   <option value="distributor">Distributor</option>
                 </select>
               </Field>
+
+              {/* Staff Category — only shown when role is Sales Staff */}
+              {form.role === "sales_staff" && (
+                <Field label="Staff Category" required error={errors.staffCategory}>
+                  <select
+                    name="staffCategory"
+                    value={form.staffCategory}
+                    onChange={handleChange}
+                    className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${
+                      errors.staffCategory ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"
+                    }`}
+                  >
+                    <option value="">Select specialisation...</option>
+                    {STAFF_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
               <div className={row2}>
                 <Field label="Employee ID" required error={errors.employeeId}>
+                  {/* Employee ID must exist in backend ValidEmployee collection */}
                   <TextInput name="employeeId" placeholder="NES123456" value={form.employeeId} onChange={handleChange} error={errors.employeeId} />
                 </Field>
                 <Field label="Department" required error={errors.department}>
@@ -379,8 +514,7 @@ export default function Register() {
             </>
           )}
 
-
-          {/* Submit */}
+          {/* Submit button */}
           <button
             type="submit"
             className="w-full bg-[#3D2B1F] text-white text-sm font-semibold rounded-lg py-3.5 mt-2 hover:bg-[#2e1f15] active:scale-[0.98] transition-all"
@@ -389,7 +523,7 @@ export default function Register() {
           </button>
         </form>
 
-        {/* Footer */}
+        {/* Link back to login for users who already have an account */}
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{" "}
           <Link to="/login" className="text-[#3D2B1F] font-semibold hover:underline">

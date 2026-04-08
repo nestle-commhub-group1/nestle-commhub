@@ -1,20 +1,40 @@
-import { useState } from "react";
+/**
+ * Login.jsx
+ *
+ * The login page for all user roles (retailer, staff, admin, distributor).
+ *
+ * Key responsibilities:
+ * - Validates email format and password presence before submitting
+ * - Calls /api/auth/login and stores the JWT + user object via AuthContext
+ * - Redirects the user to their role-appropriate dashboard after login
+ */
+
+import { useState }         from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import API_URL from "../../config/api";
-import AuthLayout from "../../components/AuthLayout";
-import { useAuth } from "../../context/AuthContext";
+import axios                from "axios";
+import API_URL              from "../../config/api";
+import AuthLayout           from "../../components/AuthLayout";
+import { useAuth }          from "../../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAuth(); // Get the login function from global auth state
 
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
+  // Form field values — controlled inputs
+  const [form, setForm]         = useState({ email: "", password: "" });
+  // Per-field validation error messages (displayed below each input)
+  const [errors, setErrors]     = useState({});
+  // Global error message shown at the top of the form (e.g., wrong password)
   const [globalError, setGlobalError] = useState("");
+  // Toggle to show/hide the password characters
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Prevents double-submission while the API request is in-flight
+  const [loading, setLoading]   = useState(false);
 
+  /* ── Client-side validation ──────────────────────────────────────────── */
+
+  // Returns an object of field → error message.
+  // An empty object means the form is valid and ready to submit.
   function validate() {
     const e = {};
     if (!form.email.trim()) {
@@ -28,6 +48,8 @@ export default function Login() {
     return e;
   }
 
+  // Clear the field error as soon as the user starts typing again,
+  // and also clear the global error so stale messages don't persist
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -37,10 +59,13 @@ export default function Login() {
     if (globalError) setGlobalError("");
   }
 
+  /* ── Form submission ─────────────────────────────────────────────────── */
+
   async function handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault();  // Prevent the browser's default form submission (page reload)
     setGlobalError("");
-    
+
+    // Run client-side validation first — stop here if there are errors
     const validation = validate();
     if (Object.keys(validation).length > 0) {
       setErrors(validation);
@@ -51,15 +76,17 @@ export default function Login() {
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, form);
       const { user, token } = response.data;
-      
-      // Update context and storage
+
+      // Store the JWT token and user object in AuthContext AND localStorage.
+      // localStorage ensures the user stays logged in after a page refresh.
       login(user, token);
 
-      // Redirect based on role
+      // Redirect to the correct dashboard based on the user's role.
+      // Each role has a completely separate section of the app.
       const roleRedirects = {
-        retailer: "/retailer/dashboard",
+        retailer:    "/retailer/dashboard",
         sales_staff: "/staff/dashboard",
-        hq_admin: "/admin/dashboard",
+        hq_admin:    "/admin/dashboard",
         distributor: "/distributor/dashboard",
       };
 
@@ -68,13 +95,14 @@ export default function Login() {
 
     } catch (err) {
       console.error("Login error:", err);
+      // Show the server's error message if available; otherwise show a generic fallback
       if (err.response && err.response.data && err.response.data.message) {
         setGlobalError(err.response.data.message);
       } else {
         setGlobalError("Failed to connect to server. Please try again.");
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // Always re-enable the button, even on error
     }
   }
 
@@ -90,6 +118,7 @@ export default function Login() {
           </p>
         </div>
 
+        {/* Global error banner — shown when the server rejects the login */}
         {globalError && (
           <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center">
             {globalError}
@@ -98,7 +127,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
-          {/* Email */}
+          {/* Email field */}
           <div>
             <label className="block text-sm font-semibold text-[#3D2B1F] mb-1.5">
               Email <span className="text-red-500">*</span>
@@ -122,7 +151,7 @@ export default function Login() {
             )}
           </div>
 
-          {/* Password */}
+          {/* Password field */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-sm font-semibold text-[#3D2B1F]">
@@ -150,6 +179,7 @@ export default function Login() {
                     : "border-transparent focus:border-[#3D2B1F]"
                   }`}
               />
+              {/* Show/hide password toggle button */}
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
@@ -157,7 +187,7 @@ export default function Login() {
               >
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -172,7 +202,7 @@ export default function Login() {
             )}
           </div>
 
-          {/* Submit */}
+          {/* Submit button — disabled while the API request is pending */}
           <button
             type="submit"
             disabled={loading}
@@ -182,7 +212,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Footer link */}
+        {/* Link to registration page */}
         <p className="mt-6 text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}
           <Link

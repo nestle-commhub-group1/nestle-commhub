@@ -1,3 +1,15 @@
+/**
+ * TicketDetail.jsx  (retailer)
+ *
+ * Detailed view of a single support ticket for the retailer who submitted it.
+ *
+ * Key responsibilities:
+ * - Loads the ticket data and chat messages from the API on mount
+ * - Polls for new messages every 8 seconds so the chat feels live
+ * - Calculates and displays the SLA countdown (time remaining before breach)
+ * - Shows a status timeline: Submitted → Assigned → In Progress → Resolved
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -42,8 +54,10 @@ export default function TicketDetail() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Fetch the ticket details AND messages at the same time to minimise loading time
         const [ticketRes, msgRes] = await Promise.all([
           axios.get(`${API_URL}/api/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+          // chatRoom param filters messages: 'staff_retailer' = Nestlé chat, 'retailer_distributor' = delivery chat
           axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
 
@@ -60,7 +74,8 @@ export default function TicketDetail() {
 
     if (id && token) fetchData();
 
-    // Poll for messages
+    // Poll for new messages every 8 seconds — gives a near-real-time chat feel
+    // without the complexity of a WebSocket connection
     const interval = setInterval(async () => {
       try {
         const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, {
@@ -70,6 +85,7 @@ export default function TicketDetail() {
       } catch (err) { console.error("Poll error", err); }
     }, 8000);
 
+    // Clean up the interval when the component unmounts or when id/chatRoom changes
     return () => clearInterval(interval);
   }, [id, token, chatRoom]);
 
@@ -118,14 +134,17 @@ export default function TicketDetail() {
     );
   }
 
-  // SLA Calculation (simple)
+  /* ── SLA Countdown Calculation ──────────────────────────────────────── */
+  // Compare the current time against the slaDeadline set by the backend.
+  // If now > deadline, the ticket is overdue and shows as "Overdue" in red.
+  // Math.max(0, ...) prevents negative numbers from showing if already overdue.
   const createdAt = new Date(ticket.createdAt);
   const deadline = new Date(ticket.slaDeadline);
   const now = new Date();
-  const isOverdue = now > deadline;
-  const timeDiff = deadline - now;
+  const isOverdue = now > deadline;          // True if the SLA deadline has passed
+  const timeDiff = deadline - now;           // Milliseconds remaining until deadline
   const hoursRemaining = Math.max(0, Math.floor(timeDiff / (1000 * 60 * 60)));
-  const minsRemaining = Math.max(0, Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60)));
+  const minsRemaining  = Math.max(0, Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60)));
 
   return (
     <RetailerLayout>
@@ -288,7 +307,9 @@ export default function TicketDetail() {
 
           {/* RIGHT */}
           <div className="space-y-5">
-            {/* Timeline */}
+            {/* ── Status Timeline ─────────────────────────────────────────── */}
+            {/* Shows the ticket's progress through its lifecycle as a vertical   */}
+            {/* stepper: green = completed, blue pulse = current, grey = pending  */}
             <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">
               <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-5">Ticket Progress</h3>
               <div className="space-y-0">
