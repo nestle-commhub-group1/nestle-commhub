@@ -54,7 +54,7 @@ const protect = async (req, res, next) => {
       // Map each role to a known test account email in the database
       const emailMap = {
         retailer:    "chamara@test.com",
-        sales_staff: "nadeeka@nestle.com",
+        staff: "nadeeka@nestle.com",
         hq_admin:    "dilini@nestle.com",
         distributor: "kamal@distributor.com"
       };
@@ -103,7 +103,7 @@ const protect = async (req, res, next) => {
  * Middleware factory to restrict route access to specific roles.
  *
  * Usage: router.put('/admin-only', protect, restrictTo('hq_admin'), controller)
- *        router.get('/staff-or-admin', protect, restrictTo('sales_staff', 'hq_admin'), controller)
+ *        router.get('/staff-or-admin', protect, restrictTo('staff', 'hq_admin'), controller)
  *
  * Must be used AFTER `protect` because it depends on req.user being populated.
  *

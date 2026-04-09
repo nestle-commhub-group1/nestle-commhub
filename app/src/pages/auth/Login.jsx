@@ -85,7 +85,7 @@ export default function Login() {
       // Each role has a completely separate section of the app.
       const roleRedirects = {
         retailer:    "/retailer/dashboard",
-        sales_staff: "/staff/dashboard",
+        staff: "/staff/dashboard",
         hq_admin:    "/admin/dashboard",
         distributor: "/distributor/dashboard",
       };

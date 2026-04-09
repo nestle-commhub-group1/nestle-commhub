@@ -61,7 +61,7 @@ export default function ProtectedRoute({ children, roles }) {
   /* ── Role check ──────────────────────────────────────────────────────── */
 
   // If the route specifies allowed roles, check that the logged-in user has one.
-  // roles can be a single string ("retailer") or an array (["hq_admin", "sales_staff"]).
+  // roles can be a single string ("retailer") or an array (["hq_admin", "staff"]).
   // If the user's role doesn't match, send them to the /unauthorized page.
   if (roles) {
     const allowed = Array.isArray(roles) ? roles : [roles];

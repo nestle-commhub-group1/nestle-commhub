@@ -50,12 +50,12 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     required: [true, "Role is required"],
-    // Only these four roles are valid — any other value is rejected by Mongoose
+    // Only these roles are valid — any other value is rejected by Mongoose
     enum: [
       "retailer",    // External shop/business partners who submit tickets
-      "sales_staff", // Nestlé employees who handle and resolve tickets
+      "staff",       // Nestlé staff who handle and resolve tickets (sub-category stored in staffCategory)
       "hq_admin",    // Nestlé HQ managers with full system access
-      "distributor", // Third-party logistics handled allocated delivery tickets
+      "distributor", // Third-party logistics partners handling deliveries
     ],
   },
 
@@ -100,7 +100,7 @@ const userSchema = new mongoose.Schema({
   },
 
   /* ─── Nestlé Employee-Only Fields ───────────────────────────────────────── */
-  // These are only filled in for sales_staff, hq_admin, and distributor roles.
+  // These are only filled in for staff, hq_admin, and distributor roles.
   // employeeId is cross-referenced against the ValidEmployee collection at registration
   // to ensure only real Nestlé staff can create employee accounts.
 
@@ -119,7 +119,7 @@ const userSchema = new mongoose.Schema({
     trim: true, // e.g., "Colombo Office"
   },
 
-  // Staff specialisation category — only applicable to sales_staff role.
+  // Staff specialisation category — only applicable to staff role.
   // Determines which ticket categories they are typically responsible for.
   staffCategory: {
     type: String,

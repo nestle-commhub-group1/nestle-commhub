@@ -149,7 +149,7 @@ const employeeDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
   phone: "", employeeId: "", officeLocation: "",
   staffCategory: "",
-  role: "sales_staff"
+  role: "staff"
 };
 
 const distributorDefaults = {
@@ -160,7 +160,7 @@ const distributorDefaults = {
 /* ─── Tab configuration ──────────────────────────────────────────────────── */
 
 // Two tabs: "Retailer" for external business partners, "Nestlé Staff" for employees.
-// The staff tab allows selecting sales_staff, hq_admin, or distributor as the exact role.
+// The staff tab allows selecting staff, hq_admin, or distributor as the exact role.
 const TABS = [
   { id: "retailer",  label: "Retailer",      sub: "Business partner", Icon: ShopIcon },
   { id: "employee",  label: "Nestlé Staff",  sub: "Employee",          Icon: OfficeIcon },
@@ -259,7 +259,7 @@ export default function Register() {
       // Employee ID is verified server-side against the ValidEmployee seed list
       req("employeeId",  "Employee ID");
       // Sales staff must also specify their specialisation category
-      if (form.role === "sales_staff") {
+      if (form.role === "staff") {
         req("staffCategory", "Staff Category");
       }
     } else if (tab === "distributor") {
@@ -473,14 +473,14 @@ export default function Register() {
                   onChange={handleChange}
                   className={`w-full bg-[#F5F5F5] rounded-lg px-4 py-3 text-sm text-gray-800 outline-none border transition-colors ${errors.role ? "border-red-400 focus:border-red-500" : "border-transparent focus:border-[#3D2B1F]"}`}
                 >
-                  <option value="sales_staff">Staff</option>
+                  <option value="staff">Staff</option>
                   <option value="hq_admin">HQ Admin</option>
                   <option value="distributor">Distributor</option>
                 </select>
               </Field>
 
               {/* Staff Category — only shown when role is Sales Staff */}
-              {form.role === "sales_staff" && (
+              {form.role === "staff" && (
                 <Field label="Staff Category" required error={errors.staffCategory}>
                   <select
                     name="staffCategory"

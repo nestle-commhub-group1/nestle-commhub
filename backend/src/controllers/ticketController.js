@@ -24,7 +24,7 @@ const hasTicketAccess = (ticket, user) => {
     // Retailers can only see tickets they personally submitted
     return ticket.retailerId.toString() === user._id.toString();
   }
-  if (user.role === "sales_staff") {
+  if (user.role === "staff") {
     // Sales staff can only see tickets assigned specifically to them
     return ticket.assignedTo && ticket.assignedTo.toString() === user._id.toString();
   }
@@ -78,7 +78,7 @@ const createTicket = async (req, res) => {
     // This prioritises a known, reliable staff member for new tickets.
     console.log("Starting auto-assignment process...");
     let assignedStaff = await User.findOne({
-      role: "sales_staff",
+      role: "staff",
       employeeId: "NES002",
       isActive: true
     });
@@ -86,7 +86,7 @@ const createTicket = async (req, res) => {
     if (!assignedStaff) {
       // NES002 not found or inactive — fall back to any active sales staff member
       assignedStaff = await User.findOne({
-        role: "sales_staff",
+        role: "staff",
         isActive: true
       });
     }
@@ -145,7 +145,7 @@ const getAllTickets = async (req, res) => {
     const filter = {};
 
     // Build the MongoDB query filter based on the user's role
-    if (req.user.role === "sales_staff") {
+    if (req.user.role === "staff") {
       // Staff sees: tickets assigned to them + unassigned tickets (so they can self-assign)
       filter.$or = [
         { assignedTo: req.user._id },
@@ -208,7 +208,7 @@ const getTicketById = async (req, res) => {
         return res.status(403).json({ success: false, message: "Not authorized to view this ticket as distributor" });
       }
     }
-    // sales_staff and hq_admin pass through without extra checks
+    // staff and hq_admin pass through without extra checks
 
     return res.status(200).json({ success: true, ticket });
   } catch (error) {

@@ -82,7 +82,7 @@ const registerUser = async (req, res) => {
     }
 
     // Prevent submission of arbitrary role values from modified requests
-    const validRoles = ["retailer", "sales_staff", "hq_admin", "distributor"];
+    const validRoles = ["retailer", "staff", "hq_admin", "distributor"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role specified." });
     }
@@ -101,15 +101,15 @@ const registerUser = async (req, res) => {
     }
 
     // Nestlé employees (staff, admin, distributor) must supply their employee ID
-    const employeeRoles = ["sales_staff", "hq_admin", "distributor"];
+    const employeeRoles = ["staff", "hq_admin", "distributor"];
     if (employeeRoles.includes(role)) {
       if (!employeeId) {
         return res.status(400).json({ message: "Employee role requires employeeId." });
       }
 
-      // Sales staff must also supply their specialisation category
-      if (role === "sales_staff" && !staffCategory) {
-        return res.status(400).json({ message: "Sales staff must select a staff category." });
+      // Staff must also supply their specialisation category
+      if (role === "staff" && !staffCategory) {
+        return res.status(400).json({ message: "Staff must select a staff category." });
       }
 
       /* ── Step 3: Employee ID verification ────────────────────────────── */

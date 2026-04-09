@@ -8,7 +8,7 @@ const hasTicketAccess = (ticket, user) => {
   if (user.role === "retailer") {
     return ticket.retailerId.toString() === user._id.toString();
   }
-  if (user.role === "sales_staff") {
+  if (user.role === "staff") {
     return ticket.assignedTo && ticket.assignedTo.toString() === user._id.toString();
   }
   return false;
@@ -39,7 +39,7 @@ const sendMessage = async (req, res) => {
 
     // Only the assigned staff and the assigned distributor can message on this ticket.
     // hq_admin can also message as they may step in to manage tickets.
-    const isAssignedStaff  = req.user.role === 'sales_staff' && ticket.assignedTo?.toString() === req.user._id.toString();
+    const isAssignedStaff  = req.user.role === 'staff' && ticket.assignedTo?.toString() === req.user._id.toString();
     const isAssignedDist   = req.user.role === 'distributor' && ticket.distributorId?.toString() === req.user._id.toString();
     const isAdmin           = req.user.role === 'hq_admin';
 

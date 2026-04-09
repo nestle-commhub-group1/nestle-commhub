@@ -8,7 +8,7 @@ const roleConfig = {
     badge: { text: 'Retailer', bg: 'bg-green-100', text_color: 'text-green-800', border: 'border-green-200' },
     description: 'Customer-facing retailer portal',
   },
-  sales_staff: {
+  staff: {
     label: 'Sales Staff',
     badge: { text: 'Sales Staff', bg: 'bg-blue-100', text_color: 'text-blue-800', border: 'border-blue-200' },
     description: 'Field sales representative view',

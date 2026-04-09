@@ -29,7 +29,7 @@ const ticketSchema = new mongoose.Schema({
 
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",   // References the sales_staff User assigned to handle this ticket
+    ref: "User",   // References the staff User assigned to handle this ticket
     default: null, // null means the ticket is not yet assigned to anyone
   },
 

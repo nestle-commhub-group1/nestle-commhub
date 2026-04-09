@@ -48,7 +48,7 @@ const UserManagement = () => {
 
   const stats = {
     total: users.length,
-    staff: users.filter(u => u.role === 'sales_staff').length,
+    staff: users.filter(u => u.role === 'staff').length,
     retailers: users.filter(u => u.role === 'retailer').length,
     distributors: users.filter(u => u.role === 'distributor').length,
     admins: users.filter(u => u.role === 'hq_admin').length
@@ -56,11 +56,10 @@ const UserManagement = () => {
 
   const filteredUsers = users.filter(u => {
     const matchesTab = activeTab === 'All' || 
-      (activeTab === 'Sales Staff' && u.role === 'sales_staff') ||
-      (activeTab === 'Regional Manager' && u.role === 'regional_manager') ||
+      (activeTab === 'Staff' && u.role === 'staff') ||
       (activeTab === 'Distributor' && u.role === 'distributor') ||
       (activeTab === 'Retailer' && u.role === 'retailer') ||
-      (activeTab === 'Delivery Driver' && u.role === 'delivery_driver');
+      (activeTab === 'HQ Admin' && u.role === 'hq_admin');
     
     const searchStr = searchTerm.toLowerCase();
     const matchesSearch = u.fullName.toLowerCase().includes(searchStr) || 
@@ -72,7 +71,7 @@ const UserManagement = () => {
 
   const getRoleLabel = (role) => {
     switch(role) {
-      case 'sales_staff': return 'Sales Staff';
+      case 'staff': return 'Staff';
       case 'retailer': return 'Retailer';
       case 'hq_admin': return 'HQ Admin';
       case 'distributor': return 'Distributor';
@@ -84,7 +83,7 @@ const UserManagement = () => {
 
   const getRoleBadge = (role) => {
     switch(role) {
-      case 'sales_staff': return 'text-[#1D4ED8] bg-[#DBEAFE] border-[#1D4ED8]/20';
+      case 'staff': return 'text-[#1D4ED8] bg-[#DBEAFE] border-[#1D4ED8]/20';
       case 'regional_manager': return 'text-[#6B21A8] bg-[#F3E8FF] border-[#6B21A8]/20';
       case 'hq_admin': return 'text-[#8B0000] bg-[#FFE4E4] border-[#8B0000]/20';
       case 'distributor': return 'text-[#C2410C] bg-[#FFEDD5] border-[#C2410C]/20';
@@ -120,7 +119,7 @@ const UserManagement = () => {
           {/* Tabs and Search */}
           <div className="px-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex space-x-6 text-[14px] font-bold overflow-x-auto hide-scrollbar">
-              {['All', 'Sales Staff', 'Regional Manager', 'Distributor', 'Retailer', 'Delivery Driver'].map((tab) => (
+              {['All', 'Staff', 'Distributor', 'Retailer', 'HQ Admin'].map((tab) => (
                 <button 
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -182,8 +181,8 @@ const UserManagement = () => {
                                 {[u.province, u.district].filter(Boolean).join(', ')}
                               </span>
                             )}
-                            {/* Staff Category badge for sales_staff */}
-                            {u.role === 'sales_staff' && u.staffCategory && (
+                            {/* Staff Category badge */}
+                            {u.role === 'staff' && u.staffCategory && (
                               <span className="mt-1 inline-block text-[10px] font-bold bg-[#DBEAFE] text-[#1D4ED8] px-2 py-0.5 rounded w-fit">
                                 {u.staffCategory}
                               </span>

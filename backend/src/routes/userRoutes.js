@@ -12,7 +12,7 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
 router.get('/', protect, restrictTo('hq_admin'), getAllUsers);
 
 // Get distributors — Staff and Admin only (retailers must not see distributor contact info)
-router.get('/distributors', protect, restrictTo('sales_staff', 'hq_admin'), getDistributors);
+router.get('/distributors', protect, restrictTo('staff', 'hq_admin'), getDistributors);
 
 // Update own profile
 router.put('/profile', protect, updateProfile);

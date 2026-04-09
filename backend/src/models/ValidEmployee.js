@@ -11,11 +11,9 @@ const validEmployeeSchema = new mongoose.Schema({
     type: String,
     required: [true, "Role is required"],
     enum: [
-      "sales_staff",
-      "regional_manager",
+      "staff",
       "hq_admin",
       "distributor",
-      "delivery_driver",
     ],
   },
   isUsed: {

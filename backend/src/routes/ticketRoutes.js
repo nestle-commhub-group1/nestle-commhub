@@ -22,30 +22,30 @@ router.post("/", protect, restrictTo("retailer"), createTicket);
 router.get("/my", protect, restrictTo("retailer"), getMyTickets);
 
 // GET /api/tickets — staff/admin/distributor views all tickets
-router.get("/", protect, restrictTo("sales_staff", "hq_admin", "distributor"), getAllTickets);
+router.get("/", protect, restrictTo("staff", "hq_admin", "distributor"), getAllTickets);
 
 // GET /api/tickets/:id — any authenticated user (access checked in controller)
 router.get("/:id", protect, getTicketById);
 
 // PUT /api/tickets/:id/status — staff/admin updates status
-router.put("/:id/status", protect, restrictTo("sales_staff", "hq_admin"), updateTicketStatus);
+router.put("/:id/status", protect, restrictTo("staff", "hq_admin"), updateTicketStatus);
 
 // POST /api/tickets/:id/escalate — staff/admin escalates ticket
-router.post("/:id/escalate", protect, restrictTo("sales_staff", "hq_admin"), escalateTicket);
+router.post("/:id/escalate", protect, restrictTo("staff", "hq_admin"), escalateTicket);
 
 // PUT /api/tickets/:id/allocate — staff/admin assigns distributor
-router.put("/:id/allocate", protect, restrictTo("sales_staff", "hq_admin"), allocateDistributor);
+router.put("/:id/allocate", protect, restrictTo("staff", "hq_admin"), allocateDistributor);
 
 // PUT /api/tickets/:id/priority — ONLY staff/admin can set priority (retailers blocked)
-router.put("/:id/priority", protect, restrictTo("sales_staff", "hq_admin"), updateTicketPriority);
+router.put("/:id/priority", protect, restrictTo("staff", "hq_admin"), updateTicketPriority);
 
 // ── Message routes ─────────────────────────────────────────────────────────────
 
 // POST /api/tickets/:id/messages — staff, admin, distributor only (retailers blocked)
 // Route-level guard + controller-level check for defense-in-depth
-router.post("/:id/messages", protect, restrictTo("sales_staff", "hq_admin", "distributor"), sendMessage);
+router.post("/:id/messages", protect, restrictTo("staff", "hq_admin", "distributor"), sendMessage);
 
 // GET /api/tickets/:id/messages — any authenticated non-retailer
-router.get("/:id/messages", protect, restrictTo("sales_staff", "hq_admin", "distributor"), getMessages);
+router.get("/:id/messages", protect, restrictTo("staff", "hq_admin", "distributor"), getMessages);
 
 module.exports = router;

@@ -14,11 +14,11 @@ const devUsers = {
     businessAddress: "123 Kandy Road",
     taxId: "TAX123456"
   },
-  sales_staff: {
+  staff: {
     id: "dev-staff-001",
     fullName: "Nadeeka Perera",
     email: "nadeeka@nestle.com",
-    role: "sales_staff",
+    role: "staff",
     phone: "0777654321",
     employeeId: "NES002",
     department: "Sales & Distribution",
@@ -49,7 +49,7 @@ const devUsers = {
 export const getRedirectPath = (role) => {
   const paths = {
     retailer: "/retailer/dashboard",
-    sales_staff: "/staff/dashboard",
+    staff: "/staff/dashboard",
     hq_admin: "/admin/dashboard",
     distributor: "/distributor/dashboard",
   };

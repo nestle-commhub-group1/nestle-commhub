@@ -30,7 +30,7 @@ import Promotions        from "./pages/retailer/Promotions";
 import StockRequests     from "./pages/retailer/StockRequests";
 import DeliveryTracking  from "./pages/retailer/DeliveryTracking";
 
-// ── Staff pages (role: "sales_staff") ─────────────────────────────────────
+// ── Staff pages (role: "staff") ─────────────────────────────────────
 import StaffDashboard    from "./pages/staff/StaffDashboard";
 import StaffProfile      from "./pages/staff/StaffProfile";
 import StaffMyTickets    from "./pages/staff/MyTickets";
@@ -95,19 +95,19 @@ function App() {
           <Route path="/retailer/stock-requests" element={<ProtectedRoute roles="retailer"><StockRequests /></ProtectedRoute>} />
           <Route path="/retailer/delivery"     element={<ProtectedRoute roles="retailer"><DeliveryTracking /></ProtectedRoute>} />
 
-          {/* ── Sales Staff routes — only accessible with role="sales_staff" ─────── */}
+          {/* ── Sales Staff routes — only accessible with role="staff" ─────── */}
           <Route
             path="/staff/dashboard"
             element={
-              <ProtectedRoute roles="sales_staff">
+              <ProtectedRoute roles="staff">
                 <StaffDashboard />
               </ProtectedRoute>
             }
           />
-          <Route path="/staff/profile"    element={<ProtectedRoute roles="sales_staff"><StaffProfile /></ProtectedRoute>} />
-          <Route path="/staff/tickets"    element={<ProtectedRoute roles="sales_staff"><StaffMyTickets /></ProtectedRoute>} />
-          <Route path="/staff/tickets/:id" element={<ProtectedRoute roles="sales_staff"><StaffTicketDetail /></ProtectedRoute>} />
-          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="sales_staff"><StaffBroadcasts /></ProtectedRoute>} />
+          <Route path="/staff/profile"    element={<ProtectedRoute roles="staff"><StaffProfile /></ProtectedRoute>} />
+          <Route path="/staff/tickets"    element={<ProtectedRoute roles="staff"><StaffMyTickets /></ProtectedRoute>} />
+          <Route path="/staff/tickets/:id" element={<ProtectedRoute roles="staff"><StaffTicketDetail /></ProtectedRoute>} />
+          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="staff"><StaffBroadcasts /></ProtectedRoute>} />
 
           {/* ── HQ Admin routes — only accessible with role="hq_admin" ──────────── */}
           <Route
