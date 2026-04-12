@@ -147,7 +147,7 @@ const retailerDefaults = {
 
 const employeeDefaults = {
   fullName: "", email: "", password: "", confirmPassword: "",
-  phone: "", employeeId: "", officeLocation: "",
+  phone: "", employeeId: "",
   staffCategory: "",
   role: "staff"
 };
@@ -504,9 +504,6 @@ export default function Register() {
                   <TextInput name="employeeId" placeholder="NES123456" value={form.employeeId} onChange={handleChange} error={errors.employeeId} />
                 </Field>
               </div>
-              <Field label="Office Location" error={errors.officeLocation}>
-                <TextInput name="officeLocation" placeholder="Colombo Office" value={form.officeLocation} onChange={handleChange} error={errors.officeLocation} />
-              </Field>
             </>
           )}
 

@@ -5,6 +5,35 @@ Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed
 
 ---
 
+## [10 April 2026] - Sprint 2
+### Changed
+- **Role refactored: `sales_staff` renamed to `staff`** across all backend and frontend files
+  - `backend/src/models/User.js` — role enum updated: `"sales_staff"` → `"staff"`
+  - `backend/src/models/ValidEmployee.js` — role enum updated: `"sales_staff"` → `"staff"`
+  - `backend/src/controllers/authController.js` — `employeeRoles` validation list updated to `"staff"`; `staffCategory` check now targets `role === "staff"`
+  - `backend/src/middleware/authMiddleware.js` — dev token email map key updated from `sales_staff` to `staff`
+  - `backend/src/routes/ticketRoutes.js` — all `restrictTo("sales_staff")` calls replaced with `restrictTo("staff")`
+  - `backend/src/routes/userRoutes.js` — user route role checks updated
+  - `app/src/pages/auth/Register.jsx` — employee role dropdown value changed from `"sales_staff"` to `"staff"`; default form state role set to `"staff"`; `staffCategory` guard checks `form.role === "staff"`
+  - `app/src/pages/auth/Login.jsx` — role redirect map updated: `staff: "/staff/dashboard"` (was `sales_staff`)
+  - `app/src/routes/ProtectedRoute.jsx` — staff dashboard route guard updated to check `"staff"` role
+  - `app/src/App.jsx` — all `<ProtectedRoute roles="staff">` updated to match new role name
+  - `app/src/utils/devAuth.js` — dev auth helper role key updated
+  - `app/src/pages/DevLauncher.jsx` — dev launcher role button updated
+  - `app/src/pages/admin/UserManagement.jsx` — role filter tab and badge updated from `"sales_staff"` to `"staff"`
+- **Seed data fully updated** (`backend/src/seed/seedEmployees.js`)
+  - All `NES-STF-*` IDs seeded with `role: "staff"` (was `"sales_staff"`)
+  - Universal dev ID `NES-DEV-888` and `NES-DEV-777` seeded with `role: "staff"`
+  - Legacy IDs `NES002`, `NES200` removed from seed (were `"sales_staff"`, now replaced by `NES-STF-*` format)
+  - Seed re-run confirmed: 27 ValidEmployee records inserted with correct roles
+
+### Fixed
+- Registration failing for Nestlé Staff due to role mismatch between frontend sending `"sales_staff"` and backend rejecting it against the updated `"staff"` enum in `User.js`
+- Login redirect failing for staff users after role rename — login now correctly routes `staff` → `/staff/dashboard`
+- ProtectedRoute blocking staff dashboard access after role rename
+
+---
+
 ## [25 March 2026] - Sprint 2
 
 ### Added

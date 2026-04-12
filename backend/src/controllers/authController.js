@@ -116,14 +116,13 @@ const registerUser = async (req, res) => {
 
       const trimmedEmpId = (employeeId || "").trim();
       const isDevMode    = process.env.NODE_ENV === "development";
-      const devId        = (process.env.DEV_EMPLOYEE_ID || "").trim();
 
-      // DEV BYPASS: If running in development and the submitted ID matches
-      // DEV_EMPLOYEE_ID, skip the DB lookup entirely so testers can register
-      // unlimited accounts without re-seeding or worrying about isUsed flags.
-      const usingDevId = isDevMode && devId && trimmedEmpId.toUpperCase() === devId.toUpperCase();
-
-      if (!usingDevId) {
+      // DEV BYPASS: In development mode accept any non-empty Employee ID without
+      // hitting the DB. This lets testers use arbitrary IDs (e.g. "NES-DEV-888")
+      // without needing them pre-seeded in the ValidEmployee collection.
+      if (isDevMode) {
+        console.log(`[Register] ⚡ Dev mode — skipping ValidEmployee DB check for ID "${trimmedEmpId}"`);
+      } else {
         // PRODUCTION PATH: verify against the ValidEmployee seed collection
         if (!ValidEmployee) {
           return res.status(500).json({ message: "ValidEmployee model is not configured." });
@@ -155,9 +154,6 @@ const registerUser = async (req, res) => {
         if (existingEmp) {
           return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is already registered. Run npm run seed to reset.` });
         }
-      } else {
-        // DEV BYPASS ACTIVE: log and continue, no DB check, no isUsed restriction
-        console.log(`[Register] ⚡ Dev bypass active — skipping ValidEmployee check for ID "${trimmedEmpId}"`);
       }
     }
 
@@ -184,11 +180,8 @@ const registerUser = async (req, res) => {
       await newUser.save();
       console.log("✅ User saved successfully. ID:", newUser._id);
 
-      // Only mark the ID as used when using a real (non-dev) employee ID
-      const usingDevBypass = process.env.NODE_ENV === 'development' &&
-        (employeeId || '').trim().toUpperCase() === (process.env.DEV_EMPLOYEE_ID || '').trim().toUpperCase();
-
-      if (employeeRoles.includes(role) && ValidEmployee && !usingDevBypass) {
+      // Only mark the ID as used in production — dev mode skips the DB check entirely
+      if (employeeRoles.includes(role) && ValidEmployee && process.env.NODE_ENV !== 'development') {
         const trimmedEmpId = (employeeId || "").trim();
         await ValidEmployee.findOneAndUpdate(
           { employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' } },
