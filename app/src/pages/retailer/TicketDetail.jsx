@@ -174,8 +174,9 @@ export default function TicketDetail() {
                 <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-4 flex items-center gap-2"><Paperclip size={14}/>Attached Evidence</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {ticket.attachments.map((file, idx) => {
-                    const isImage = file.startsWith('data:image/');
-                    const isVideo = file.startsWith('data:video/');
+                    const fileStr = typeof file === 'string' ? file : '';
+                    const isImage = fileStr.startsWith('data:image/');
+                    const isVideo = fileStr.startsWith('data:video/');
                     return (
                       <div key={idx} className="group relative bg-[#F8F7F5] border border-[#E0DBD5] rounded-[12px] overflow-hidden hover:shadow-md transition-shadow aspect-square flex items-center justify-center">
                         {isImage ? (

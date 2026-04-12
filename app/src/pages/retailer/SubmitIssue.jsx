@@ -27,6 +27,7 @@ const CATEGORIES = [
   { value: 'product_quality', label: 'Product Quality' },
   { value: 'logistics_delay', label: 'Logistics Delay' },
   { value: 'pricing_issue',   label: 'Pricing Issue' },
+  { value: 'other',           label: 'Other / General' },
 ];
 
 const defaultForm = {

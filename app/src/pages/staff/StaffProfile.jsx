@@ -92,7 +92,7 @@ const StaffProfile = () => {
             <h2 className="text-[20px] font-extrabold text-nestle-brown">{user.fullName}</h2>
             <p className="text-[14px] font-medium text-gray-500 mt-0.5">{user.email}</p>
             <span className="inline-block mt-3 bg-[#DBEAFE] text-[#1D4ED8] text-[12px] font-bold px-3 py-1 rounded-md shadow-sm">
-              Sales Staff
+              {user.staffCategory || 'Staff'}
             </span>
           </div>
         </div>

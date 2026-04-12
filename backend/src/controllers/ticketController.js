@@ -86,20 +86,23 @@ const createTicket = async (req, res) => {
     const requiredStaffCategory = categoryToStaffMap[category] || "General Staff";
     console.log("Starting auto-assignment process for:", requiredStaffCategory);
 
-    // Find staff with matching category
-    let assignedStaff = await User.findOne({
+    // Find all staff with matching category
+    let staffMembers = await User.find({
       role: "staff",
       staffCategory: requiredStaffCategory,
       isActive: true
     });
 
-    if (!assignedStaff) {
+    if (staffMembers.length === 0) {
       // Fallback
-      assignedStaff = await User.findOne({ role: "staff", isActive: true });
-      if (!assignedStaff) {
+      staffMembers = await User.find({ role: "staff", isActive: true });
+      if (staffMembers.length === 0) {
         return res.status(400).json({ success: false, message: `No active staff available for ${requiredStaffCategory}` });
       }
     }
+
+    // Pick a random staff member to distribute the allocation
+    const assignedStaff = staffMembers[Math.floor(Math.random() * staffMembers.length)];
 
     ticket.assignedTo = assignedStaff._id;
     console.log("Assigned to: " + assignedStaff.email);
