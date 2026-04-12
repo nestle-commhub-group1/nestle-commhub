@@ -98,25 +98,22 @@ const sendMessage = async (req, res) => {
 // Always returns the staff_distributor room regardless of query param.
 const getMessages = async (req, res) => {
   try {
-    // Retailers cannot access the messaging system
-    if (req.user.role === 'retailer') {
-      return res.status(403).json({ success: false, message: "Retailers do not have access to ticket messages." });
+    const ticketId = req.params.id;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    // Allow staff, hq_admin, distributor to view messages
+    const allowedRoles = ['staff', 'hq_admin', 'distributor'];
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({ error: 'Not authorized to view messages' });
     }
 
-    const chatRoom = 'staff_distributor';
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-      return res.status(404).json({ success: false, message: "Ticket not found." });
-    }
-
-    const messages = await Message.find({ ticketId: ticket._id, chatRoom })
-      .populate('senderId', 'fullName role')
-      .sort({ createdAt: 1 });
-
-    return res.status(200).json({ success: true, count: messages.length, messages });
-  } catch (error) {
-    console.error("getMessages error:", error);
-    return res.status(500).json({ success: false, message: error.message });
+    // Fetch messages for this ticket
+    const messages = await Message.find({ ticketId }).sort({ createdAt: 1 });
+    
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 

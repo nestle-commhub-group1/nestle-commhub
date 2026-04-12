@@ -151,7 +151,7 @@ const registerUser = async (req, res) => {
 
         // Extra guard: check the User collection too, in case of data inconsistency
         const existingEmp = await User.findOne({ employeeId: trimmedEmpId });
-        if (existingEmp) {
+        if (existingEmp && !isDevMode) {
           return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is already registered. Run npm run seed to reset.` });
         }
       }
