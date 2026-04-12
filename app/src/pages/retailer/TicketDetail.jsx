@@ -200,7 +200,7 @@ export default function TicketDetail() {
                 </div>
               </div>
             )}
-
+          </div>
 
 
           {/* RIGHT */}
