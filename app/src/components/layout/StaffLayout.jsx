@@ -12,7 +12,7 @@ const StaffLayout = ({ children }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
-  const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'Sales Staff', email: '' });
+  const [user, setUser] = useState({ fullName: 'User', initials: 'U', staffCategory: 'Staff', email: '' });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,7 +31,7 @@ const StaffLayout = ({ children }) => {
         console.error('Failed to parse user', e);
       }
     } else {
-      setUser({ fullName: 'Nadeeka Perera', initials: 'NP', role: 'Sales Staff', email: 'nadeeka.perera@nestle.com' });
+      setUser({ fullName: 'Nadeeka Perera', initials: 'NP', staffCategory: 'Staff', email: 'nadeeka.perera@nestle.com' });
     }
     
     if (isDevMode) {
@@ -157,7 +157,7 @@ const StaffLayout = ({ children }) => {
           <div className="flex flex-col overflow-hidden">
             <span className="font-semibold truncate text-[15px]">{user.fullName}</span>
             <span className="bg-[#DBEAFE] text-[#1D4ED8] text-[10px] font-bold px-2 py-0.5 rounded-full w-max mt-1 tracking-wide">
-              Sales Staff
+              {user.staffCategory || 'Staff'}
             </span>
           </div>
         </div>
