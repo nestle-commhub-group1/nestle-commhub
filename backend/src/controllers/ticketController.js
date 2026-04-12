@@ -78,8 +78,8 @@ const createTicket = async (req, res) => {
     const categoryToStaffMap = {
       stock_out: "Stockout Staff",
       product_quality: "Product Quality Staff",
-      logistics_delay: "Product Quality Staff",
-      pricing_issue: "General Staff",
+      logistics_delay: "Logistics Staff",
+      pricing_issue: "Pricing Staff",
       other: "General Staff"
     };
 
@@ -155,6 +155,20 @@ const getAllTickets = async (req, res) => {
 
     // Build the MongoDB query filter based on the user's role
     if (req.user.role === "staff") {
+      // Determine what categories this staff member is allowed to see
+      const staffCategoryToTicketCategory = {
+        "Stockout Staff": "stock_out",
+        "Product Quality Staff": "product_quality",
+        "Logistics Staff": "logistics_delay",
+        "Pricing Staff": "pricing_issue",
+        "General Staff": "other"
+      };
+
+      const allowedCategory = staffCategoryToTicketCategory[req.user.staffCategory];
+      if (allowedCategory) {
+        filter.category = allowedCategory;
+      }
+
       // Staff sees: tickets assigned to them + unassigned tickets (so they can self-assign)
       filter.$or = [
         { assignedTo: req.user._id },
@@ -170,7 +184,11 @@ const getAllTickets = async (req, res) => {
     // Apply optional query string filters sent by the frontend (for the filter bar)
     if (req.query.status)   filter.status   = req.query.status;
     if (req.query.priority) filter.priority = req.query.priority;
-    if (req.query.category) filter.category = req.query.category;
+    if (req.query.category) {
+      if (!filter.category) {
+        filter.category = req.query.category;
+      }
+    }
 
     const tickets = await Ticket.find(filter)
       .populate("retailerId", "fullName businessName email") // Show retailer details on each ticket
