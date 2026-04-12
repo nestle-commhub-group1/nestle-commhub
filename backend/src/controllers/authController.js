@@ -10,7 +10,7 @@
  * - Issues JWT tokens upon successful registration or login
  */
 
-const jwt  = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 // The ValidEmployee model is optional — if it doesn't exist yet (e.g., before seeding),
@@ -36,7 +36,7 @@ const registerUser = async (req, res) => {
   console.log("-----------------------------------------");
   console.log("📍 REGISTRATION REQUEST RECEIVED");
   console.log("📍 NODE_ENV:", process.env.NODE_ENV);
-  
+
   // Log registration attempts in dev only — never log passwords in production
   if (process.env.NODE_ENV !== 'production') {
     const safe = { ...req.body, password: '[REDACTED]', confirmPassword: '[REDACTED]' };
@@ -115,7 +115,7 @@ const registerUser = async (req, res) => {
       /* ── Step 3: Employee ID verification ────────────────────────────── */
 
       const trimmedEmpId = (employeeId || "").trim();
-      const isDevMode    = process.env.NODE_ENV === "development";
+      const isDevMode = process.env.NODE_ENV === "development";
 
       // DEV BYPASS: In development mode accept any non-empty Employee ID without
       // hitting the DB. This lets testers use arbitrary IDs (e.g. "NES-DEV-888")
@@ -219,7 +219,7 @@ const registerUser = async (req, res) => {
         phone: newUser.phone,
         officeLocation: newUser.officeLocation,
         employeeId: newUser.employeeId,
-        staffCategory: newUser.staffCategory,
+        staffCategory: User.staffCategory,
       },
     });
 
