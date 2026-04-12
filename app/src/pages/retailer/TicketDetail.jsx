@@ -41,28 +41,18 @@ export default function TicketDetail() {
   const { id } = useParams();
   console.log("Ticket ID from URL:", id);
   const [ticket, setTicket] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [chatRoom, setChatRoom] = useState('staff_retailer');
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async () => लगाने
       try {
         setLoading(true);
-        // Fetch the ticket details AND messages at the same time to minimise loading time
-        const [ticketRes, msgRes] = await Promise.all([
-          axios.get(`${API_URL}/api/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
-          // chatRoom param filters messages: 'staff_retailer' = Nestlé chat, 'retailer_distributor' = delivery chat
-          axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, { headers: { Authorization: `Bearer ${token}` } })
-        ]);
+        // Fetch the ticket details
+        const ticketRes = await axios.get(`${API_URL}/api/tickets/${id}`, { headers: { Authorization: `Bearer ${token}` } });
 
         if (ticketRes.data.success) setTicket(ticketRes.data.ticket);
-        if (msgRes.data.success) setMessages(msgRes.data.messages || []);
         setError(null);
       } catch (err) {
         console.log("Ticket detail error:", err.response?.data || err.message);
@@ -73,43 +63,9 @@ export default function TicketDetail() {
     };
 
     if (id && token) fetchData();
+  }, [id, token]);
 
-    // Poll for new messages every 8 seconds — gives a near-real-time chat feel
-    // without the complexity of a WebSocket connection
-    const interval = setInterval(async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.success) setMessages(res.data.messages || []);
-      } catch (err) { console.error("Poll error", err); }
-    }, 8000);
 
-    // Clean up the interval when the component unmounts or when id/chatRoom changes
-    return () => clearInterval(interval);
-  }, [id, token, chatRoom]);
-
-  const send = async () => {
-    if (!input.trim() || sending) return;
-    try {
-      setSending(true);
-      const res = await axios.post(`${API_URL}/api/tickets/${id}/messages`, {
-        message: input.trim(),
-        chatRoom
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.data.success) {
-        setMessages(p => [...p, res.data.message]);
-        setInput('');
-      }
-    } catch (err) {
-      console.error('Error sending message:', err);
-    } finally {
-      setSending(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -245,65 +201,7 @@ export default function TicketDetail() {
               </div>
             )}
 
-            {/* Chat */}
-            <div className="bg-white border border-[#E0DBD5] rounded-[20px] shadow-sm overflow-hidden flex flex-col h-[550px]">
-              <div className="border-b border-[#E0DBD5] bg-gray-50/50 flex flex-shrink-0">
-                <button
-                  onClick={() => setChatRoom('staff_retailer')}
-                  className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'staff_retailer' ? 'text-blue-600 bg-white border-b-2 border-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  🏢 Nestlé Support
-                </button>
-                {ticket.distributorId && (
-                  <button
-                    onClick={() => setChatRoom('retailer_distributor')}
-                    className={`flex-1 py-4 text-[13px] font-extrabold uppercase tracking-wide transition-all ${chatRoom === 'retailer_distributor' ? 'text-orange-600 bg-white border-b-2 border-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    🚚 Distributor
-                  </button>
-                )}
-              </div>
-              <div className={`px-5 py-2 text-[11px] font-bold uppercase tracking-widest flex-shrink-0 border-b border-white ${chatRoom === 'staff_retailer' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-700'}`}>
-                {chatRoom === 'staff_retailer' ? '💬 Chatting with Nestlé HQ' : '🤝 Chatting with Delivery Distributor'}
-              </div>
-              <div className="p-5 space-y-4 overflow-y-auto bg-[#F8F7F5] flex-1">
-                {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-                    <p className="text-[14px] font-medium">No messages here yet. Send a message to start.</p>
-                  </div>
-                ) : (
-                  messages.map(m => (
-                    <div key={m._id} className={`flex flex-col ${m.senderRole === 'retailer' ? 'items-end' : 'items-start'}`}>
-                      <p className="text-[11px] text-gray-500 font-bold mb-1 mx-1">
-                        {m.senderId?.fullName || (m.senderRole === 'retailer' ? 'Me' : (m.senderRole === 'distributor' ? 'Distributor' : 'Staff'))}
-                      </p>
-                      <div className={`max-w-[80%] px-4 py-3 rounded-[14px] ${m.senderRole === 'retailer' ? 'bg-[#3D2B1F] text-white rounded-br-sm shadow-sm' : (m.senderRole === 'distributor' ? 'bg-orange-50 text-orange-900 border border-orange-200 rounded-bl-sm shadow-sm' : 'bg-white text-[#2C1810] border border-[#E0DBD5] shadow-sm rounded-bl-sm')}`}>
-                        <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap">{m.message}</p>
-                      </div>
-                      <p className="text-[11px] text-gray-400 mt-1">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="p-4 border-t border-[#E0DBD5] flex gap-3 bg-white flex-shrink-0">
-                <input 
-                  value={input} 
-                  onChange={e => setInput(e.target.value)} 
-                  onKeyDown={e => e.key === 'Enter' && !sending && send()} 
-                  placeholder="Type your message..." 
-                  disabled={sending}
-                  className="flex-1 border border-[#E0DBD5] rounded-[10px] px-4 py-3 text-[14px] font-medium text-[#2C1810] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 disabled:bg-gray-50" 
-                />
-                <button 
-                  onClick={send} 
-                  disabled={sending || !input.trim()}
-                  className="bg-[#3D2B1F] text-white p-3 rounded-[10px] hover:bg-[#2C1810] transition-colors flex-shrink-0 disabled:opacity-50"
-                >
-                  {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18}/>}
-                </button>
-              </div>
-            </div>
-          </div>
+
 
           {/* RIGHT */}
           <div className="space-y-5">
