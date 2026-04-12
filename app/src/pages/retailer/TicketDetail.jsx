@@ -46,7 +46,7 @@ export default function TicketDetail() {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const fetchData = async () => लगाने
+    const fetchData = async () => {
       try {
         setLoading(true);
         // Fetch the ticket details
