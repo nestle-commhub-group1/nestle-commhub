@@ -81,7 +81,7 @@ export default function StaffTicketDetail() {
 
     Promise.all([
       fetch(`${API_URL}/api/tickets/${id}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
-      fetch(`${API_URL}/api/tickets/${id}/messages?chatRoom=${chatRoom}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
+      fetch(`${API_URL}/api/tickets/${id}/messages?chatRoom=staff_distributor`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
     ]).then(([ticketData, msgData]) => {
       if (ticketData?.success && ticketData.ticket) {
         const t = ticketData.ticket;
@@ -130,7 +130,7 @@ export default function StaffTicketDetail() {
     }).catch(err => {
       console.log("Ticket detail error:", err.message);
     }).finally(() => setLoading(false));
-  }, [id, token, isDevMode, chatRoom]);
+  }, [id, token, isDevMode]);
 
   // Poll for messages — staff_distributor channel only
   useEffect(() => {

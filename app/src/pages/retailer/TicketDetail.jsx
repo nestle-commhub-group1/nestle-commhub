@@ -42,6 +42,7 @@ export default function TicketDetail() {
   console.log("Ticket ID from URL:", id);
   const [ticket, setTicket] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem('token');
 
