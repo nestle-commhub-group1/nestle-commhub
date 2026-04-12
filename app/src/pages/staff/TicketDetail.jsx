@@ -369,7 +369,8 @@ export default function StaffTicketDetail() {
             </div>
 
             {/* SLA Status */}
-            <div className={`rounded-[20px] p-6 shadow-sm ${ticket.slaBreached || isOverdue ? 'bg-red-50 border border-red-200' : 'bg-white border border-[#E0DBD5]'}`}>
+            {ticket.timeToResolve && ticket.slaDeadline && (
+              <div className={`rounded-[20px] p-6 shadow-sm ${ticket.slaBreached || isOverdue ? 'bg-red-50 border border-red-200' : 'bg-white border border-[#E0DBD5]'}`}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[12px] font-extrabold uppercase tracking-widest flex items-center gap-2 text-[#3D2B1F]"><Clock size={14}/>SLA Status</h3>
                 <span className="text-[11px] text-gray-500 font-medium">Deadline: {ticket.slaDeadline}</span>
@@ -391,6 +392,7 @@ export default function StaffTicketDetail() {
                 </>
               )}
             </div>
+          )}
 
             {/* Attachments */}
             <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">

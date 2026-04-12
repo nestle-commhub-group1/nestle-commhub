@@ -150,7 +150,7 @@ export default function TicketDetail() {
             </div>
 
             {/* SLA */}
-            {ticket.status !== 'resolved' && (
+            {ticket.timeToResolve && ticket.slaDeadline && ticket.status !== 'resolved' && (
               <div className={`border rounded-[20px] p-6 shadow-sm ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-white border-[#E0DBD5]'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest flex items-center gap-2"><Clock size={14}/>Time Remaining</h3>

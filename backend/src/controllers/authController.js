@@ -217,6 +217,9 @@ const registerUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         phone: newUser.phone,
+        officeLocation: newUser.officeLocation,
+        employeeId: newUser.employeeId,
+        staffCategory: newUser.staffCategory,
       },
     });
 
@@ -286,6 +289,9 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
+        officeLocation: user.officeLocation,
+        employeeId: user.employeeId,
+        staffCategory: user.staffCategory,
       },
     });
 
