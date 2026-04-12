@@ -129,7 +129,7 @@ const userSchema = new mongoose.Schema({
       "Product Quality Staff",
       "Logistics Staff",
       "Pricing Staff",
-      "General Support",
+      "General Staff",
     ],
   },
 

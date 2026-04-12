@@ -42,8 +42,7 @@ const ticketSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, "Category is required"],
-    // These four categories map to common Nestlé supply chain issues
-    enum: ["stock_out", "product_quality", "logistics_delay", "pricing_issue"],
+    enum: ["stock_out", "product_quality", "logistics_delay", "pricing_issue", "other"],
   },
 
   priority: {

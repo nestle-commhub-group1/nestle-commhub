@@ -74,29 +74,35 @@ const createTicket = async (req, res) => {
 
     /* ── Auto-assignment logic ─────────────────────────────────────────── */
 
-    // Try to assign to the primary sales staff (NES002) first.
-    // This prioritises a known, reliable staff member for new tickets.
-    console.log("Starting auto-assignment process...");
+    // Map category to staff category
+    const categoryToStaffMap = {
+      stock_out: "Stockout Staff",
+      product_quality: "Product Quality Staff",
+      logistics_delay: "Product Quality Staff",
+      pricing_issue: "General Staff",
+      other: "General Staff"
+    };
+
+    const requiredStaffCategory = categoryToStaffMap[category] || "General Staff";
+    console.log("Starting auto-assignment process for:", requiredStaffCategory);
+
+    // Find staff with matching category
     let assignedStaff = await User.findOne({
       role: "staff",
-      employeeId: "NES002",
+      staffCategory: requiredStaffCategory,
       isActive: true
     });
 
     if (!assignedStaff) {
-      // NES002 not found or inactive — fall back to any active sales staff member
-      assignedStaff = await User.findOne({
-        role: "staff",
-        isActive: true
-      });
+      // Fallback
+      assignedStaff = await User.findOne({ role: "staff", isActive: true });
+      if (!assignedStaff) {
+        return res.status(400).json({ success: false, message: `No active staff available for ${requiredStaffCategory}` });
+      }
     }
 
-    if (assignedStaff) {
-      ticket.assignedTo = assignedStaff._id;
-      console.log("Assigned to: " + assignedStaff.email);
-    } else {
-      console.log("No staff available, ticket unassigned");
-    }
+    ticket.assignedTo = assignedStaff._id;
+    console.log("Assigned to: " + assignedStaff.email);
 
     await ticket.save();
 
@@ -374,9 +380,34 @@ const updateTicketPriority = async (req, res) => {
     }
 
     ticket.priority  = priority;
-    if (timeToResolve) ticket.timeToResolve = timeToResolve;
+    if (timeToResolve) {
+      ticket.timeToResolve = timeToResolve;
+      // Recalculate slaDeadline based on timeToResolve
+      const timeMap = {
+        "1 hour": 1,
+        "4 hours": 4,
+        "8 hours": 8,
+        "24 hours": 24,
+        "48 hours": 48
+      };
+      if (timeMap[timeToResolve]) {
+        const hours = timeMap[timeToResolve];
+        ticket.slaDeadline = new Date(Date.now() + hours * 60 * 60 * 1000);
+      }
+    }
     ticket.updatedAt = new Date();
     await ticket.save();
+
+    // Notify retailer when time is assigned
+    if (timeToResolve) {
+      await Notification.create({
+        userId: ticket.retailerId,
+        type: 'ticket_updated',
+        ticketId: ticket._id,
+        ticketNumber: ticket.ticketNumber,
+        message: `Your ticket has been assigned. Expected resolution time: ${timeToResolve}`,
+      });
+    }
 
     return res.status(200).json({ success: true, ticket });
   } catch (error) {

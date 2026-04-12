@@ -58,6 +58,17 @@ const checkSLABreaches = async () => {
           message:      `Ticket ${ticket.ticketNumber} has been auto-escalated due to SLA breach`,
         });
       }
+
+      // Notify the staff member that their ticket breached SLA
+      if (ticket.assignedTo) {
+        await Notification.create({
+          userId:       ticket.assignedTo,
+          type:         "warning",
+          ticketId:     ticket._id,
+          ticketNumber: ticket.ticketNumber,
+          message:      `Ticket ${ticket.ticketNumber} has breached SLA. Auto-escalating to HQ.`,
+        });
+      }
     }
 
     console.log(`[SLA Checker] ${breachedTickets.length} ticket(s) auto-escalated`);
