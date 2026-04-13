@@ -172,7 +172,8 @@ const registerUser = async (req, res) => {
     const newUser = new User({
       fullName, email, password, phone, role,
       businessName, businessAddress, taxId, province, district,
-      employeeId, officeLocation, staffCategory,
+      employeeId, officeLocation, 
+      staffCategory: role === 'staff' ? staffCategory : undefined,
     });
 
     console.log("📍 Saving user to MongoDB...");
