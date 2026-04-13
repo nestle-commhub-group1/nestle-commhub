@@ -21,6 +21,7 @@ const notificationSchema = new mongoose.Schema({
       "promo_material_assigned",
       "promo_delivery",
       "promotion_rating",
+      "warning",
     ],
     required: true,
   },

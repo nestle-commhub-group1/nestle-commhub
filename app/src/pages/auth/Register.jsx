@@ -476,6 +476,7 @@ export default function Register() {
                   <option value="staff">Staff</option>
                   <option value="hq_admin">HQ Admin</option>
                   <option value="distributor">Distributor</option>
+                  <option value="promotion_manager">Promotion Manager</option>
                 </select>
               </Field>
 
