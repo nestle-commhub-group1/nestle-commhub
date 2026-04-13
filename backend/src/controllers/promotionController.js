@@ -6,7 +6,7 @@ const Notification = require('../models/Notification');
  * POST /api/promotions
  * Create a new promotion (Promotion Manager only)
  */
-exports.createPromotion = async (req, res) => {
+const createPromotion = async (req, res) => {
   try {
     // Only promotion_manager role can create
     if (req.user.role !== 'promotion_manager') {
@@ -58,7 +58,7 @@ exports.createPromotion = async (req, res) => {
  * GET /api/promotions
  * Get all active promotions
  */
-exports.getAllPromotions = async (req, res) => {
+const getAllPromotions = async (req, res) => {
   try {
     const promotions = await Promotion.find({ status: 'active' })
       .populate('createdBy', 'fullName email')
@@ -77,7 +77,7 @@ exports.getAllPromotions = async (req, res) => {
  * GET /api/promotions/:id
  * Get single promotion details
  */
-exports.getPromotionById = async (req, res) => {
+const getPromotionById = async (req, res) => {
   try {
     const promotion = await Promotion.findById(req.params.id)
       .populate('createdBy', 'fullName email')
@@ -101,7 +101,7 @@ exports.getPromotionById = async (req, res) => {
  * PUT /api/promotions/:id
  * Update promotion (Promotion Manager only)
  */
-exports.updatePromotion = async (req, res) => {
+const updatePromotion = async (req, res) => {
   try {
     const promotion = await Promotion.findById(req.params.id);
     
@@ -141,7 +141,7 @@ exports.updatePromotion = async (req, res) => {
  * POST /api/promotions/:id/opt-in
  * Retailer opts into a promotion
  */
-exports.retailerOptInPromotion = async (req, res) => {
+const retailerOptInPromotion = async (req, res) => {
   try {
     if (req.user.role !== 'retailer') {
       return res.status(403).json({ error: 'Only retailers can opt into promotions' });
@@ -196,7 +196,7 @@ exports.retailerOptInPromotion = async (req, res) => {
  * POST /api/promotions/:id/assign-distributor
  * Promotion Manager assigns distributor to retailer
  */
-exports.assignDistributorToRetailer = async (req, res) => {
+const assignDistributorToRetailer = async (req, res) => {
   try {
     if (req.user.role !== 'promotion_manager') {
       return res.status(403).json({ error: 'Only Promotion Managers can assign distributors' });
@@ -252,7 +252,7 @@ exports.assignDistributorToRetailer = async (req, res) => {
  * POST /api/promotions/:id/rate
  * Retailer rates a promotion
  */
-exports.ratePromotion = async (req, res) => {
+const ratePromotion = async (req, res) => {
   try {
     if (req.user.role !== 'retailer') {
       return res.status(403).json({ error: 'Only retailers can rate promotions' });
@@ -304,7 +304,7 @@ exports.ratePromotion = async (req, res) => {
  * GET /api/promotions/retailer/my-promotions
  * Get retailer's opted-in promotions
  */
-exports.getRetailerPromotions = async (req, res) => {
+const getRetailerPromotions = async (req, res) => {
   try {
     if (req.user.role !== 'retailer') {
       return res.status(403).json({ error: 'Only retailers can view their promotions' });
@@ -322,4 +322,15 @@ exports.getRetailerPromotions = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+module.exports = {
+  createPromotion,
+  getAllPromotions,
+  getPromotionById,
+  updatePromotion,
+  retailerOptInPromotion,
+  assignDistributorToRetailer,
+  ratePromotion,
+  getRetailerPromotions
 };
