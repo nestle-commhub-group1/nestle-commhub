@@ -16,6 +16,11 @@ const notificationSchema = new mongoose.Schema({
       "ticket_escalated",
       "ticket_resolved",
       "new_message",
+      "promotion",
+      "promotion_optin",
+      "promo_material_assigned",
+      "promo_delivery",
+      "promotion_rating",
     ],
     required: true,
   },
@@ -32,6 +37,11 @@ const notificationSchema = new mongoose.Schema({
 
   ticketNumber: {
     type: String,
+  },
+
+  relatedPromotion: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Promotion',
   },
 
   isRead: {

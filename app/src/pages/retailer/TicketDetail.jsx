@@ -253,6 +253,18 @@ export default function TicketDetail() {
                 <p className="text-[14px] text-gray-500 font-medium italic">Not assigned yet</p>
               )}
             </div>
+
+            {/* Promo Manager Chat */}
+            <div className="bg-white border border-[#E0DBD5] rounded-[20px] p-6 shadow-sm">
+              <h3 className="text-[12px] font-extrabold text-[#3D2B1F] uppercase tracking-widest mb-4 flex items-center gap-2"><Send size={14}/>Promotion Manager Chat</h3>
+              <div className="h-40 bg-gray-50 border border-gray-100 rounded-xl mb-4 overflow-y-auto p-3 text-sm">
+                <div className="text-center text-gray-400 mt-14 italic">You are connected to promo_retailer_manager</div>
+              </div>
+              <div className="flex gap-2">
+                <input type="text" placeholder="Type a message..." className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <button className="bg-blue-600 text-white rounded-lg px-3 py-2"><Send size={16}/></button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

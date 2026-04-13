@@ -56,6 +56,7 @@ const userSchema = new mongoose.Schema({
       "staff",       // Nestlé staff who handle and resolve tickets (sub-category stored in staffCategory)
       "hq_admin",    // Nestlé HQ managers with full system access
       "distributor", // Third-party logistics partners handling deliveries
+      "promotion_manager", // Managers who post promotions and assigned distributors
     ],
   },
 

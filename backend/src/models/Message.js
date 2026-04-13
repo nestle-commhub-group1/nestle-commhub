@@ -33,7 +33,7 @@ const messageSchema = new mongoose.Schema({
   chatRoom: {
     type: String,
     default: "staff_distributor",
-    enum: ["staff_distributor"],
+    enum: ["staff_distributor", "promo_retailer_manager"],
   },
 
   attachments: {

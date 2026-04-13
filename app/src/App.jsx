@@ -26,7 +26,8 @@ import RetailerProfile   from "./pages/retailer/RetailerProfile";
 import SubmitIssue       from "./pages/retailer/SubmitIssue";
 import MyTickets         from "./pages/retailer/MyTickets";
 import TicketDetail      from "./pages/retailer/TicketDetail";
-import Promotions        from "./pages/retailer/Promotions";
+import PromotionsWall    from "./pages/retailer/PromotionsWall";
+import MyPromotions      from "./pages/retailer/MyPromotions";
 import StockRequests     from "./pages/retailer/StockRequests";
 import DeliveryTracking  from "./pages/retailer/DeliveryTracking";
 
@@ -47,9 +48,14 @@ import AdminBroadcasts         from "./pages/admin/Broadcasts";
 import DistributorEvaluations  from "./pages/admin/DistributorEvaluations";
 import AdminTicketDetail       from "./pages/admin/AdminTicketDetail";
 
+// ── Promotion Manager pages (role: "promotion_manager") ────────────────────
+import PromotionDashboard from "./pages/promotion_manager/PromotionDashboard";
+import CreatePromotion    from "./pages/promotion_manager/CreatePromotion";
+
 // ── Distributor pages (role: "distributor") ────────────────────────────────
 import DistributorDashboard  from "./pages/distributor/DistributorDashboard";
 import DistributorTicketDetail from "./pages/distributor/DistributorTicketDetail";
+import PromotionalMaterials  from "./pages/distributor/PromotionalMaterials";
 
 // ── Dev tools (only accessible in development mode) ────────────────────────
 import DevLauncher from "./pages/DevLauncher";
@@ -91,7 +97,8 @@ function App() {
           <Route path="/retailer/submit-issue" element={<ProtectedRoute roles="retailer"><SubmitIssue /></ProtectedRoute>} />
           <Route path="/retailer/tickets"      element={<ProtectedRoute roles="retailer"><MyTickets /></ProtectedRoute>} />
           <Route path="/retailer/tickets/:id"  element={<ProtectedRoute roles="retailer"><TicketDetail /></ProtectedRoute>} />
-          <Route path="/retailer/promotions"   element={<ProtectedRoute roles="retailer"><Promotions /></ProtectedRoute>} />
+          <Route path="/retailer/promotions"   element={<ProtectedRoute roles="retailer"><PromotionsWall /></ProtectedRoute>} />
+          <Route path="/retailer/my-promotions" element={<ProtectedRoute roles="retailer"><MyPromotions /></ProtectedRoute>} />
           <Route path="/retailer/stock-requests" element={<ProtectedRoute roles="retailer"><StockRequests /></ProtectedRoute>} />
           <Route path="/retailer/delivery"     element={<ProtectedRoute roles="retailer"><DeliveryTracking /></ProtectedRoute>} />
 
@@ -175,7 +182,25 @@ function App() {
             }
           />
 
-          {/* ── Distributor routes — only accessible with role="distributor" ──────── */}
+          {/* ── Promotion Manager routes ──────────── */}
+          <Route
+            path="/promotion-manager/dashboard"
+            element={
+              <ProtectedRoute roles="promotion_manager">
+                <PromotionDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/promotion-manager/create"
+            element={
+              <ProtectedRoute roles="promotion_manager">
+                <CreatePromotion />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ── Distributor routes ──────── */}
           <Route
             path="/distributor/dashboard"
             element={
@@ -189,6 +214,14 @@ function App() {
             element={
               <ProtectedRoute roles="distributor">
                 <DistributorTicketDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/distributor/promotions"
+            element={
+              <ProtectedRoute roles="distributor">
+                <PromotionalMaterials />
               </ProtectedRoute>
             }
           />
