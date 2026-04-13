@@ -9,6 +9,7 @@ const DEV_IDS = [
   "NES-DEV-888",  // staff
   "NES-DEV-777",  // staff
   "NES-DEV-666",  // distributor
+  "NES-DEV-555",  // promotion_manager
 
   // Legacy test IDs (also reset for safety)
   "TEST_ADMIN",
@@ -30,6 +31,7 @@ const DEV_IDS = [
 //   staff — Staff members (Stockout, Product Quality, Logistics, Pricing, General Support)
 //                 Staff Category is chosen at registration — it does NOT affect the role value stored in DB
 //   distributor — Third-party logistics / distributor partners
+//   promotion_manager — Handles promotions testing and assignment
 //
 // Each ID is one-time use. NES-DEV-* IDs are reset on every seed run.
 const EMPLOYEES = [
@@ -38,6 +40,7 @@ const EMPLOYEES = [
   { employeeId: "NES-DEV-888", role: "staff" },
   { employeeId: "NES-DEV-777", role: "staff" },
   { employeeId: "NES-DEV-666", role: "distributor" },
+  { employeeId: "NES-DEV-555", role: "promotion_manager" },
 
   // ── HQ Admin IDs ─────────────────────────────────────────────────────────────
   { employeeId: "NES-ADM-001", role: "hq_admin" },
@@ -64,6 +67,10 @@ const EMPLOYEES = [
   { employeeId: "NES-DST-003", role: "distributor" },
   { employeeId: "NES-DST-004", role: "distributor" },
   { employeeId: "NES-DST-005", role: "distributor" },
+
+  // ── Promotion Manager IDs ───────────────────────────────────────────────────
+  { employeeId: "NES-PRM-001", role: "promotion_manager" },
+  { employeeId: "NES-PRM-002", role: "promotion_manager" },
 
   // ── Legacy IDs (kept so old accounts remain findable) ─────────────────────────
   { employeeId: "NES001",    role: "hq_admin" },
@@ -98,10 +105,12 @@ const run = async () => {
     console.log("   NES-DEV-888  →  staff  (pick any Staff Category)");
     console.log("   NES-DEV-777  →  staff  (pick any Staff Category)");
     console.log("   NES-DEV-666  →  distributor");
+    console.log("   NES-DEV-555  →  promotion_manager");
     console.log("\n📋  Named IDs by role:");
     console.log("   HQ Admin:     NES-ADM-001 to NES-ADM-003");
     console.log("   Staff:        NES-STF-001 to NES-STF-010");
-    console.log("   Distributor:  NES-DST-001 to NES-DST-005\n");
+    console.log("   Distributor:  NES-DST-001 to NES-DST-005");
+    console.log("   Promotions:   NES-PRM-001 to NES-PRM-002\n");
 
     await mongoose.disconnect();
     console.log("🔌  Disconnected. Seed complete.");

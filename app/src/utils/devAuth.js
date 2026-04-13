@@ -44,6 +44,16 @@ const devUsers = {
     department: "Distribution",
     officeLocation: "Colombo Distribution Centre"
   },
+  promotion_manager: {
+    id: "dev-proms-001",
+    fullName: "Sonia Perera",
+    email: "sonia@nestle.com",
+    role: "promotion_manager",
+    phone: "0771122334",
+    employeeId: "NES005",
+    department: "Promotions",
+    officeLocation: "Colombo Head Office"
+  },
 };
 
 export const getRedirectPath = (role) => {
@@ -52,6 +62,7 @@ export const getRedirectPath = (role) => {
     staff: "/staff/dashboard",
     hq_admin: "/admin/dashboard",
     distributor: "/distributor/dashboard",
+    promotion_manager: "/promotion-manager/dashboard",
   };
   return paths[role] || "/login";
 };

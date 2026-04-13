@@ -88,6 +88,7 @@ export default function Login() {
         staff: "/staff/dashboard",
         hq_admin:    "/admin/dashboard",
         distributor: "/distributor/dashboard",
+        promotion_manager: "/promotion-manager/dashboard",
       };
 
       const target = roleRedirects[user.role] || "/unauthorized";

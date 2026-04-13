@@ -23,6 +23,11 @@ const roleConfig = {
     badge: { text: 'Distributor', bg: 'bg-orange-100', text_color: 'text-orange-800', border: 'border-orange-200' },
     description: 'Distribution management portal',
   },
+  promotion_manager: {
+    label: 'Promotion Manager',
+    badge: { text: 'Manager', bg: 'bg-purple-100', text_color: 'text-purple-800', border: 'border-purple-200' },
+    description: 'Manage marketing promotions',
+  },
 };
 
 const initials = (name) => {
