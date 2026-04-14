@@ -49,8 +49,10 @@ import DistributorEvaluations  from "./pages/admin/DistributorEvaluations";
 import AdminTicketDetail       from "./pages/admin/AdminTicketDetail";
 
 // ── Promotion Manager pages (role: "promotion_manager") ────────────────────
-import PromotionDashboard from "./pages/promotion_manager/PromotionDashboard";
-import CreatePromotion    from "./pages/promotion_manager/CreatePromotion";
+import PromotionManagerDashboard from "./pages/promotion_manager/Dashboard";
+import PromotionsList           from "./pages/promotion_manager/PromotionDashboard";
+import CreatePromotion          from "./pages/promotion_manager/CreatePromotion";
+import PromotionManagerProfile  from "./pages/promotion_manager/Profile";
 
 // ── Distributor pages (role: "distributor") ────────────────────────────────
 import DistributorDashboard  from "./pages/distributor/DistributorDashboard";
@@ -187,7 +189,15 @@ function App() {
             path="/promotion-manager/dashboard"
             element={
               <ProtectedRoute roles="promotion_manager">
-                <PromotionDashboard />
+                <PromotionManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/promotion-manager/promotions"
+            element={
+              <ProtectedRoute roles="promotion_manager">
+                <PromotionsList />
               </ProtectedRoute>
             }
           />
@@ -196,6 +206,14 @@ function App() {
             element={
               <ProtectedRoute roles="promotion_manager">
                 <CreatePromotion />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/promotion-manager/profile"
+            element={
+              <ProtectedRoute roles="promotion_manager">
+                <PromotionManagerProfile />
               </ProtectedRoute>
             }
           />
