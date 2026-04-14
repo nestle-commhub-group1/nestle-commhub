@@ -78,13 +78,13 @@ const PromotionManagerLayout = ({ children }) => {
         </div>
 
         <div className="px-6 py-4 flex items-center space-x-4 mb-2">
-          <div className="h-12 w-12 rounded-full bg-nestle-brown-hover border border-nestle-border/20 flex flex-shrink-0 items-center justify-center text-lg font-bold">
+          <div className="h-12 w-12 rounded-full bg-white text-nestle-brown border-2 border-white flex flex-shrink-0 items-center justify-center text-lg font-black shadow-inner">
             {user.initials}
           </div>
           <div className="flex flex-col overflow-hidden">
-            <span className="font-semibold truncate text-[15px]">{user.fullName}</span>
-            <span className="bg-[#DCFCE7] text-[#166534] text-[10px] font-bold px-2 py-0.5 rounded-full w-max mt-1 tracking-wide border border-[#166534]/20 uppercase">
-              Promotion Manager
+            <span className="font-black truncate text-[15px] tracking-tight">{user.fullName}</span>
+            <span className="bg-[#166534] text-white text-[9px] font-black px-2.5 py-1 rounded-full w-max mt-1 tracking-widest border border-white/20 uppercase shadow-sm">
+              Promotion Manager PRO
             </span>
           </div>
         </div>
@@ -124,13 +124,16 @@ const PromotionManagerLayout = ({ children }) => {
           })}
         </nav>
 
-        <div className="p-4 mt-auto">
+        <div className="p-4 mt-auto border-t border-white/5 mx-2">
+          <div className="px-4 py-2 mb-2">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] opacity-50">System v1.2.0-LATEST</p>
+          </div>
           <button 
             onClick={handleLogout}
-            className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-nestle-brown-hover hover:text-white rounded-xl transition-colors"
+            className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors font-bold text-[14px]"
           >
             <LogOut size={20} />
-            <span className="font-medium text-[15px]">Logout</span>
+            <span>Logout</span>
           </button>
         </div>
       </div>

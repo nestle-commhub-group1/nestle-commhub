@@ -115,8 +115,8 @@ const PromotionManagerDashboard = () => {
       <div className="space-y-8 pb-12">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-[32px] font-black text-[#2C1810] tracking-tight">Main Dashboard</h1>
-            <p className="text-[15px] text-gray-500 font-medium mt-1">Global summary of your promotional campaigns</p>
+            <h1 className="text-[32px] font-black text-[#2C1810] tracking-tight">Promotions Hub Dashboard</h1>
+            <p className="text-[15px] text-gray-500 font-medium mt-1">Global performance summary of your Nestlé campaigns</p>
           </div>
           <Link to="/promotion-manager/create" className="bg-[#3D2B1F] hover:bg-[#2c1f16] text-white font-bold py-3.5 px-6 rounded-[16px] shadow-lg shadow-brown-200/50 transition-all flex items-center space-x-2">
             <PlusCircle size={20} />
