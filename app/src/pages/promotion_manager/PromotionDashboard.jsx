@@ -1,5 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
-import { Users, Truck, Star, CheckCircle, Search, Filter } from 'lucide-react';
+import { Users, Truck, Star, CheckCircle, Search, Filter, Package } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 

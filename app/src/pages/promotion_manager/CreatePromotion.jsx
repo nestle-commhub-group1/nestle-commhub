@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
 import { Sparkles, Calendar, Tag, FileText, Send } from 'lucide-react';
 import axios from 'axios';

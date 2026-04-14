@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
 import { 
   Package, Users, Clock, Star, 
-  TrendingUp, CheckCircle, AlertCircle, ArrowUpRight 
+  TrendingUp, CheckCircle, AlertCircle, ArrowUpRight, PlusCircle 
 } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
