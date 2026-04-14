@@ -8,7 +8,10 @@ const {
   retailerOptInPromotion,
   assignDistributorToRetailer,
   ratePromotion,
-  getRetailerPromotions
+  getRetailerPromotions,
+  addPromotionAttachment,
+  submitSalesReport,
+  sendSalesReminders
 } = require('../controllers/promotionController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -35,5 +38,14 @@ router.post('/:id/rate', protect, ratePromotion);
 
 // Retailer: get their opted-in promotions
 router.get('/retailer/my-promotions', protect, getRetailerPromotions);
+
+// Promotion Manager: add attachment
+router.post('/:id/attachments', protect, addPromotionAttachment);
+
+// Retailer: submit sales report
+router.post('/:id/sales-report', protect, submitSalesReport);
+
+// Automated job: send sales reminders (accessible for manual trigger by PM too)
+router.post('/send-sales-reminders', protect, sendSalesReminders);
 
 module.exports = router;

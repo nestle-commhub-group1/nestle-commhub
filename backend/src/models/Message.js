@@ -4,7 +4,12 @@ const messageSchema = new mongoose.Schema({
   ticketId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Ticket",
-    required: [true, "Ticket ID is required"],
+    required: false,
+  },
+  promotionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Promotion",
+    required: false,
   },
 
   senderId: {

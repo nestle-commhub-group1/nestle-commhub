@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Calendar, Percent, CheckCircle, Search } from 'lucide-react';
+import { Tag, Calendar, Percent, CheckCircle, Search, FileText } from 'lucide-react';
 // Assuming use of standard context and layout, though not explicit in prompt
 import RetailerLayout from '../../components/layout/RetailerLayout';
+import PromotionChat from '../../components/PromotionChat';
 import axios from 'axios';
+import API_URL from '../../config/api';
 
 const PromotionsWall = () => {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+  const [chatPromotionId, setChatPromotionId] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     fetchPromotions();
@@ -17,7 +21,7 @@ const PromotionsWall = () => {
   const fetchPromotions = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/promotions', {
+      const res = await axios.get(`${API_URL}/api/promotions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPromotions(res.data.promotions || []);
@@ -29,10 +33,15 @@ const PromotionsWall = () => {
     }
   };
 
+  const handleAskQuestion = (promoId) => {
+    setChatPromotionId(promoId);
+    setIsChatOpen(true);
+  };
+
   const handleOptIn = async (promoId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`/api/promotions/${promoId}/opt-in`, {}, {
+      await axios.post(`${API_URL}/api/promotions/${promoId}/opt-in`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Successfully opted in!');
@@ -97,33 +106,67 @@ const PromotionsWall = () => {
                     <h3 className="text-xl font-extrabold text-[#2C1810] mb-2">{promo.title}</h3>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3">{promo.description}</p>
                     
-                    <div className="space-y-2 mb-6 text-sm text-gray-500 font-medium">
-                      <div className="flex items-center">
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center text-sm text-gray-500 font-medium">
                         <Calendar size={16} className="mr-2 text-gray-400" />
                         Valid: {new Date(promo.startDate).toLocaleDateString()} - {new Date(promo.endDate).toLocaleDateString()}
                       </div>
+                      
+                      {promo.attachments && promo.attachments.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Campaign Assets</p>
+                          <div className="flex flex-wrap gap-2">
+                            {promo.attachments.map((file, idx) => (
+                              <a 
+                                key={idx} href={file.url} download={file.filename}
+                                className="flex items-center space-x-1.5 px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-500 hover:text-nestle-brown hover:border-nestle-brown/20 transition-all"
+                              >
+                                <FileText size={12} />
+                                <span>{file.filename}</span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
-                  {isOptedIn ? (
-                    <button disabled className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 font-bold flex items-center justify-center">
-                      <CheckCircle size={18} className="mr-2" />
-                      Opted In
-                    </button>
-                  ) : (
+                  <div className="space-y-3">
+                    {isOptedIn ? (
+                      <button disabled className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 font-bold flex items-center justify-center">
+                        <CheckCircle size={18} className="mr-2" />
+                        Opted In
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleOptIn(promo._id)}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors"
+                      >
+                        Opt In Now
+                      </button>
+                    )}
+                    
                     <button 
-                      onClick={() => handleOptIn(promo._id)}
-                      className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors"
+                      onClick={() => handleAskQuestion(promo._id)}
+                      className="w-full py-2.5 rounded-xl border border-gray-100 text-[#3D2B1F] font-bold text-[13px] hover:bg-gray-50 transition-colors"
                     >
-                      Opt In Now
+                      Ask a Question
                     </button>
-                  )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {chatPromotionId && (
+        <PromotionChat 
+          promotionId={chatPromotionId} 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </RetailerLayout>
   );
 };

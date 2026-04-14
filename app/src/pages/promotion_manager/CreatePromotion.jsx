@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
-import { Sparkles, Calendar, Tag, FileText, Send } from 'lucide-react';
+import { Sparkles, Calendar, Tag, FileText, Send, PlusCircle, X } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../../config/api';
 
 const CreatePromotion = () => {
   const navigate = useNavigate();
@@ -15,18 +16,60 @@ const CreatePromotion = () => {
     discount: ''
   });
   const [loading, setLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) return alert('File size must be less than 5MB');
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachments([...attachments, {
+          name: file.name,
+          base64: event.target.result,
+          type: 'document'
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAttachment = (idx) => {
+    setAttachments(attachments.filter((_, i) => i !== idx));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('/api/promotions', {
+      const res = await axios.post(`${API_URL}/api/promotions`, {
         ...formData,
         discount: formData.discount ? Number(formData.discount) : undefined
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      const newPromotionId = res.data.promotion._id;
+
+      // Upload any attachments
+      if (attachments.length > 0) {
+        for (const attachment of attachments) {
+          try {
+            await axios.post(`${API_URL}/api/promotions/${newPromotionId}/attachments`, {
+              filename: attachment.name,
+              base64Data: attachment.base64,
+              type: attachment.type
+            }, { 
+              headers: { Authorization: `Bearer ${token}` } 
+            });
+          } catch (err) {
+            console.error('Error uploading attachment:', attachment.name, err);
+          }
+        }
+      }
+
       alert('Promotion created successfully');
       navigate('/promotion-manager/dashboard');
     } catch (err) {
@@ -130,13 +173,51 @@ const CreatePromotion = () => {
                     <label className="text-[13px] font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>
                     <input 
                         required type="date" 
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-[20px] px-6 py-4 text-[16px] font-bold text-[#2C1810] focus:bg-white focus:ring-4 focus:ring-nestle-brown/5 focus:border-nestle-brown outline-none transition-all cursor-pointer"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-[20px] px-6 py-4 text-[16px] font-bold text-[#2C1810] focus:bg-white focus:ring-4 focus:ring-nestle-brown/5 focus:border-nestle-brown outline-none transition-all"
                         value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})}
                     />
                 </div>
             </div>
           </div>
-          
+
+          <div className="space-y-6">
+            <div className="flex items-center space-x-3 text-nestle-brown mb-2">
+                <FileText size={20} />
+                <h2 className="text-[18px] font-black uppercase tracking-widest">Digital Assets & Guides</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[24px] cursor-pointer bg-gray-50/50 hover:bg-gray-100 transition-all group">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <PlusCircle className="w-8 h-8 text-gray-400 group-hover:text-nestle-brown mb-2" />
+                      <p className="text-sm font-bold text-gray-500 group-hover:text-nestle-brown">Upload Campaign Assets (PDF, PNG, JPG)</p>
+                      <p className="text-[11px] text-gray-400 mt-1 uppercase tracking-widest font-black">Max 5MB per file</p>
+                    </div>
+                    <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+                  </label>
+                </div>
+
+                {attachments.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {attachments.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-[16px] shadow-sm">
+                        <div className="flex items-center space-x-3">
+                          <FileText size={18} className="text-nestle-brown" />
+                          <span className="text-[13px] font-bold text-[#2C1810] line-clamp-1 truncate max-w-[150px]">{file.name}</span>
+                        </div>
+                        <button type="button" onClick={() => removeAttachment(idx)} className="p-1 px-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="pt-6">
             <button 
               type="submit" disabled={loading}

@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
-import { Users, Truck, Star, CheckCircle, Search, Filter, Package } from 'lucide-react';
+import { Users, Truck, Star, CheckCircle, Search, Filter, Package, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import API_URL from '../../config/api';
+import PromotionChat from '../../components/PromotionChat';
 
 const PromotionDashboard = () => {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [distributorId, setDistributorId] = useState('');
+  const [chatPromotionId, setChatPromotionId] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('participants'); // 'participants' or 'sales'
 
   useEffect(() => {
     fetchPromotions();
@@ -17,13 +22,13 @@ const PromotionDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       // Managers can see all promotions
-      const res = await axios.get('/api/promotions', {
+      const res = await axios.get(`${API_URL}/api/promotions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Further we may need full details for each, but get all active first
       const fullPromos = await Promise.all(
         res.data.promotions.map(async (p) => {
-           const d = await axios.get(`/api/promotions/${p._id}`, {
+           const d = await axios.get(`${API_URL}/api/promotions/${p._id}`, {
              headers: { Authorization: `Bearer ${token}` }
            });
            return d.data.promotion;
@@ -41,7 +46,7 @@ const PromotionDashboard = () => {
     if (!distributorId) return alert('Please enter a distributor ID');
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`/api/promotions/${promoId}/assign-distributor`, {
+      await axios.post(`${API_URL}/api/promotions/${promoId}/assign-distributor`, {
         retailerId,
         distributorId
       }, {
@@ -120,11 +125,36 @@ const PromotionDashboard = () => {
                 </div>
 
                 <div className="p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-[14px] font-black text-[#2C1810] flex items-center uppercase tracking-widest">
-                      <Users size={18} className="mr-2.5 text-nestle-brown"/> Participating Retailers
-                    </h4>
+                  <div className="flex items-center space-x-8 border-b border-gray-100 mb-6">
+                    <button 
+                      onClick={() => setActiveTab('participants')}
+                      className={`pb-4 text-[14px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'participants' ? 'text-nestle-brown' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      Participants
+                      {activeTab === 'participants' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-nestle-brown rounded-t-full" />}
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('sales')}
+                      className={`pb-4 text-[14px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'sales' ? 'text-nestle-brown' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      Sales & Rewards
+                      {activeTab === 'sales' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-nestle-brown rounded-t-full" />}
+                    </button>
+                    <button 
+                      onClick={() => handleOpenChat(promo._id)}
+                      className="pb-4 text-[14px] font-black uppercase tracking-widest text-blue-600 flex items-center"
+                    >
+                       Campaign Chat <MessageSquare size={16} className="ml-2" />
+                    </button>
                   </div>
+                  
+                  {activeTab === 'participants' ? (
+                    <>
+                      <div className="flex items-center justify-between mb-6">
+                        <h4 className="text-[14px] font-black text-[#2C1810] flex items-center uppercase tracking-widest">
+                          <Users size={18} className="mr-2.5 text-nestle-brown"/> Participating Retailers
+                        </h4>
+                      </div>
                   
                   {promo.participatingRetailers?.length === 0 ? (
                     <div className="bg-gray-50/50 rounded-[24px] p-10 text-center border-2 border-dashed border-gray-100">
@@ -200,12 +230,59 @@ const PromotionDashboard = () => {
                       </table>
                     </div>
                   )}
-                </div>
+                </>
+              ) : (
+                  <div className="overflow-hidden border border-gray-50 rounded-[24px]">
+                    <table className="w-full text-left text-[14px]">
+                      <thead>
+                        <tr className="bg-gray-50/50 text-gray-400 font-black text-[11px] tracking-widest uppercase">
+                          <th className="px-6 py-4">Retailer</th>
+                          <th className="px-6 py-4">Units Sold</th>
+                          <th className="px-6 py-4">Reward Tier</th>
+                          <th className="px-6 py-4">Reward Amount</th>
+                          <th className="px-6 py-4 text-right">Payment Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {promo.salesData && promo.salesData.length > 0 ? promo.salesData.map(sale => (
+                          <tr key={sale.retailerId} className="hover:bg-gray-50/30 transition-colors">
+                            <td className="px-6 py-5 font-bold text-[#3D2B1F]">{sale.retailerId?.fullName || 'Retailer'}</td>
+                            <td className="px-6 py-5 text-gray-600 font-black">{sale.unitsSold}</td>
+                            <td className="px-6 py-5">
+                              <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                {sale.rewardTier}
+                              </span>
+                            </td>
+                            <td className="px-6 py-5 text-nestle-brown font-black">${sale.rewardAmount}</td>
+                            <td className="px-6 py-5 text-right">
+                              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[11px] font-black uppercase tracking-widest">
+                                {sale.rewardIssuedAt ? 'Paid' : 'Pending'}
+                              </span>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan="5" className="px-6 py-10 text-center text-gray-400 italic font-medium">No sales reported yet for this campaign.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
       </div>
+
+      {chatPromotionId && (
+        <PromotionChat 
+          promotionId={chatPromotionId} 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </PromotionManagerLayout>
   );
 };

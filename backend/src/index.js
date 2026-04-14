@@ -54,12 +54,14 @@ const ticketRoutes       = require('./routes/ticketRoutes');       // CRUD for s
 const notificationRoutes = require('./routes/notificationRoutes'); // In-app notifications
 const userRoutes         = require('./routes/userRoutes');          // User management (admin)
 const promotionRoutes    = require('./routes/promotionRoutes');     // Promotions management
+const messageRoutes      = require('./routes/messageRoutes');       // Multi-channel messaging
 
 app.use('/api/auth',          authRoutes);
 app.use('/api/tickets',       ticketRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users',         userRoutes);
 app.use('/api/promotions',    promotionRoutes);
+app.use('/api/messages',      messageRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 

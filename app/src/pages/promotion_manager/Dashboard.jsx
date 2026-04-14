@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import API_URL from '../../config/api';
 
 const PromotionManagerDashboard = () => {
   const [stats, setStats] = useState({
@@ -25,7 +26,7 @@ const PromotionManagerDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/promotions', {
+      const res = await axios.get(`${API_URL}/api/promotions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -35,7 +36,7 @@ const PromotionManagerDashboard = () => {
       const fullPromos = await Promise.all(
         promos.map(async (p) => {
           try {
-            const d = await axios.get(`/api/promotions/${p._id}`, {
+            const d = await axios.get(`${API_URL}/api/promotions/${p._id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             return d.data.promotion;
@@ -97,15 +98,15 @@ const PromotionManagerDashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, color, subtext }) => (
-    <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 flex items-center space-x-5">
-      <div className={`p-4 rounded-[20px] ${color}`}>
-        <Icon size={24} />
-      </div>
+  const StatCard = ({ title, value, icon: Icon, color, subtext, borderColor, bgColor }) => (
+    <div className={`bg-white p-6 rounded-[16px] shadow-sm flex items-center justify-between hover:shadow-md transition-all relative border-l-[4px] ${borderColor}`}>
       <div>
-        <p className="text-[14px] font-bold text-gray-400 uppercase tracking-wider">{title}</p>
-        <h3 className="text-[28px] font-black text-[#2C1810] mt-1">{value}</h3>
-        {subtext && <p className="text-[12px] text-gray-500 font-medium mt-1">{subtext}</p>}
+        <p className="text-[14px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">{title}</p>
+        <h3 className="text-[32px] font-black text-[#2C1810] leading-none">{value}</h3>
+        {subtext && <p className="text-[13px] text-gray-500 font-medium mt-2">{subtext}</p>}
+      </div>
+      <div className={`p-3.5 rounded-2xl ${bgColor}`}>
+        <Icon size={24} className={color.split(' ')[1]} />
       </div>
     </div>
   );
@@ -115,8 +116,10 @@ const PromotionManagerDashboard = () => {
       <div className="space-y-8 pb-12">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-[32px] font-black text-[#2C1810] tracking-tight">Promotions Hub Dashboard</h1>
-            <p className="text-[15px] text-gray-500 font-medium mt-1">Global performance summary of your Nestlé campaigns</p>
+            <h1 className="text-[32px] font-black text-[#2C1810] tracking-tight flex items-center">
+              Campaigns Overview <TrendingUp className="ml-3 text-gray-400" size={28} />
+            </h1>
+            <p className="text-[15px] text-gray-500 font-medium mt-1">Real-time performance metrics for your Nestlé promotions</p>
           </div>
           <Link to="/promotion-manager/create" className="bg-[#3D2B1F] hover:bg-[#2c1f16] text-white font-bold py-3.5 px-6 rounded-[16px] shadow-lg shadow-brown-200/50 transition-all flex items-center space-x-2">
             <PlusCircle size={20} />
@@ -130,29 +133,37 @@ const PromotionManagerDashboard = () => {
             title="Active Campaigns" 
             value={stats.activePromotions} 
             icon={Package} 
-            color="bg-nestle-brown/10 text-nestle-brown"
-            subtext="Running currently"
+            color="text-blue-600"
+            bgColor="bg-blue-50"
+            borderColor="border-l-blue-600"
+            subtext="Live in market"
           />
           <StatCard 
             title="Total Opt-ins" 
             value={stats.totalOptIns} 
             icon={Users} 
-            color="bg-blue-50 text-blue-600"
-            subtext="Retailer participations"
+            color="text-[#3D2B1F]"
+            bgColor="bg-[#F8F7F5]"
+            borderColor="border-l-[#3D2B1F]"
+            subtext="Retailer participation"
           />
           <StatCard 
             title="Pending Actions" 
             value={stats.pendingAssignments} 
             icon={Clock} 
-            color="bg-orange-50 text-orange-600"
-            subtext="Material assignments"
+            color="text-orange-600"
+            bgColor="bg-orange-50"
+            borderColor="border-l-orange-500"
+            subtext="Needs material assignment"
           />
           <StatCard 
             title="Avg. Rating" 
             value={`${stats.averageRating}/10`} 
             icon={Star} 
-            color="bg-yellow-50 text-yellow-600"
-            subtext="Promotion feedback"
+            color="text-green-600"
+            bgColor="bg-green-50"
+            borderColor="border-l-green-500"
+            subtext="Promotion health"
           />
         </div>
 

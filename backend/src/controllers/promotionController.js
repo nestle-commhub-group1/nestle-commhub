@@ -324,6 +324,155 @@ const getRetailerPromotions = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/promotions/:id/attachments
+ * Add attachment to promotion (Promotion Manager only)
+ */
+const addPromotionAttachment = async (req, res) => {
+  try {
+    if (req.user.role !== 'promotion_manager') {
+      return res.status(403).json({ error: 'Only Promotion Managers can add attachments' });
+    }
+
+    const { filename, base64Data, type } = req.body;
+    if (!filename || !base64Data) {
+      return res.status(400).json({ error: 'filename and base64Data required' });
+    }
+
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    promotion.attachments.push({
+      filename,
+      url: base64Data,
+      uploadedAt: new Date(),
+      type: type || 'document'
+    });
+
+    await promotion.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Attachment added successfully',
+      promotion
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * POST /api/promotions/:id/sales-report
+ * Retailer submits units sold performance
+ */
+const submitSalesReport = async (req, res) => {
+  try {
+    if (req.user.role !== 'retailer') {
+      return res.status(403).json({ error: 'Only retailers can submit sales reports' });
+    }
+
+    const { unitsSold } = req.body;
+    if (unitsSold === undefined) {
+      return res.status(400).json({ error: 'unitsSold required' });
+    }
+
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    // Calculate reward tier based on tiered config
+    let rewardTier, rewardAmount;
+    if (unitsSold <= promotion.rewards.tier1.maxUnits) {
+      rewardTier = 'tier1';
+      rewardAmount = promotion.rewards.tier1.rewardAmount;
+    } else if (unitsSold <= promotion.rewards.tier2.maxUnits) {
+      rewardTier = 'tier2';
+      rewardAmount = promotion.rewards.tier2.rewardAmount;
+    } else {
+      rewardTier = 'tier3';
+      rewardAmount = promotion.rewards.tier3.rewardAmount;
+    }
+
+    // Upsert sales entry for this retailer
+    const existingSale = promotion.salesData.find(
+      s => s.retailerId.toString() === req.user._id.toString()
+    );
+
+    if (existingSale) {
+      existingSale.unitsSold = unitsSold;
+      existingSale.submittedAt = new Date();
+      existingSale.rewardTier = rewardTier;
+      existingSale.rewardAmount = rewardAmount;
+    } else {
+      promotion.salesData.push({
+        retailerId: req.user._id,
+        unitsSold,
+        submittedAt: new Date(),
+        rewardTier,
+        rewardAmount,
+        rewardIssuedAt: new Date() // Mark locally as issued for demo simplicity
+      });
+    }
+
+    await promotion.save();
+
+    // Notify PM of performance
+    await Notification.create({
+      userId: promotion.createdBy,
+      type: 'sales_report',
+      message: `Retailer reported ${unitsSold} units for promotion: ${promotion.title}. Tier: ${rewardTier}.`,
+      relatedPromotion: promotion._id
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Sales report submitted successfully',
+      rewardTier,
+      rewardAmount,
+      promotion
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * POST /api/promotions/send-sales-reminders
+ * Automated job logic to notify retailers of ending campaigns
+ */
+const sendSalesReminders = async (req, res) => {
+  try {
+    // Check for promotions ending within 48 hours
+    const endingSoon = await Promotion.find({
+      endDate: { $lte: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) },
+      status: 'active'
+    });
+
+    for (const promo of endingSoon) {
+      for (const participant of promo.participatingRetailers) {
+        if (participant.optedIn) {
+          await Notification.create({
+            userId: participant.retailerId,
+            type: 'sales_reminder',
+            message: `Current promotion "${promo.title}" ends in 2 days. Don't forget to submit your final sales figures to claim rewards!`,
+            relatedPromotion: promo._id
+          });
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Sent reminders for ${endingSoon.length} campaigns`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createPromotion,
   getAllPromotions,
@@ -332,5 +481,8 @@ module.exports = {
   retailerOptInPromotion,
   assignDistributorToRetailer,
   ratePromotion,
-  getRetailerPromotions
+  getRetailerPromotions,
+  addPromotionAttachment,
+  submitSalesReport,
+  sendSalesReminders
 };

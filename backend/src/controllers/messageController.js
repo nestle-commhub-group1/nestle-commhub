@@ -120,4 +120,46 @@ const getMessages = async (req, res) => {
 
 
 
-module.exports = { sendMessage, getMessages };
+// ─── GET /api/messages/promo/:id ───────────────────────────────────────────
+// Sprint 2: Promotion Managers and participating retailers can message here.
+const getPromotionMessages = async (req, res) => {
+  try {
+    const promotionId = req.params.id;
+    const messages = await Message.find({ promotionId }).sort({ createdAt: 1 });
+    res.status(200).json({ success: true, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── POST /api/messages/promo/:id ───────────────────────────────────────────
+const sendPromotionMessage = async (req, res) => {
+  try {
+    const { message } = req.body;
+    const promotionId = req.params.id;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Message cannot be empty" });
+    }
+
+    const newMessage = await Message.create({
+      promotionId,
+      senderId: req.user._id,
+      senderName: req.user.fullName,
+      senderRole: req.user.role,
+      message: message.trim(),
+      chatRoom: 'promo_retailer_manager',
+    });
+
+    res.status(201).json({ success: true, message: newMessage });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { 
+  sendMessage, 
+  getMessages, 
+  getPromotionMessages, 
+  sendPromotionMessage 
+};

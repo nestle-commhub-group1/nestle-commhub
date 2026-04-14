@@ -8,12 +8,15 @@ import {
 const PromotionManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [user, setUser] = useState({ fullName: 'Promotion Manager', initials: 'PM', role: 'promotion_manager', email: '' });
+  const [user, setUser] = useState({ fullName: 'Promotion Manager', initials: 'PM', role: 'promotion_manager', staffCategory: 'Promotion Manager', email: '' });
+  const [notificationCount, setNotificationCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -23,6 +26,25 @@ const PromotionManagerLayout = ({ children }) => {
         setUser({ ...parsedUser, fullName: name, initials: initials.toUpperCase(), role: 'promotion_manager' });
       } catch (e) {}
     }
+
+    const fetchNotifications = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.notifications) {
+          setNotificationCount(data.notifications.filter(n => !n.read).length);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
@@ -35,7 +57,7 @@ const PromotionManagerLayout = ({ children }) => {
     { label: 'Home', path: '/promotion-manager/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Create Promotion', path: '/promotion-manager/create', icon: <PlusCircle size={20} /> },
     { label: 'Promotions Dashboard', path: '/promotion-manager/promotions', icon: <FileText size={20} /> },
-    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: 2, action: () => setIsNotificationsOpen(true) },
+    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: notificationCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/promotion-manager/profile', icon: <User size={20} /> },
   ];
 
@@ -51,7 +73,11 @@ const PromotionManagerLayout = ({ children }) => {
       </div>
       <button className="p-2 relative" onClick={() => setIsNotificationsOpen(true)}>
         <Bell size={24} />
-        <span className="absolute top-1 right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">2</span>
+        {notificationCount > 0 && (
+          <span className="absolute top-1 right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
+            {notificationCount}
+          </span>
+        )}
       </button>
     </div>
   );
@@ -84,7 +110,7 @@ const PromotionManagerLayout = ({ children }) => {
           <div className="flex flex-col overflow-hidden">
             <span className="font-black truncate text-[15px] tracking-tight">{user.fullName}</span>
             <span className="bg-[#166534] text-white text-[9px] font-black px-2.5 py-1 rounded-full w-max mt-1 tracking-widest border border-white/20 uppercase shadow-sm">
-              Promotion Manager PRO
+              {user.staffCategory || 'PROMOTION MANAGER'}
             </span>
           </div>
         </div>
@@ -145,7 +171,11 @@ const PromotionManagerLayout = ({ children }) => {
         <div className="hidden lg:flex absolute top-6 right-8 z-10">
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
-            <span className="absolute -top-1 -right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border-2 border-white">2</span>
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border-2 border-white">
+                {notificationCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -168,7 +198,9 @@ const PromotionManagerLayout = ({ children }) => {
               <div className="flex items-center space-x-2">
                 <Bell size={20} className="text-nestle-brown" />
                 <h2 className="text-lg font-bold text-nestle-brown">Notifications</h2>
-                <span className="bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">2</span>
+                {notificationCount > 0 && (
+                  <span className="bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{notificationCount}</span>
+                )}
               </div>
               <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
                 <X size={20} />

@@ -14,6 +14,34 @@ const promotionSchema = new Schema({
     enum: ["active", "inactive", "archived"],
     default: "active"
   },
+  // NEW: File attachments
+  attachments: [
+    {
+      filename: String,
+      url: String,           // URL to file (base64 or Cloudinary)
+      uploadedAt: { type: Date, default: Date.now },
+      type: { type: String, default: 'document' } // 'poster', 'guide', 'flyer', etc.
+    }
+  ],
+  // NEW: Tiered rewards configuration
+  rewards: {
+    tier1: { minUnits: { type: Number, default: 0 }, maxUnits: { type: Number, default: 100 }, rewardAmount: { type: Number, default: 10 } },
+    tier2: { minUnits: { type: Number, default: 101 }, maxUnits: { type: Number, default: 500 }, rewardAmount: { type: Number, default: 50 } },
+    tier3: { minUnits: { type: Number, default: 501 }, maxUnits: { type: Number, default: 999999 }, rewardAmount: { type: Number, default: 100 } }
+  },
+  // NEW: Sales tracking per retailer
+  salesData: [
+    {
+      retailerId: { type: Schema.Types.ObjectId, ref: 'User' },
+      unitsSold: { type: Number, default: 0 },
+      submittedAt: { type: Date, default: Date.now },
+      rewardTier: String,                    // 'tier1', 'tier2', 'tier3'
+      rewardAmount: Number,
+      rewardIssuedAt: Date
+    }
+  ],
+  // NEW: Chat room ID
+  chatRoomId: { type: String },
   participatingRetailers: [
     {
       retailerId: { type: Schema.Types.ObjectId, ref: 'User' },
