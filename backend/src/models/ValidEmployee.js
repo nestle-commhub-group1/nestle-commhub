@@ -14,6 +14,7 @@ const validEmployeeSchema = new mongoose.Schema({
       "staff",
       "hq_admin",
       "distributor",
+      "promotion_manager",
     ],
   },
   isUsed: {

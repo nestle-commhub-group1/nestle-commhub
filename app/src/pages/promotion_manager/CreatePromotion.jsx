@@ -89,7 +89,7 @@ const CreatePromotion = () => {
             <p className="text-[16px] text-gray-500 font-medium max-w-lg mx-auto mt-2">Design and publish a new promotional offer for your retail network.</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="bg-white rounded-[40px] shadow-xl shadow-gray-200/50 border border-gray-100 p-10 md:p-14 space-y-10">
+        <form onSubmit={handleSubmit} className="bg-white rounded-[40px] shadow-xl shadow-gray-200/50 border border-gray-100 p-6 md:p-14 space-y-10">
           <div className="space-y-6">
             <div className="flex items-center space-x-3 text-nestle-brown mb-2">
                 <FileText size={20} />

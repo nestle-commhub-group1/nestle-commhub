@@ -1,6 +1,7 @@
 const Message = require("../models/Message");
 const Ticket = require("../models/Ticket");
 const Notification = require("../models/Notification");
+const mongoose = require("mongoose");
 
 // ─── Helper: check ticket access permission ────────────────────────────────────
 const hasTicketAccess = (ticket, user) => {
@@ -155,6 +156,37 @@ const sendPromotionMessage = async (req, res) => {
       message: message.trim(),
       chatRoom: chatRoom || 'promo_retailer_manager',
     });
+
+    // Notify the recipient(s)
+    const promotion = await mongoose.model('Promotion').findById(promotionId);
+    if (promotion) {
+      // If PM sent, notify the retailer(s) - for now notifying the creator of the promotion or participants
+      let notificationTarget = null;
+      if (req.user.role === 'promotion_manager') {
+        // If it's a specific room for a retailer, we'd notify that retailer
+        // For now, simplify: if PM sends, notify participants; if retailer sends, notify PM
+        // In a more advanced version we'd filter by the specific retailer in the room name
+        const retailers = promotion.participatingRetailers.map(r => r.retailerId);
+        for (const rid of retailers) {
+          if (rid.toString() !== req.user._id.toString()) {
+            await Notification.create({
+              userId: rid,
+              type: "promo_chat",
+              relatedPromotion: promotionId,
+              message: `New message from Promotion Manager regarding ${promotion.title}`,
+            });
+          }
+        }
+      } else {
+        // Retailer sent, notify PM
+        await Notification.create({
+          userId: promotion.createdBy,
+          type: "promo_chat",
+          relatedPromotion: promotionId,
+          message: `${req.user.fullName} sent a message regarding ${promotion.title}`,
+        });
+      }
+    }
 
     res.status(201).json({ success: true, message: newMessage });
   } catch (error) {

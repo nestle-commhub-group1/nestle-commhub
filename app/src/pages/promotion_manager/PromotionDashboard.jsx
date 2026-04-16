@@ -8,6 +8,7 @@ import PromotionChat from '../../components/PromotionChat';
 
 const PromotionDashboard = () => {
   const [promotions, setPromotions] = useState([]);
+  const [distributors, setDistributors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [distributorId, setDistributorId] = useState('');
   const [chatPromotionId, setChatPromotionId] = useState(null);
@@ -17,7 +18,20 @@ const PromotionDashboard = () => {
 
   useEffect(() => {
     fetchPromotions();
+    fetchDistributors();
   }, []);
+
+  const fetchDistributors = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/users/distributors`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDistributors(res.data.distributors || []);
+    } catch (err) {
+      console.error('Failed to fetch distributors:', err);
+    }
+  };
 
   const fetchPromotions = async () => {
     try {
@@ -163,8 +177,8 @@ const PromotionDashboard = () => {
                       <button className="mt-4 text-[12px] font-black text-nestle-brown uppercase tracking-widest hover:underline">Copy Invite Link</button>
                     </div>
                   ) : (
-                    <div className="overflow-hidden border border-gray-50 rounded-[24px]">
-                      <table className="w-full text-left text-[14px]">
+                    <div className="overflow-x-auto border border-gray-50 rounded-[24px]">
+                      <table className="min-w-[800px] w-full text-left text-[14px]">
                         <thead>
                           <tr className="bg-gray-50/50 text-gray-400 font-black text-[11px] tracking-widest uppercase">
                             <th className="px-6 py-4">Retailer Information</th>
@@ -208,11 +222,16 @@ const PromotionDashboard = () => {
                                 <div className="flex flex-col items-end space-y-2">
                                   {!r.assignedDistributor ? (
                                     <div className="flex justify-end items-center space-x-3">
-                                      <input 
-                                        type="text" placeholder="Enter Distributor ID..." 
-                                        className="bg-gray-50 border border-gray-100 outline-none focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 focus:border-nestle-brown rounded-[12px] px-4 py-2 text-[13px] w-[200px] font-medium"
+                                      <select 
+                                        className="bg-gray-50 border border-gray-100 outline-none focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 focus:border-nestle-brown rounded-[12px] px-4 py-2 text-[13px] w-[200px] font-medium appearance-none cursor-pointer"
+                                        value={distributorId}
                                         onChange={e => setDistributorId(e.target.value)}
-                                      />
+                                      >
+                                        <option value="">Select Distributor...</option>
+                                        {distributors.map(d => (
+                                          <option key={d._id} value={d._id}>{d.fullName}</option>
+                                        ))}
+                                      </select>
                                       <button 
                                         onClick={() => handleAssignDistributor(promo._id, r.retailerId._id)}
                                         className="bg-nestle-brown text-white px-6 py-2 rounded-[12px] text-[12px] font-black uppercase tracking-widest hover:bg-[#2c1f16] shadow-sm transition-all active:scale-95"
@@ -259,8 +278,8 @@ const PromotionDashboard = () => {
                   )}
                 </>
               ) : (
-                  <div className="overflow-hidden border border-gray-50 rounded-[24px]">
-                    <table className="w-full text-left text-[14px]">
+                  <div className="overflow-x-auto border border-gray-50 rounded-[24px]">
+                    <table className="min-w-[800px] w-full text-left text-[14px]">
                       <thead>
                         <tr className="bg-gray-50/50 text-gray-400 font-black text-[11px] tracking-widest uppercase">
                           <th className="px-6 py-4">Retailer</th>
