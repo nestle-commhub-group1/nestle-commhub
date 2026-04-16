@@ -3,7 +3,7 @@ import { Send, X, User, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../config/api';
 
-const PromotionChat = ({ promotionId, isOpen, onClose }) => {
+const PromotionChat = ({ promotionId, isOpen=true, onClose, chatRoom, currentUserRole }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ const PromotionChat = ({ promotionId, isOpen, onClose }) => {
       const interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
       return () => clearInterval(interval);
     }
-  }, [isOpen, promotionId]);
+  }, [isOpen, promotionId, chatRoom]);
 
   useEffect(() => {
     scrollToBottom();
@@ -29,7 +29,11 @@ const PromotionChat = ({ promotionId, isOpen, onClose }) => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/messages/promo/${promotionId}`, {
+      const url = chatRoom 
+        ? `${API_URL}/api/messages/promo/${promotionId}?chatRoom=${chatRoom}`
+        : `${API_URL}/api/messages/promo/${promotionId}`;
+        
+      const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -47,7 +51,8 @@ const PromotionChat = ({ promotionId, isOpen, onClose }) => {
     try {
       setLoading(true);
       await axios.post(`${API_URL}/api/messages/promo/${promotionId}`, {
-        message: newMessage
+        message: newMessage,
+        chatRoom
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -62,19 +67,28 @@ const PromotionChat = ({ promotionId, isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const isModal = !!onClose;
+
   return (
-    <div className="fixed inset-y-0 right-0 z-[60] w-full max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300">
-      <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-nestle-brown text-white">
+    <div className={isModal 
+      ? "fixed inset-y-0 right-0 z-[60] w-full max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300"
+      : "flex flex-col h-[500px] bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
+    }>
+      <div className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between ${isModal ? 'bg-nestle-brown text-white' : 'bg-gray-50 text-nestle-brown'}`}>
         <div className="flex items-center space-x-3">
           <MessageCircle size={20} />
           <div>
-            <h3 className="text-[16px] font-black uppercase tracking-wider">Campaign Chat</h3>
+            <h3 className="text-[16px] font-black uppercase tracking-wider">
+              {currentUserRole === 'retailer' ? 'Ask Promotion Manager' : 'Campaign Chat'}
+            </h3>
             <p className="text-[11px] font-bold opacity-70">Promotion ID: {promotionId.slice(-6).toUpperCase()}</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <X size={20} />
-        </button>
+        {isModal && (
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30">
@@ -107,7 +121,7 @@ const PromotionChat = ({ promotionId, isOpen, onClose }) => {
           <input 
             type="text" 
             placeholder="Type your message..."
-            className="w-full bg-gray-50 border border-gray-100 rounded-[16px] pl-5 pr-14 py-4 text-[14px] font-bold focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 outline-none transition-all transition-all"
+            className="w-full bg-gray-50 border border-gray-100 rounded-[16px] pl-5 pr-14 py-4 text-[14px] font-bold focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 outline-none transition-all"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />

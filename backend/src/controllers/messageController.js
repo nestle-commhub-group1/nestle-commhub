@@ -125,7 +125,12 @@ const getMessages = async (req, res) => {
 const getPromotionMessages = async (req, res) => {
   try {
     const promotionId = req.params.id;
-    const messages = await Message.find({ promotionId }).sort({ createdAt: 1 });
+    const { chatRoom } = req.query;
+    
+    const filter = { promotionId };
+    if (chatRoom) filter.chatRoom = chatRoom;
+
+    const messages = await Message.find(filter).sort({ createdAt: 1 });
     res.status(200).json({ success: true, messages });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -135,7 +140,7 @@ const getPromotionMessages = async (req, res) => {
 // ─── POST /api/messages/promo/:id ───────────────────────────────────────────
 const sendPromotionMessage = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, chatRoom } = req.body;
     const promotionId = req.params.id;
 
     if (!message || !message.trim()) {
@@ -148,7 +153,7 @@ const sendPromotionMessage = async (req, res) => {
       senderName: req.user.fullName,
       senderRole: req.user.role,
       message: message.trim(),
-      chatRoom: 'promo_retailer_manager',
+      chatRoom: chatRoom || 'promo_retailer_manager',
     });
 
     res.status(201).json({ success: true, message: newMessage });

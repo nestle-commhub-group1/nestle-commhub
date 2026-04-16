@@ -115,7 +115,8 @@ const registerUser = async (req, res) => {
       /* ── Step 3: Employee ID verification ────────────────────────────── */
 
       const trimmedEmpId = (employeeId || "").trim();
-      const isDevMode = process.env.NODE_ENV === "development";
+      const isDevMode = process.env.NODE_ENV === "development" && 
+                        process.env.ALLOW_ANY_EMPLOYEE_ID === "true";
 
       // DEV BYPASS: In development mode accept any non-empty Employee ID without
       // hitting the DB. This lets testers use arbitrary IDs (e.g. "NES-DEV-888")

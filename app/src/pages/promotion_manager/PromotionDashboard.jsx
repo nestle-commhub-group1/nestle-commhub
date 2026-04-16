@@ -13,6 +13,7 @@ const PromotionDashboard = () => {
   const [chatPromotionId, setChatPromotionId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('participants'); // 'participants' or 'sales'
+  const [selectedRetailer, setSelectedRetailer] = useState(null);
 
   useEffect(() => {
     fetchPromotions();
@@ -204,30 +205,56 @@ const PromotionDashboard = () => {
                                 ) : <span className="px-4 py-2 bg-orange-50/50 border border-orange-100 text-orange-600 rounded-[16px] text-[12px] font-black uppercase tracking-wider">Unassigned</span>}
                               </td>
                               <td className="px-6 py-5 text-right">
-                                {!r.assignedDistributor ? (
-                                  <div className="flex justify-end items-center space-x-3">
-                                    <input 
-                                      type="text" placeholder="Enter Distributor ID..." 
-                                      className="bg-gray-50 border border-gray-100 outline-none focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 focus:border-nestle-brown rounded-[12px] px-4 py-2 text-[13px] w-[200px] font-medium"
-                                      onChange={e => setDistributorId(e.target.value)}
-                                    />
-                                    <button 
-                                      onClick={() => handleAssignDistributor(promo._id, r.retailerId._id)}
-                                      className="bg-nestle-brown text-white px-6 py-2 rounded-[12px] text-[12px] font-black uppercase tracking-widest hover:bg-[#2c1f16] shadow-sm transition-all active:scale-95"
-                                    >
-                                      Assign
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-end items-center text-green-600 font-black text-[12px] uppercase tracking-widest bg-green-50 px-4 py-2 rounded-[12px] w-max ml-auto">
-                                    <CheckCircle size={16} className="mr-2"/> Fulfilled
-                                  </div>
-                                )}
+                                <div className="flex flex-col items-end space-y-2">
+                                  {!r.assignedDistributor ? (
+                                    <div className="flex justify-end items-center space-x-3">
+                                      <input 
+                                        type="text" placeholder="Enter Distributor ID..." 
+                                        className="bg-gray-50 border border-gray-100 outline-none focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 focus:border-nestle-brown rounded-[12px] px-4 py-2 text-[13px] w-[200px] font-medium"
+                                        onChange={e => setDistributorId(e.target.value)}
+                                      />
+                                      <button 
+                                        onClick={() => handleAssignDistributor(promo._id, r.retailerId._id)}
+                                        className="bg-nestle-brown text-white px-6 py-2 rounded-[12px] text-[12px] font-black uppercase tracking-widest hover:bg-[#2c1f16] shadow-sm transition-all active:scale-95"
+                                      >
+                                        Assign
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-end items-center text-green-600 font-black text-[12px] uppercase tracking-widest bg-green-50 px-4 py-2 rounded-[12px]">
+                                      <CheckCircle size={16} className="mr-2"/> Fulfilled
+                                    </div>
+                                  )}
+                                  
+                                  <button 
+                                    onClick={() => setSelectedRetailer(r)}
+                                    className="px-4 py-2 bg-white border border-nestle-brown text-nestle-brown rounded-[12px] text-[11px] font-black uppercase tracking-widest hover:bg-nestle-brown/5 transition-all"
+                                  >
+                                    Message Retailer
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+
+                      {selectedRetailer && (
+                        <div className="chat-modal mt-6 border-t pt-6 p-6">
+                          <h3 className="text-lg font-bold mb-4">Chat with {selectedRetailer.retailerId.businessName}</h3>
+                          <PromotionChat 
+                            promotionId={promo._id}
+                            chatRoom={`promo_${promo._id}_chat`}
+                            currentUserRole="promotion_manager"
+                          />
+                          <button 
+                            onClick={() => setSelectedRetailer(null)}
+                            className="mt-4 text-xs font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest"
+                          >
+                            Close Chat
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

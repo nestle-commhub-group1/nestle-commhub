@@ -167,6 +167,17 @@ const MyPromotions = () => {
                              Campaign Chat
                            </button>
 
+                           {promo && (
+                             <div className="chat-section mt-6 border-t pt-6">
+                               <h3 className="text-lg font-bold mb-4">Questions? Ask the Promotion Manager</h3>
+                               <PromotionChat 
+                                 promotionId={promo._id}
+                                 chatRoom={`promo_${promo._id}_chat`}
+                                 currentUserRole="retailer"
+                               />
+                             </div>
+                           )}
+
                            {myRecord?.rating ? (
                              <div className="pt-2 border-t border-gray-50">
                                <div className="flex text-yellow-500 mb-1">
