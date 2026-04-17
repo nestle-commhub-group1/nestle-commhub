@@ -147,7 +147,12 @@ const registerUser = async (req, res) => {
              if (exactEmp.role !== role) return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${exactEmp.role}", but you selected "${role}".` });
              return res.status(400).json({ message: `Employee ID exact match worked but logic failed, please try again.` });
           }
-          return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
+          // Debugging info to send back!
+          const allDocs = await ValidEmployee.find({}).select('employeeId role isUsed -_id');
+          const debugMsg = `Invalid Employee ID "${trimmedEmpId}". ` + 
+                           `Hosted DB has ${allDocs.length} valid IDs. ` +
+                           `Are you sure seed script ran on the hosted DB?`;
+          return res.status(400).json({ message: debugMsg });
         }
 
         if (validEmp.isUsed) {
