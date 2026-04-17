@@ -1,0 +1,14 @@
+{
+  "name": "nestle-commhub",
+  "version": "1.0.0",
+  "description": "Nestle CommHub E2E test runner",
+  "scripts": {
+    "test": "playwright test",
+    "test:notifications": "playwright test tests/e2e/integration-notifications.spec.js",
+    "test:promotions": "playwright test tests/e2e/sprint2-promotions.spec.js",
+    "test:stock": "playwright test tests/e2e/sprint3-stock-management.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}

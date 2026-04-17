@@ -154,6 +154,86 @@ const StockManagerLayout = ({ children }) => {
           </div>
         </main>
       </div>
+      {/* Notifications Panel */}
+      {isNotificationsOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-40 transition-opacity backdrop-blur-sm"
+            onClick={() => setIsNotificationsOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col translate-x-0 transition-transform duration-300 ease-in-out">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-nestle-border">
+              <div className="flex items-center space-x-2">
+                <Bell size={20} className="text-nestle-brown" />
+                <h2 className="text-lg font-bold text-nestle-brown">Notifications</h2>
+                {unreadCount > 0 && (
+                  <span className="bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">{unreadCount}</span>
+                )}
+              </div>
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                    } catch (err) {}
+                  }}
+                  disabled={unreadCount === 0}
+                  className="text-sm font-medium text-gray-500 hover:text-nestle-brown disabled:opacity-50 transition-colors"
+                >
+                  Mark all as read
+                </button>
+                <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-nestle-border">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                    <Bell size={40} className="mb-2 opacity-20" />
+                    <p className="text-sm font-medium italic">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif._id} 
+                      onClick={async () => {
+                        if (!notif.isRead) {
+                          try {
+                            const token = localStorage.getItem('token');
+                            await axios.put(`${API_URL}/api/notifications/${notif._id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                            setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n));
+                          } catch (e) {}
+                        }
+                      }}
+                      className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
+                    >
+                      <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.isRead ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+                        <Bell size={16} className={notif.type === 'order' ? "text-green-500" : "text-gray-500"} />
+                      </div>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
+                          {notif.message}
+                        </p>
+                        <p className="text-[12px] text-gray-500 mt-1.5">{formatTimeAgo(notif.createdAt)}</p>
+                      </div>
+                      {!notif.isRead && (
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
