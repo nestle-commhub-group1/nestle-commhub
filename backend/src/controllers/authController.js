@@ -133,12 +133,20 @@ const registerUser = async (req, res) => {
 
         // Case-insensitive lookup — "NES001" matches "nes001", "Nes001", etc.
         const validEmp = await ValidEmployee.findOne({
-          employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' }
+          employeeId: new RegExp(`^${trimmedEmpId}$`, 'i')
         });
 
         console.log(`[Register] ValidEmployee lookup result:`, validEmp ? `Found (isUsed=${validEmp.isUsed})` : 'NOT FOUND');
 
         if (!validEmp) {
+          // If the RegExp failed for some reason, also check exact match
+          const exactEmp = await ValidEmployee.findOne({ employeeId: trimmedEmpId });
+          if (exactEmp) {
+             console.log(`[Register] ValidEmployee FOUND with exact match but not regex!`);
+             if (exactEmp.isUsed) return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" has already been used` });
+             if (exactEmp.role !== role) return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${exactEmp.role}", but you selected "${role}".` });
+             return res.status(400).json({ message: `Employee ID exact match worked but logic failed, please try again.` });
+          }
           return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
         }
 
@@ -186,7 +194,7 @@ const registerUser = async (req, res) => {
       if (employeeRoles.includes(role) && ValidEmployee && process.env.NODE_ENV !== 'development') {
         const trimmedEmpId = (employeeId || "").trim();
         await ValidEmployee.findOneAndUpdate(
-          { employeeId: { $regex: `^${trimmedEmpId.replace(/-/g, '\\-')}$`, $options: 'i' } },
+          { employeeId: new RegExp(`^${trimmedEmpId}$`, 'i') },
           { isUsed: true }
         );
         console.log(`[Register] Marked employeeId "${trimmedEmpId}" as used`);
