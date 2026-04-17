@@ -55,6 +55,8 @@ const notificationRoutes = require('./routes/notificationRoutes'); // In-app not
 const userRoutes         = require('./routes/userRoutes');          // User management (admin)
 const promotionRoutes    = require('./routes/promotionRoutes');     // Promotions management
 const messageRoutes      = require('./routes/messageRoutes');       // Multi-channel messaging
+const productRoutes      = require('./routes/productRoutes');       // Product management
+const orderRoutes        = require('./routes/orderRoutes');         // Order management
 
 app.use('/api/auth',          authRoutes);
 app.use('/api/tickets',       ticketRoutes);
@@ -62,6 +64,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users',         userRoutes);
 app.use('/api/promotions',    promotionRoutes);
 app.use('/api/messages',      messageRoutes);
+app.use('/api/products',      productRoutes);
+app.use('/api/orders',        orderRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 

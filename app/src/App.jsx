@@ -58,6 +58,12 @@ import PromotionManagerProfile  from "./pages/promotion_manager/Profile";
 import DistributorDashboard  from "./pages/distributor/DistributorDashboard";
 import DistributorTicketDetail from "./pages/distributor/DistributorTicketDetail";
 import PromotionalMaterials  from "./pages/distributor/PromotionalMaterials";
+ 
+// ── Stock Manager pages (role: "stock_manager") ──────────────────────────
+import StockManagerDashboard from "./pages/stock_manager/StockManagerDashboard";
+import InventoryManagement    from "./pages/stock_manager/InventoryManagement";
+import OrderManagement        from "./pages/stock_manager/OrderManagement";
+import StockManagerProfile    from "./pages/stock_manager/Profile";
 
 // ── Dev tools (only accessible in development mode) ────────────────────────
 import DevLauncher from "./pages/DevLauncher";
@@ -240,6 +246,40 @@ function App() {
             element={
               <ProtectedRoute roles="distributor">
                 <PromotionalMaterials />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ── Stock Manager routes ──────── */}
+          <Route
+            path="/stock-manager/dashboard"
+            element={
+              <ProtectedRoute roles="stock_manager">
+                <StockManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock-manager/inventory"
+            element={
+              <ProtectedRoute roles="stock_manager">
+                <InventoryManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock-manager/orders"
+            element={
+              <ProtectedRoute roles="stock_manager">
+                <OrderManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stock-manager/profile"
+            element={
+              <ProtectedRoute roles="stock_manager">
+                <StockManagerProfile />
               </ProtectedRoute>
             }
           />

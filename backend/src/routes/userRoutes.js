@@ -11,8 +11,8 @@ const { protect, restrictTo } = require('../middleware/authMiddleware');
 // Get all users (Admin only)
 router.get('/', protect, restrictTo('hq_admin'), getAllUsers);
 
-// Get distributors — Staff, Admin, and Promotion Manager
-router.get('/distributors', protect, restrictTo('staff', 'hq_admin', 'promotion_manager'), getDistributors);
+// Get distributors — Staff, Admin, Promotion Manager, and Stock Manager
+router.get('/distributors', protect, restrictTo('staff', 'hq_admin', 'promotion_manager', 'stock_manager'), getDistributors);
 
 // Update own profile
 router.put('/profile', protect, updateProfile);

@@ -28,6 +28,11 @@ const roleConfig = {
     badge: { text: 'Manager', bg: 'bg-purple-100', text_color: 'text-purple-800', border: 'border-purple-200' },
     description: 'Manage marketing promotions',
   },
+  stock_manager: {
+    label: 'Stock Manager',
+    badge: { text: 'Stock Manager', bg: 'bg-blue-100', text_color: 'text-blue-800', border: 'border-blue-200' },
+    description: 'Manage inventory and orders',
+  },
 };
 
 const initials = (name) => {

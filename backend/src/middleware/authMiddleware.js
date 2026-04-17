@@ -57,7 +57,8 @@ const protect = async (req, res, next) => {
         staff: "nadeeka@nestle.com",
         hq_admin:    "dilini@nestle.com",
         distributor: "kamal@distributor.com",
-        promotion_manager: "sonia@nestle.com"
+        promotion_manager: "sonia@nestle.com",
+        stock_manager: "mahesh@nestle.com"
       };
 
       const email = emailMap[role];
@@ -126,4 +127,5 @@ const restrictTo = (...roles) => {
 module.exports = {
   protect,
   restrictTo,
+  authorize: restrictTo,
 };

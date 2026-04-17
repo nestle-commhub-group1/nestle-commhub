@@ -82,7 +82,7 @@ const registerUser = async (req, res) => {
     }
 
     // Prevent submission of arbitrary role values from modified requests
-    const validRoles = ["retailer", "staff", "hq_admin", "distributor", "promotion_manager"];
+    const validRoles = ["retailer", "staff", "hq_admin", "distributor", "promotion_manager", "stock_manager"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role specified." });
     }
@@ -100,8 +100,8 @@ const registerUser = async (req, res) => {
       }
     }
 
-    // Nestlé employees (staff, admin, distributor, promotion_manager) must supply their employee ID
-    const employeeRoles = ["staff", "hq_admin", "distributor", "promotion_manager"];
+    // Nestlé employees (staff, admin, distributor, promotion_manager, stock_manager) must supply their employee ID
+    const employeeRoles = ["staff", "hq_admin", "distributor", "promotion_manager", "stock_manager"];
     if (employeeRoles.includes(role)) {
       if (!employeeId) {
         return res.status(400).json({ message: "Employee role requires employeeId." });
