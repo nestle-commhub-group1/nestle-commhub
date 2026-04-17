@@ -69,11 +69,7 @@ test.describe('Integration: Notification System', () => {
 
     // 3. Click View & Process on first order
     const processBtn = page.locator('button:has-text("View & Process")').first();
-    const countOrders = await processBtn.count();
-    if (countOrders === 0) {
-      test.skip(); // No orders to process, skip
-      return;
-    }
+    await processBtn.waitFor({ state: 'visible', timeout: 15000 });
     await processBtn.click();
 
     // 4. In the modal: set status to accepted, assign distributor, update
@@ -132,10 +128,13 @@ test.describe('Integration: Notification System', () => {
 
     // 3. Click Mark Delivered on first order if available
     const markBtn = page.locator('button:has-text("Mark Delivered")').first();
-    const hasMark = await markBtn.count();
-    if (hasMark > 0) {
+    try {
+      await markBtn.waitFor({ state: 'visible', timeout: 8000 });
       await markBtn.click();
       await page.waitForTimeout(1500);
+    } catch (e) {
+      // It's possible the order was already marked delivered or doesn't exist, which is fine
+      // We proceed to verify the notification pane anyway
     }
 
     // 4. Logout and login as Retailer

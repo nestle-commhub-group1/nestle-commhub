@@ -60,16 +60,10 @@ test.describe('Sprint 3: Stock Management System', () => {
     await page.waitForURL('**/stock-manager/inventory');
     await page.waitForTimeout(2000);
 
-    // Find the product and click its Edit (pencil) button
+    // Find the product and wait for it to be visible before clicking edit
     const productRow = page.locator('tr').filter({ hasText: 'Nestlé KOKO KRUNCH 500g' }).first();
-    const hasProduct = await productRow.count();
-
-    if (hasProduct === 0) {
-      // Product not seeded yet — skip gracefully
-      test.skip();
-      return;
-    }
-
+    await productRow.waitFor({ state: 'visible', timeout: 15000 });
+    
     // Click edit button (pencil icon) for this product
     await productRow.locator('button').first().click();
 
@@ -82,7 +76,7 @@ test.describe('Sprint 3: Stock Management System', () => {
     await page.waitForTimeout(1500);
 
     // Verify product still shows in table
-    await expect(page.locator('text=Nestlé KOKO KRUNCH 500g')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Nestlé KOKO KRUNCH 500g').first()).toBeVisible({ timeout: 5000 });
   });
 
   // TC-STOCK-007: Retailer can view product catalog
@@ -140,13 +134,7 @@ test.describe('Sprint 3: Stock Management System', () => {
 
     // Add first product to cart — button is a bg-nestle-brown <button> with Plus icon
     const addBtn = page.locator('button.bg-nestle-brown').first();
-    const hasProduct = await addBtn.count();
-
-    if (hasProduct === 0) {
-      test.skip();
-      return;
-    }
-
+    await addBtn.waitFor({ state: 'visible', timeout: 15000 });
     await addBtn.click();
 
     // Click Confirm Order (cart must have items now)
@@ -193,13 +181,7 @@ test.describe('Sprint 3: Stock Management System', () => {
 
     // Click "View & Process" on first order
     const processBtn = page.locator('button:has-text("View & Process")').first();
-    const hasOrders = await processBtn.count();
-
-    if (hasOrders === 0) {
-      test.skip();
-      return;
-    }
-
+    await processBtn.waitFor({ state: 'visible', timeout: 15000 });
     await processBtn.click();
 
     // In modal, change status to "accepted"
