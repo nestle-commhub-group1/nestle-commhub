@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Calendar, Percent, CheckCircle, Search, FileText } from 'lucide-react';
+import { Tag, Calendar, Percent, CheckCircle, Search, FileText, Star } from 'lucide-react';
 // Assuming use of standard context and layout, though not explicit in prompt
 import RetailerLayout from '../../components/layout/RetailerLayout';
 import PromotionChat from '../../components/PromotionChat';
@@ -13,6 +13,7 @@ const PromotionsWall = () => {
   const [search, setSearch] = useState('');
   const [chatPromotionId, setChatPromotionId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [ratingData, setRatingData] = useState({ id: null, score: 0, feedback: '' });
 
   useEffect(() => {
     fetchPromotions();
@@ -45,9 +46,29 @@ const PromotionsWall = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Successfully opted in!');
+      setRatingData({ id: promoId, score: 0, feedback: '' });
       fetchPromotions(); // Refresh state
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to opt in');
+    }
+  };
+
+  const handleRate = async (e) => {
+    e.preventDefault();
+    if (!ratingData.id || ratingData.score === 0) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/promotions/${ratingData.id}/rate`, {
+        rating: ratingData.score,
+        feedback: ratingData.feedback
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Rating submitted successfully!');
+      setRatingData({ id: null, score: 0, feedback: '' });
+      fetchPromotions();
+    } catch (err) {
+      alert('Error submitting rating');
     }
   };
 
@@ -86,9 +107,11 @@ const PromotionsWall = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {filtered.map(promo => {
               const myUserId = JSON.parse(localStorage.getItem('user'))?._id;
-              const isOptedIn = promo.participatingRetailers?.some(
+              const myRecord = promo.participatingRetailers?.find(
                 r => r.retailerId === myUserId || r.retailerId?._id === myUserId
               );
+              const isOptedIn = !!myRecord;
+              const alreadyRated = !!myRecord?.rating;
 
               return (
                 <div key={promo._id} className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -133,10 +156,28 @@ const PromotionsWall = () => {
                   
                   <div className="space-y-3">
                     {isOptedIn ? (
-                      <button disabled className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 font-bold flex items-center justify-center">
-                        <CheckCircle size={18} className="mr-2" />
-                        Opted In
-                      </button>
+                      <div className="space-y-2">
+                        <button disabled className="w-full py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 font-bold flex items-center justify-center">
+                          <CheckCircle size={18} className="mr-2" />
+                          Opted In
+                        </button>
+                        
+                        {alreadyRated ? (
+                          <div className="flex justify-center text-yellow-500 py-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} size={14} fill={i < Math.floor(myRecord.rating/2) ? "currentColor" : "none"} />
+                            ))}
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '' })}
+                            className="w-full py-2.5 rounded-xl bg-[#F8F7F5] text-nestle-brown font-bold text-[13px] hover:bg-nestle-brown/5 transition-colors flex items-center justify-center"
+                          >
+                            <Star size={14} className="mr-2" />
+                            Rate Campaign
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       <button 
                         onClick={() => handleOptIn(promo._id)}
@@ -167,8 +208,49 @@ const PromotionsWall = () => {
           onClose={() => setIsChatOpen(false)} 
         />
       )}
+
+      {/* Rating Modal */}
+      {ratingData.id && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2C1810]/40 backdrop-blur-sm p-4">
+           <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl">
+              <h3 className="text-[24px] font-black text-[#2C1810] mb-2">Campaign Feedback</h3>
+              <p className="text-sm text-gray-500 mb-6">How is your experience with this campaign?</p>
+              
+              <form onSubmit={handleRate} className="space-y-5">
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Overall Rating (1-10)</label>
+                    <input 
+                      type="range" min="1" max="10" step="1"
+                      className="w-full accent-nestle-brown h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer"
+                      value={ratingData.score || 5}
+                      onChange={e => setRatingData({...ratingData, score: Number(e.target.value)})}
+                    />
+                    <div className="flex justify-between text-[14px] font-black text-[#3D2B1F]">
+                      <span>1</span> <span className="text-nestle-brown bg-nestle-brown/5 px-3 py-1 rounded-full">{ratingData.score || 5}/10</span> <span>10</span>
+                    </div>
+                 </div>
+
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Details & Impact</label>
+                    <textarea 
+                      placeholder="Help us improve our next launch..."
+                      className="w-full bg-gray-50 border border-gray-100 rounded-[20px] p-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 outline-none h-24 resize-none"
+                      value={ratingData.feedback}
+                      onChange={e => setRatingData({...ratingData, feedback: e.target.value})}
+                    />
+                 </div>
+
+                 <div className="flex space-x-3 pt-2">
+                    <button type="button" onClick={() => setRatingData({ id: null, score: 0, feedback: '' })} className="flex-1 py-4 rounded-[20px] bg-gray-100 text-gray-600 font-bold text-sm">Dismiss</button>
+                    <button type="submit" className="flex-2 bg-nestle-brown text-white py-4 px-8 rounded-[20px] font-black uppercase tracking-widest text-sm shadow-lg shadow-brown-100/50">Submit Review</button>
+                 </div>
+              </form>
+           </div>
+        </div>
+      )}
     </RetailerLayout>
   );
 };
 
 export default PromotionsWall;
+
