@@ -118,9 +118,6 @@ const registerUser = async (req, res) => {
       const isDevMode = process.env.NODE_ENV === "development" && 
                         process.env.ALLOW_ANY_EMPLOYEE_ID === "true";
 
-      // DEV BYPASS: In development mode accept any non-empty Employee ID without
-      // hitting the DB. This lets testers use arbitrary IDs (e.g. "NES-DEV-888")
-      // without needing them pre-seeded in the ValidEmployee collection.
       if (isDevMode) {
         console.log(`[Register] ⚡ Dev mode — skipping ValidEmployee DB check for ID "${trimmedEmpId}"`);
       } else {
@@ -129,30 +126,12 @@ const registerUser = async (req, res) => {
           return res.status(500).json({ message: "ValidEmployee model is not configured." });
         }
 
-        console.log(`[Register] Looking up employeeId: "${trimmedEmpId}" role: "${role}"`);
-
-        // Case-insensitive lookup — "NES001" matches "nes001", "Nes001", etc.
         const validEmp = await ValidEmployee.findOne({
           employeeId: new RegExp(`^${trimmedEmpId}$`, 'i')
         });
 
-        console.log(`[Register] ValidEmployee lookup result:`, validEmp ? `Found (isUsed=${validEmp.isUsed})` : 'NOT FOUND');
-
         if (!validEmp) {
-          // If the RegExp failed for some reason, also check exact match
-          const exactEmp = await ValidEmployee.findOne({ employeeId: trimmedEmpId });
-          if (exactEmp) {
-             console.log(`[Register] ValidEmployee FOUND with exact match but not regex!`);
-             if (exactEmp.isUsed) return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" has already been used` });
-             if (exactEmp.role !== role) return res.status(400).json({ message: `Employee ID "${trimmedEmpId}" is for role "${exactEmp.role}", but you selected "${role}".` });
-             return res.status(400).json({ message: `Employee ID exact match worked but logic failed, please try again.` });
-          }
-          // Debugging info to send back!
-          const allDocs = await ValidEmployee.find({}).select('employeeId role isUsed -_id');
-          const debugMsg = `Invalid Employee ID "${trimmedEmpId}". ` + 
-                           `Hosted DB has ${allDocs.length} valid IDs. ` +
-                           `Are you sure seed script ran on the hosted DB?`;
-          return res.status(400).json({ message: debugMsg });
+          return res.status(400).json({ message: `Invalid Employee ID "${trimmedEmpId}". Contact HQ Admin to register.` });
         }
 
         if (validEmp.isUsed) {

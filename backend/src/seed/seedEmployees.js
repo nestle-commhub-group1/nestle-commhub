@@ -3,88 +3,28 @@ const mongoose = require("mongoose");
 const ValidEmployee = require("../models/ValidEmployee");
 const User = require("../models/User");
 
-// ─── Universal Dev IDs — always reset these so they can be re-registered ──────
-const DEV_IDS = [
-  "NES-DEV-999",  // hq_admin
-  "NES-DEV-888",  // staff
-  "NES-DEV-777",  // staff
-  "NES-DEV-666",  // distributor
-  "NES-DEV-555",  // promotion_manager
-  "NES-DEV-444",  // stock_manager
-
-  // Legacy test IDs (also reset for safety)
-  "TEST_ADMIN",
-  "TEST_STAFF",
-  "TEST_DIST",
-  "NES001",
-  "NES002",
-  "NES004",
-  "NES100",
-  "NES111",
-  "NES200",
-  "NES400",
-  "NES123456",
+const QA_IDS = [
+  "NES-PRM-001",
+  "NES-SM-001",
+  "NES-STF-001",
+  "NES-ADM-001",
+  "NES-DIST-001",
+  "NES-DIST-002"
 ];
 
-// ─── Employee seed list ────────────────────────────────────────────────────────
-// Roles in this system:
-//   hq_admin    — HQ Admins with full system access
-//   staff — Staff members (Stockout, Product Quality, Logistics, Pricing, General Support)
-//                 Staff Category is chosen at registration — it does NOT affect the role value stored in DB
-//   distributor — Third-party logistics / distributor partners
-//   promotion_manager — Handles promotions testing and assignment
-//   stock_manager — Handles inventory and stock requests
-//
-// Each ID is one-time use. NES-DEV-* IDs are reset on every seed run.
 const EMPLOYEES = [
-  // ── Universal Dev IDs (reset on every seed — always available for testing) ──
   { employeeId: "NES-DEV-999", role: "hq_admin" },
   { employeeId: "NES-DEV-888", role: "staff" },
   { employeeId: "NES-DEV-777", role: "staff" },
   { employeeId: "NES-DEV-666", role: "distributor" },
   { employeeId: "NES-DEV-555", role: "promotion_manager" },
   { employeeId: "NES-DEV-444", role: "stock_manager" },
-
-  // ── HQ Admin IDs ─────────────────────────────────────────────────────────────
-  { employeeId: "NES-ADM-001", role: "hq_admin" },
-  { employeeId: "NES-ADM-002", role: "hq_admin" },
-  { employeeId: "NES-ADM-003", role: "hq_admin" },
-
-  // ── Sales Staff IDs ───────────────────────────────────────────────────────────
-  // Used by: Stockout Staff, Product Quality Staff, Logistics Staff,
-  //          Pricing Staff, and General Support — all share role = "staff"
-  { employeeId: "NES-STF-001", role: "staff" },
-  { employeeId: "NES-STF-002", role: "staff" },
-  { employeeId: "NES-STF-003", role: "staff" },
-  { employeeId: "NES-STF-004", role: "staff" },
-  { employeeId: "NES-STF-005", role: "staff" },
-  { employeeId: "NES-STF-006", role: "staff" },
-  { employeeId: "NES-STF-007", role: "staff" },
-  { employeeId: "NES-STF-008", role: "staff" },
-  { employeeId: "NES-STF-009", role: "staff" },
-  { employeeId: "NES-STF-010", role: "staff" },
-
-  // ── Distributor IDs ───────────────────────────────────────────────────────────
-  { employeeId: "NES-DST-001", role: "distributor" },
-  { employeeId: "NES-DST-002", role: "distributor" },
-  { employeeId: "NES-DST-003", role: "distributor" },
-  { employeeId: "NES-DST-004", role: "distributor" },
-  { employeeId: "NES-DST-005", role: "distributor" },
-
-  // ── Promotion Manager IDs ───────────────────────────────────────────────────
   { employeeId: "NES-PRM-001", role: "promotion_manager" },
-  { employeeId: "NES-PRM-002", role: "promotion_manager" },
-
-  // ── Stock Manager IDs ───────────────────────────────────────────────────────
-  { employeeId: "NES-SMG-001", role: "stock_manager" },
-  { employeeId: "NES-SMG-002", role: "stock_manager" },
-
-  // ── Legacy IDs (kept so old accounts remain findable) ─────────────────────────
-  { employeeId: "NES001",    role: "hq_admin" },
-  { employeeId: "NES100",    role: "hq_admin" },
-  { employeeId: "NES111",    role: "hq_admin" },
-  { employeeId: "NES004",    role: "distributor" },
-  { employeeId: "NES400",    role: "distributor" },
+  { employeeId: "NES-SM-001",  role: "stock_manager" },
+  { employeeId: "NES-STF-001", role: "staff" },
+  { employeeId: "NES-ADM-001", role: "hq_admin" },
+  { employeeId: "NES-DIST-001", role: "distributor" },
+  { employeeId: "NES-DIST-002", role: "distributor" }
 ];
 
 const run = async () => {
@@ -95,31 +35,26 @@ const run = async () => {
     await mongoose.connect(uri);
     console.log("✅  Connected to MongoDB");
 
-    // 1. Delete any User accounts registered with the resettable dev IDs
-    const userDel = await User.deleteMany({ employeeId: { $in: DEV_IDS } });
-    console.log(`🗑   Deleted ${userDel.deletedCount} registered User account(s) for dev IDs`);
+    // Clear old test accounts
+    const emailsToDelete = [
+      "pm1@nestle.com", 
+      "retailer1@test.com", 
+      "retailer2@test.com", 
+      "sm1@nestle.com", 
+      "staff1@nestle.com", 
+      "admin1@nestle.com", 
+      "dist1@nestle.com", 
+      "dist2@nestle.com"
+    ];
+    await User.deleteMany({ email: { $in: emailsToDelete } });
+    await User.deleteMany({ employeeId: { $in: QA_IDS } });
+    console.log("🗑   Cleared existing test accounts");
 
-    // 2. Wipe the whole ValidEmployee collection and re-seed fresh
     await ValidEmployee.deleteMany({});
     console.log("🗑   Cleared ValidEmployee collection");
 
-    // 3. Insert fresh records (isUsed defaults to false)
     await ValidEmployee.insertMany(EMPLOYEES);
     console.log(`✅  Inserted ${EMPLOYEES.length} ValidEmployee records`);
-
-    console.log("\n🔑  Universal Dev IDs ready to register:");
-    console.log("   NES-DEV-999  →  hq_admin");
-    console.log("   NES-DEV-888  →  staff  (pick any Staff Category)");
-    console.log("   NES-DEV-777  →  staff  (pick any Staff Category)");
-    console.log("   NES-DEV-666  →  distributor");
-    console.log("   NES-DEV-555  →  promotion_manager");
-    console.log("   NES-DEV-444  →  stock_manager");
-    console.log("\n📋  Named IDs by role:");
-    console.log("   HQ Admin:     NES-ADM-001 to NES-ADM-003");
-    console.log("   Staff:        NES-STF-001 to NES-STF-010");
-    console.log("   Distributor:  NES-DST-001 to NES-DST-005");
-    console.log("   Promotions:   NES-PRM-001 to NES-PRM-002");
-    console.log("   Stock Mgr:    NES-SMG-001 to NES-SMG-002\n");
 
     await mongoose.disconnect();
     console.log("🔌  Disconnected. Seed complete.");

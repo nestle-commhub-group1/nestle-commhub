@@ -1,0 +1,46 @@
+{
+  "baseUrl": "http://localhost:5173",
+  "apiUrl": "http://localhost:5001",
+  "password": "password123",
+  "accounts": {
+    "pm": {
+      "email": "pm1@nestle.com",
+      "role": "promotion_manager",
+      "employeeId": "NES-PRM-001"
+    },
+    "retailer1": {
+      "email": "retailer1@test.com",
+      "role": "retailer"
+    },
+    "retailer2": {
+      "email": "retailer2@test.com",
+      "role": "retailer"
+    },
+    "stock_manager": {
+      "email": "sm1@nestle.com",
+      "role": "stock_manager",
+      "employeeId": "NES-SM-001"
+    },
+    "staff": {
+      "email": "staff1@nestle.com",
+      "role": "staff",
+      "employeeId": "NES-STF-001",
+      "category": "Logistics"
+    },
+    "admin": {
+      "email": "admin1@nestle.com",
+      "role": "hq_admin",
+      "employeeId": "NES-ADM-001"
+    },
+    "distributor1": {
+      "email": "dist1@nestle.com",
+      "role": "distributor",
+      "employeeId": "NES-DIST-001"
+    },
+    "distributor2": {
+      "email": "dist2@nestle.com",
+      "role": "distributor",
+      "employeeId": "NES-DIST-002"
+    }
+  }
+}
