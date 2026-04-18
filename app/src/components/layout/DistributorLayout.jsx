@@ -56,6 +56,34 @@ const DistributorLayout = ({ children }) => {
     }
   };
 
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      await markAsRead(notif._id);
+    }
+    
+    setIsNotificationsOpen(false);
+
+    // Navigation logic for Distributor
+    if (notif.ticketId || notif.type?.startsWith('ticket_')) {
+      navigate(`/distributor/tickets/${notif.ticketId || ''}`);
+    } else if (notif.type === 'promo_delivery') {
+      navigate('/distributor/promotions');
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!window.confirm('Are you sure you want to clear all notifications?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/notifications/clear`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
+    }
+  };
+
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -234,9 +262,15 @@ const DistributorLayout = ({ children }) => {
                 <button 
                   onClick={markAllAsRead}
                   disabled={unreadCount === 0}
-                  className="text-sm font-medium text-gray-500 hover:text-nestle-brown disabled:opacity-50 transition-colors"
+                  className="text-[11px] font-black text-nestle-brown-light hover:text-nestle-brown disabled:opacity-30 transition-colors uppercase tracking-widest bg-nestle-brown/5 px-3 py-1.5 rounded-lg"
                 >
                   Mark all as read
+                </button>
+                <button 
+                  onClick={clearAllNotifications}
+                  className="text-[11px] font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg border border-red-100/50"
+                >
+                  Clear All
                 </button>
                 <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
                   <X size={20} />
@@ -255,7 +289,7 @@ const DistributorLayout = ({ children }) => {
                   notifications.map((notif) => (
                     <div 
                       key={notif._id} 
-                      onClick={() => !notif.isRead && markAsRead(notif._id)}
+                      onClick={() => handleNotificationClick(notif)}
                       className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
                     >
                       <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.isRead ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>

@@ -45,4 +45,11 @@
 3. **TC-FEEDBACK-003**: Ensure star ratings persist and remain visible to the Retailer after submission.
 4. **TC-FEEDBACK-004**: Validate the system prevents submission of negative sales figures in performance reports.
 5. **TC-FEEDBACK-005**: Confirm Promotion Managers can view aggregated retailer feedback in the 'Campaigns Overview' dashboard.
+
+## Sprint 3: Promotion Rewards & Credit System (5 Cases)
+1. **TC-REWARD-001**: Verify Promotion Managers can manually approve sales reports and issue credits to retailers.
+2. **TC-REWARD-002**: Confirm credits are correctly added to the retailer's "Rewards Wallet" balance upon approval.
+3. **TC-REWARD-003**: Validate the 1:1 reward ratio (e.g., reporting 500 units sold results in 500 credits).
+4. **TC-REWARD-004**: Verify Retailers can apply their earned credit balance as a discount during the stock request checkout process.
+5. **TC-REWARD-005**: Ensure the final order total is correctly calculated after applying both bulk discounts and credit-based rewards.
  

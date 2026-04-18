@@ -5,10 +5,14 @@ const {
   getMyNotifications,
   markAsRead,
   markAllAsRead,
+  clearNotifications,
 } = require("../controllers/notificationController");
 
 // GET /api/notifications — get all notifications for current user
 router.get("/", protect, getMyNotifications);
+
+// DELETE /api/notifications/clear — delete all notifications
+router.delete("/clear", protect, clearNotifications);
 
 // PUT /api/notifications/read-all — mark all as read (must be before /:id)
 router.put("/read-all", protect, markAllAsRead);

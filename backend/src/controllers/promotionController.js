@@ -497,7 +497,7 @@ const approveReward = async (req, res) => {
     }
 
     const salesEntry = promotion.salesData.find(
-      s => s.retailerId.toString() === retailerId
+      s => (s.retailerId._id || s.retailerId).toString() === retailerId
     );
 
     if (!salesEntry) {
@@ -540,11 +540,39 @@ const approveReward = async (req, res) => {
   }
 };
 
+/**
+ * DELETE /api/promotions/:id
+ * Delete promotion (Promotion Manager only)
+ */
+const deletePromotion = async (req, res) => {
+  try {
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    // Only the creator can delete
+    if (promotion.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only the promotion creator can delete it' });
+    }
+
+    await Promotion.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Promotion deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createPromotion,
   getAllPromotions,
   getPromotionById,
   updatePromotion,
+  deletePromotion,
   retailerOptInPromotion,
   assignDistributorToRetailer,
   ratePromotion,

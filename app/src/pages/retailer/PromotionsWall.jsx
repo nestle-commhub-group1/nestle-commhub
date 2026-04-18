@@ -146,10 +146,12 @@ const PromotionsWall = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {filtered.map(promo => {
-              const myUserId = JSON.parse(localStorage.getItem('user'))?._id;
-              const myRecord = promo.participatingRetailers?.find(
-                r => r.retailerId === myUserId || r.retailerId?._id === myUserId
-              );
+              const _stored = JSON.parse(localStorage.getItem('user'));
+              const myUserId = _stored?.id || _stored?._id;
+              const myRecord = promo.participatingRetailers?.find(r => {
+                const rid = r.retailerId?._id || r.retailerId;
+                return rid?.toString() === myUserId?.toString();
+              });
               const isOptedIn = !!myRecord;
               const alreadyRated = !!myRecord?.rating;
 

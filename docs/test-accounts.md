@@ -108,6 +108,15 @@ Business details (use any for testing):
 
 ---
 
+## 🏆 Testing the Promotion Reward System
+
+1. **Retailer Report**: Log in as a **Retailer** → Go to **Promotions Wall** → Submit a sales report (e.g., 500 units).
+2. **PM Approval**: Log in as a **Promotion Manager** → Go to **Dashboard** → **Sales & Rewards** → Click **"Approve & Pay"**.
+3. **Check Wallet**: Log back in as the **Retailer** → See your new balance in the **Rewards Wallet**.
+4. **Redeem Credits**: Go to **Order Stock** → Add items to cart → Toggle **"Apply Credits"** to see your discount applied.
+
+---
+
 ## 📌 Notes
 - All test passwords should be `password123`
 - Do not use these accounts in production

@@ -8,6 +8,8 @@ import {
 const ManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState({ fullName: 'Manager', initials: 'M', role: 'Regional Manager', email: '' });
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +27,73 @@ const ManagerLayout = ({ children }) => {
     } else {
       setUser({ fullName: 'Regional Manager', initials: 'RM', role: 'Regional Manager', email: 'manager@nestle.com' });
     }
+    fetchNotifications();
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(res.data.notifications || []);
+      setUnreadCount((res.data.notifications || []).filter(n => !n.isRead).length);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/read-all`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!window.confirm('Are you sure you want to clear all notifications?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/clear`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.isRead) {
+      await markAsRead(notif._id);
+    }
+    setIsNotificationsOpen(false);
+    // Generic navigation for Manager
+    if (notif.ticketId) {
+      navigate('/manager/dashboard'); // Or specific ticket view if exists
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -42,16 +110,8 @@ const ManagerLayout = ({ children }) => {
     { label: 'Heatmap', path: '/manager/heatmap', icon: <Map size={20} /> },
     { label: 'Distributor Scorecards', path: '/manager/scorecards', icon: <Star size={20} /> },
     { label: 'Broadcasts', path: '/manager/broadcasts', icon: <Radio size={20} /> },
-    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: 3, action: () => setIsNotificationsOpen(true) },
+    { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/manager/profile', icon: <User size={20} /> },
-  ];
-
-  const notifications = [
-    { id: 1, type: 'danger', text: 'TKT-1037 is overdue. SLA breached.', time: '30 minutes ago', read: false },
-    { id: 2, type: 'warning', text: 'Priya Fernando has 2 overdue tickets', time: '2 hours ago', read: false },
-    { id: 3, type: 'ticket', text: 'New ticket TKT-1048 from Lakeside Stores', time: '4 hours ago', read: false },
-    { id: 4, type: 'document', text: 'Distributor scorecard March 2026 ready', time: '1 day ago', read: true },
-    { id: 5, type: 'success', text: 'TKT-1033 resolved by Chamith Silva', time: '2 days ago', read: true },
   ];
 
   const getNotificationIcon = (type) => {
@@ -199,7 +259,19 @@ const ManagerLayout = ({ children }) => {
                 <span className="bg-nestle-danger text-white text-[11px] font-bold px-2 py-0.5 rounded-full">3</span>
               </div>
               <div className="flex items-center space-x-4">
-                <button className="text-sm font-medium text-gray-500 hover:text-nestle-brown transition-colors">Mark all as read</button>
+                <button 
+                  onClick={markAllAsRead}
+                  disabled={unreadCount === 0}
+                  className="text-[11px] font-black text-nestle-brown-light hover:text-nestle-brown disabled:opacity-30 transition-colors uppercase tracking-widest bg-nestle-brown/5 px-3 py-1.5 rounded-lg"
+                >
+                  Mark all as read
+                </button>
+                <button 
+                  onClick={clearAllNotifications}
+                  className="text-[11px] font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg border border-red-100/50"
+                >
+                  Clear All
+                </button>
                 <button onClick={() => setIsNotificationsOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
                   <X size={20} />
                 </button>
@@ -208,22 +280,33 @@ const ManagerLayout = ({ children }) => {
             
             <div className="flex-1 overflow-y-auto">
               <div className="divide-y divide-nestle-border">
-                {notifications.map((notif) => (
-                  <div key={notif.id} className={`p-5 flex items-start space-x-4 transition-colors hover:bg-gray-50/50 ${!notif.read ? 'bg-blue-50/30' : ''}`}>
-                    <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.read ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
-                      {getNotificationIcon(notif.type)}
-                    </div>
-                    <div className="flex-1 min-w-0 pr-2">
-                      <p className={`text-[14px] text-nestle-brown ${!notif.read ? 'font-medium' : ''} leading-snug`}>
-                        {notif.message}
-                      </p>
-                      <p className="text-[12px] text-gray-500 mt-1.5">{notif.time}</p>
-                    </div>
-                    {!notif.read && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                    )}
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                    <Bell size={40} className="mb-2 opacity-20" />
+                    <p className="text-sm font-medium italic">No notifications yet</p>
                   </div>
-                ))}
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif._id} 
+                      onClick={() => handleNotificationClick(notif)}
+                      className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
+                    >
+                      <div className={`p-2 rounded-full flex-shrink-0 mt-0.5 ${!notif.isRead ? 'bg-white shadow-sm border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+                        {getNotificationIcon(notif.type)}
+                      </div>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className={`text-[14px] text-nestle-brown ${!notif.isRead ? 'font-medium' : ''} leading-snug`}>
+                          {notif.message}
+                        </p>
+                        <p className="text-[12px] text-gray-500 mt-1.5">{notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString() : 'Just now'}</p>
+                      </div>
+                      {!notif.isRead && (
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

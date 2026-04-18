@@ -5,6 +5,7 @@ const {
   getAllPromotions,
   getPromotionById,
   updatePromotion,
+  deletePromotion,
   retailerOptInPromotion,
   assignDistributorToRetailer,
   ratePromotion,
@@ -27,6 +28,9 @@ router.get('/:id', protect, getPromotionById);
 
 // Promotion Manager: update promotion
 router.put('/:id', protect, updatePromotion);
+
+// Promotion Manager: delete promotion
+router.delete('/:id', protect, deletePromotion);
 
 // Retailer: opt-in to promotion
 router.post('/:id/opt-in', protect, retailerOptInPromotion);

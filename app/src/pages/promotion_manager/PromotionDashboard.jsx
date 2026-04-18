@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
-import { Users, Truck, Star, CheckCircle, Search, Filter, Package, MessageSquare } from 'lucide-react';
+import { Users, Truck, Star, CheckCircle, Search, Filter, Package, MessageSquare, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import API_URL from '../../config/api';
@@ -83,6 +83,20 @@ const PromotionDashboard = () => {
     }
   };
 
+  const handleDeletePromotion = async (promoId) => {
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this promotion? This cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/promotions/${promoId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Promotion deleted successfully');
+      fetchPromotions();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error deleting promotion');
+    }
+  };
+
   const handleOpenChat = (promoId) => {
     setChatPromotionId(promoId);
     setIsChatOpen(true);
@@ -156,10 +170,19 @@ const PromotionDashboard = () => {
                       <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Opt-ins</p>
                       <p className="text-[18px] font-black text-[#3D2B1F]">{promo.participatingRetailers?.length || 0}</p>
                     </div>
-                    <div className={`px-4 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-widest ${
-                      promo.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'
-                    }`}>
-                      {promo.status}
+                    <div className="flex items-center space-x-3">
+                      <div className={`px-4 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-widest ${
+                        promo.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'
+                      }`}>
+                        {promo.status}
+                      </div>
+                      <button 
+                        onClick={() => handleDeletePromotion(promo._id)}
+                        className="p-1.5 bg-red-50 text-red-500 rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+                        title="Delete Promotion"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
                 </div>

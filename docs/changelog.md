@@ -3,6 +3,20 @@
 All notable changes to this project will be documented here.
 Format: `## [Date] - [Sprint Number]` → `### Added / Changed / Fixed / Removed`
 
+## [18 April 2026] - Sprint 3
+### Added
+- **Promotion Reward & Credit System** — A full loop reward system where retailers earn credits for promotion performance.
+  - **Manual Reward Approval** — Promotion Managers must now manually review and approve retailer sales reports before rewards are issued.
+  - **Rewards Wallet (Retailer)** — A new balance display across the Promotions Wall to track earned credits.
+  - **Inventory Discounts** — Integrated credits into the checkout process, allowing retailers to use rewards as a discount on stock orders.
+  - **Population Logic** — Enhanced backend controllers to provide full retailer details for performance reports, fixing dashboard identifying issues.
+- **QA Automation Suite: Sprint 3 Rewards** — Created `tests/e2e/sprint3-rewards.spec.js` and updated `qa-test-definitions.md` with 5 new test cases.
+
+### Changed
+- **`User` Model** — Added `credits` field to track retailer reward balances.
+- **`Order` Model** — Added `creditsUsed` field to record applied discounts.
+- **`Order Stock` UI** — Added Reward Credits toggle to the shopping cart for dynamic discount application.
+
 ---
 
 ## [10 April 2026] - Sprint 2
