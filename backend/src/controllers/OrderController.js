@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const User = require("../models/User"); // Added to handle credit deductions
 
 // Calculate discount based on quantity
 const calculateDiscount = (quantity) => {
@@ -48,10 +49,25 @@ exports.placeOrder = async (req, res) => {
         return res.status(400).json({ message: "No valid products found in your cart. Please refresh and try again." });
     }
 
+    // NEW: Handle Credit Deductions for discount
+    const { useCredits } = req.body;
+    let creditsApplied = 0;
+    if (useCredits) {
+      const userRecord = await User.findById(retailerId);
+      if (userRecord && userRecord.credits > 0) {
+        creditsApplied = Math.min(userRecord.credits, totalAmount);
+        userRecord.credits -= creditsApplied;
+        await userRecord.save();
+        totalAmount -= creditsApplied;
+        console.log(`💎 [Order] Applied ${creditsApplied} credits as discount. User remaining credits: ${userRecord.credits}`);
+      }
+    }
+
     const order = new Order({
       retailer: retailerId,
       items: processedItems,
       totalAmount,
+      creditsUsed: creditsApplied,
       notes,
     });
 

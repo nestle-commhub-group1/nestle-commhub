@@ -11,7 +11,8 @@ const {
   getRetailerPromotions,
   addPromotionAttachment,
   submitSalesReport,
-  sendSalesReminders
+  sendSalesReminders,
+  approveReward
 } = require('../controllers/promotionController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -44,6 +45,9 @@ router.post('/:id/attachments', protect, addPromotionAttachment);
 
 // Retailer: submit sales report
 router.post('/:id/sales-report', protect, submitSalesReport);
+
+// Promotion Manager: approve reward and issue credits
+router.post('/:id/approve-reward', protect, approveReward);
 
 // Automated job: send sales reminders (accessible for manual trigger by PM too)
 router.post('/send-sales-reminders', protect, sendSalesReminders);

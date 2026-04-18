@@ -40,16 +40,8 @@ const PromotionDashboard = () => {
       const res = await axios.get(`${API_URL}/api/promotions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Further we may need full details for each, but get all active first
-      const fullPromos = await Promise.all(
-        res.data.promotions.map(async (p) => {
-           const d = await axios.get(`${API_URL}/api/promotions/${p._id}`, {
-             headers: { Authorization: `Bearer ${token}` }
-           });
-           return d.data.promotion;
-        })
-      );
-      setPromotions(fullPromos);
+      // All details (subsidiary populations) are now handled by the backend
+      setPromotions(res.data.promotions || []);
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -73,6 +65,39 @@ const PromotionDashboard = () => {
     } catch (err) {
       alert(err.response?.data?.error || 'Error assigning distributor');
     }
+  };
+
+  const handleApproveReward = async (promoId, retailerId) => {
+    if (!retailerId) return alert('Invalid retailer selection');
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/promotions/${promoId}/approve-reward`, {
+        retailerId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Reward approved and credits issued!');
+      fetchPromotions();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error approving reward');
+    }
+  };
+
+  const handleOpenChat = (promoId) => {
+    setChatPromotionId(promoId);
+    setIsChatOpen(true);
+  };
+
+  // Helper to safely get retailer info
+  const getRetailerId = (retailer) => {
+    if (!retailer) return null;
+    return typeof retailer === 'string' ? retailer : (retailer._id || retailer.id);
+  };
+
+  const getRetailerName = (retailer) => {
+    if (!retailer) return 'Retailer';
+    if (typeof retailer === 'string') return `Retailer (${retailer.slice(-4)})`;
+    return retailer.fullName || retailer.businessName || 'Retailer';
   };
 
   return (
@@ -189,10 +214,10 @@ const PromotionDashboard = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                           {promo.participatingRetailers.map(r => (
-                            <tr key={r.retailerId?._id} className="hover:bg-gray-50/30 transition-colors">
+                            <tr key={getRetailerId(r.retailerId)} className="hover:bg-gray-50/30 transition-colors">
                               <td className="px-6 py-5">
                                 <div className="flex flex-col">
-                                  <span className="text-[15px] font-bold text-[#3D2B1F]">{r.retailerId?.fullName}</span>
+                                  <span className="text-[15px] font-bold text-[#3D2B1F]">{getRetailerName(r.retailerId)}</span>
                                   <span className="text-[12px] text-gray-500 font-medium">{r.retailerId?.businessName}</span>
                                 </div>
                               </td>
@@ -233,7 +258,7 @@ const PromotionDashboard = () => {
                                         ))}
                                       </select>
                                       <button 
-                                        onClick={() => handleAssignDistributor(promo._id, r.retailerId._id)}
+                                        onClick={() => handleAssignDistributor(promo._id, getRetailerId(r.retailerId))}
                                         className="bg-nestle-brown text-white px-6 py-2 rounded-[12px] text-[12px] font-black uppercase tracking-widest hover:bg-[#2c1f16] shadow-sm transition-all active:scale-95"
                                       >
                                         Assign
@@ -291,19 +316,28 @@ const PromotionDashboard = () => {
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {promo.salesData && promo.salesData.length > 0 ? promo.salesData.map(sale => (
-                          <tr key={sale.retailerId} className="hover:bg-gray-50/30 transition-colors">
-                            <td className="px-6 py-5 font-bold text-[#3D2B1F]">{sale.retailerId?.fullName || 'Retailer'}</td>
+                          <tr key={getRetailerId(sale.retailerId)} className="hover:bg-gray-50/30 transition-colors">
+                            <td className="px-6 py-5 font-bold text-[#3D2B1F]">{getRetailerName(sale.retailerId)}</td>
                             <td className="px-6 py-5 text-gray-600 font-black">{sale.unitsSold}</td>
                             <td className="px-6 py-5">
                               <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">
                                 {sale.rewardTier}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-nestle-brown font-black">${sale.rewardAmount}</td>
+                            <td className="px-6 py-5 text-nestle-brown font-black">{sale.rewardAmount} Credits</td>
                             <td className="px-6 py-5 text-right">
-                              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[11px] font-black uppercase tracking-widest">
-                                {sale.rewardIssuedAt ? 'Paid' : 'Pending'}
-                              </span>
+                              {sale.rewardIssuedAt ? (
+                                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[11px] font-black uppercase tracking-widest border border-green-100 flex items-center justify-center w-max ml-auto">
+                                  <CheckCircle size={12} className="mr-1.5"/> Paid
+                                </span>
+                              ) : (
+                                <button 
+                                  onClick={() => handleApproveReward(promo._id, getRetailerId(sale.retailerId))}
+                                  className="px-4 py-2 bg-nestle-brown text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-[#2c1f16] transition-all shadow-sm"
+                                >
+                                  Approve & Pay
+                                </button>
+                              )}
                             </td>
                           </tr>
                         )) : (

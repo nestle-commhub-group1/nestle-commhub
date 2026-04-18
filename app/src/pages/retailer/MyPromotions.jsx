@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../config/api';
-import { Star, MessageSquare, TrendingUp, DollarSign, Package } from 'lucide-react';
+import { Star, MessageSquare, TrendingUp, DollarSign, Package, Download, FileText } from 'lucide-react';
 import PromotionChat from '../../components/PromotionChat';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 
 const MyPromotions = () => {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [ratingData, setRatingData] = useState({ id: null, score: 0, feedback: '' });
+  const [ratingData, setRatingData] = useState({ id: null, score: 0, feedback: '', unitsSold: '' });
   const [unitsSold, setUnitsSold] = useState({});
   const [chatPromotionId, setChatPromotionId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -31,20 +31,20 @@ const MyPromotions = () => {
     }
   };
 
-  const handleSubmitSales = async (promotionId) => {
-    const units = unitsSold[promotionId];
-    if (!units || units < 0) return alert('Please enter valid units');
+  const handleSubmitSales = async (promotionId, units) => {
+    const val = units || unitsSold[promotionId];
+    if (!val || val < 0) return alert('Please enter valid units');
     
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(`${API_URL}/api/promotions/${promotionId}/sales-report`, {
-        unitsSold: parseInt(units)
+        unitsSold: parseInt(val)
       }, { headers: { Authorization: `Bearer ${token}` } });
       
-      alert(`Performance reported! Reward earned: $${res.data.rewardAmount} (${res.data.rewardTier})`);
+      if (!units) alert(`Performance reported! Reward earned: $${res.data.rewardAmount} (${res.data.rewardTier})`);
       fetchMyPromotions();
     } catch (err) {
-      alert(err.response?.data?.error || 'Error submitting sales');
+      if (!units) alert(err.response?.data?.error || 'Error submitting sales');
     }
   };
 
@@ -58,14 +58,22 @@ const MyPromotions = () => {
     if (!ratingData.id || ratingData.score === 0) return;
     try {
       const token = localStorage.getItem('token');
+      
+      // Submit Rating
       await axios.post(`${API_URL}/api/promotions/${ratingData.id}/rate`, {
         rating: ratingData.score,
         feedback: ratingData.feedback
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Rating submitted successfully!');
-      setRatingData({ id: null, score: 0, feedback: '' });
+
+      // Submit Sales if provided
+      if (ratingData.unitsSold) {
+        await handleSubmitSales(ratingData.id, ratingData.unitsSold);
+      }
+
+      alert('Feedback submitted successfully!');
+      setRatingData({ id: null, score: 0, feedback: '', unitsSold: '' });
       fetchMyPromotions();
     } catch (err) {
       alert('Error submitting rating');
@@ -103,8 +111,42 @@ const MyPromotions = () => {
                         {promo.discount && <span className="text-green-600 font-bold text-sm">{promo.discount}% OFF</span>}
                       </div>
                       <h3 className="text-xl font-bold text-[#2C1810] mt-2">{promo.title}</h3>
-                      <p className="text-gray-600 text-sm mt-1">{promo.description}</p>
+                      <p className="text-gray-600 text-sm mt-1 mb-4">{promo.description}</p>
+
+                      {/* Attached Images Properly Rendered */}
+                      {promo.attachments && promo.attachments.length > 0 && (
+                        <div className="space-y-2 mt-4">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Promotion Assets</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {promo.attachments.map((file, idx) => {
+                              const isImage = file.filename.match(/\.(jpg|jpeg|png|gif|webp)$/i) || (file.url && file.url.startsWith('data:image'));
+                              if (isImage) {
+                                return (
+                                  <div key={idx} className="group relative rounded-xl overflow-hidden border border-gray-100 aspect-square bg-gray-50">
+                                    <img src={file.url} alt={file.filename} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <a href={file.url} download={file.filename} className="p-2 bg-white rounded-full text-nestle-brown hover:scale-110 transition-transform">
+                                        <Download size={14} />
+                                      </a>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <a 
+                                  key={idx} href={file.url} download={file.filename}
+                                  className="flex items-center space-x-1.5 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-500 hover:text-nestle-brown hover:border-nestle-brown/20 transition-all truncate"
+                                >
+                                  <FileText size={12} className="flex-shrink-0" />
+                                  <span className="truncate">{file.filename}</span>
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    
                     <div className="flex-shrink-0 w-full md:w-[320px] space-y-4">
                       {/* Rewards & Sales Reporting Section */}
                       <div className="bg-[#F8F7F5] p-5 rounded-[24px] border border-gray-100">
@@ -167,17 +209,6 @@ const MyPromotions = () => {
                              Campaign Chat
                            </button>
 
-                           {promo && (
-                             <div className="chat-section mt-6 border-t pt-6">
-                               <h3 className="text-lg font-bold mb-4">Questions? Ask the Promotion Manager</h3>
-                               <PromotionChat 
-                                 promotionId={promo._id}
-                                 chatRoom={`promo_${promo._id}_chat`}
-                                 currentUserRole="retailer"
-                               />
-                             </div>
-                           )}
-
                            {myRecord?.rating ? (
                              <div className="pt-2 border-t border-gray-50">
                                <div className="flex text-yellow-500 mb-1">
@@ -189,7 +220,7 @@ const MyPromotions = () => {
                              </div>
                            ) : (
                              <button 
-                               onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '' })}
+                               onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '', unitsSold: '' })}
                                className="w-full py-3 bg-[#F8F7F5] text-[#3D2B1F] rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-[#efede9] transition-all"
                              >
                                Rate Campaign
@@ -215,14 +246,28 @@ const MyPromotions = () => {
         />
       )}
 
-      {/* Rating Modal (Existing but enhanced) */}
+      {/* Rating Modal */}
       {ratingData.id && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2C1810]/40 backdrop-blur-sm p-4">
            <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl">
               <h3 className="text-[24px] font-black text-[#2C1810] mb-2">Campaign Feedback</h3>
-              <p className="text-sm text-gray-500 mb-6">How was the summer essentials campaign experience?</p>
+              <p className="text-sm text-gray-500 mb-6">How is your experience with this campaign?</p>
               
               <form onSubmit={handleRate} className="space-y-5">
+                 <div className="space-y-2">
+                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Daily Sales Performance</label>
+                    <div className="relative">
+                      <Package size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="number" 
+                        placeholder="How many products sold today?"
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-[20px] text-sm font-bold focus:bg-white focus:ring-2 focus:ring-nestle-brown/10 outline-none"
+                        value={ratingData.unitsSold}
+                        onChange={e => setRatingData({...ratingData, unitsSold: e.target.value})}
+                      />
+                    </div>
+                 </div>
+
                  <div className="space-y-2">
                     <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Overall Rating (1-10)</label>
                     <input 
@@ -247,7 +292,7 @@ const MyPromotions = () => {
                  </div>
 
                  <div className="flex space-x-3 pt-2">
-                    <button type="button" onClick={() => setRatingData({ id: null, score: 0, feedback: '' })} className="flex-1 py-4 rounded-[20px] bg-gray-100 text-gray-600 font-bold text-sm">Dismiss</button>
+                    <button type="button" onClick={() => setRatingData({ id: null, score: 0, feedback: '', unitsSold: '' })} className="flex-1 py-4 rounded-[20px] bg-gray-100 text-gray-600 font-bold text-sm">Dismiss</button>
                     <button type="submit" className="flex-2 bg-nestle-brown text-white py-4 px-8 rounded-[20px] font-black uppercase tracking-widest text-sm shadow-lg shadow-brown-100/50">Submit Review</button>
                  </div>
               </form>

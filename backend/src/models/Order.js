@@ -32,6 +32,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  creditsUsed: {
+    type: Number,
+    default: 0, // Amount of promotion credits applied as discount
+  },
   status: {
     type: String,
     enum: ["pending", "accepted", "denied", "shipped", "delivered"],

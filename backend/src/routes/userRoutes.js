@@ -4,7 +4,8 @@ const {
   getDistributors,
   getAllUsers,
   updateUserStatus,
-  updateProfile
+  updateProfile,
+  getProfile
 } = require('../controllers/userController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
@@ -13,6 +14,9 @@ router.get('/', protect, restrictTo('hq_admin'), getAllUsers);
 
 // Get distributors — Staff, Admin, Promotion Manager, and Stock Manager
 router.get('/distributors', protect, restrictTo('staff', 'hq_admin', 'promotion_manager', 'stock_manager'), getDistributors);
+
+// Get own profile
+router.get('/profile', protect, getProfile);
 
 // Update own profile
 router.put('/profile', protect, updateProfile);

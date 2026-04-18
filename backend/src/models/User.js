@@ -101,6 +101,11 @@ const userSchema = new mongoose.Schema({
     trim: true, // e.g., "Colombo"
   },
 
+  credits: {
+    type: Number,
+    default: 0, // NEW: Earned credits from promotions to be used as discounts in stock requests
+  },
+
   /* ─── Nestlé Employee-Only Fields ───────────────────────────────────────── */
   // These are only filled in for staff, hq_admin, and distributor roles.
   // employeeId is cross-referenced against the ValidEmployee collection at registration

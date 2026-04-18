@@ -11,11 +11,26 @@ const StockRequests = () => {
   const [activeTab, setActiveTab] = useState('shop'); // 'shop', 'history', 'favorites'
   const [orders, setOrders] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userCredits, setUserCredits] = useState(0);
+  const [useCredits, setUseCredits] = useState(false);
 
   useEffect(() => {
     fetchProducts();
     fetchOrders();
+    fetchUserCredits();
   }, []);
+
+  const fetchUserCredits = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserCredits(res.data.user?.credits || 0);
+    } catch (err) {
+      console.error('Error fetching credits:', err);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -90,10 +105,15 @@ const StockRequests = () => {
   };
 
   const calculateTotal = () => {
-    return cart.reduce((total, item) => {
+    const cartTotal = cart.reduce((total, item) => {
       const discount = calculateDiscount(item.quantity);
       return total + (item.product.price * item.quantity * (1 - discount / 100));
     }, 0);
+
+    if (useCredits) {
+      return Math.max(0, cartTotal - userCredits);
+    }
+    return cartTotal;
   };
 
   const handlePlaceOrder = async () => {
@@ -110,13 +130,16 @@ const StockRequests = () => {
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/orders`, {
         items: cart.map(item => ({ product: item.product._id, quantity: parseInt(item.quantity) })),
-        notes: ''
+        notes: '',
+        useCredits: useCredits
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Order placed successfully!');
       setCart([]);
+      setUseCredits(false);
       fetchOrders();
+      fetchUserCredits();
       setActiveTab('history');
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to place order';
@@ -301,6 +324,25 @@ const StockRequests = () => {
                   </div>
 
                   <div className="pt-4 space-y-2 border-t border-gray-100">
+                    {/* NEW: Credit System */}
+                    <div className="bg-nestle-brown/5 p-4 rounded-2xl border border-nestle-brown/10 mb-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-nestle-brown font-black uppercase tracking-widest">Rewards credits</span>
+                          <span className="text-[15px] font-black text-nestle-brown">{userCredits.toLocaleString()} Available</span>
+                        </div>
+                        <button 
+                          onClick={() => setUseCredits(!useCredits)}
+                          disabled={userCredits === 0}
+                          className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                            useCredits ? 'bg-nestle-brown text-white' : 'bg-white border border-nestle-brown text-nestle-brown hover:bg-nestle-brown/5'
+                          } ${userCredits === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {useCredits ? 'Applied' : 'Apply'}
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="flex justify-between text-gray-500 font-medium">
                       <span>Subtotal</span>
                       <span className="font-black">LKR {cart.reduce((t, i) => t + (i.product.price * i.quantity), 0).toLocaleString()}</span>
@@ -308,7 +350,19 @@ const StockRequests = () => {
                     {cart.some(i => calculateDiscount(i.quantity) > 0) && (
                         <div className="flex justify-between text-green-600 font-medium">
                             <span>Bulk Discount</span>
-                            <span className="font-black">-LKR {(cart.reduce((t, i) => t + (i.product.price * i.quantity), 0) - calculateTotal()).toLocaleString()}</span>
+                            <span className="font-black">-LKR {(cart.reduce((t, i) => t + (i.product.price * i.quantity), 0) - cart.reduce((total, item) => {
+                              const discount = calculateDiscount(item.quantity);
+                              return total + (item.product.price * item.quantity * (1 - discount / 100));
+                            }, 0)).toLocaleString()}</span>
+                        </div>
+                    )}
+                    {useCredits && userCredits > 0 && (
+                        <div className="flex justify-between text-nestle-brown font-medium">
+                            <span>Credit Discount</span>
+                            <span className="font-black">-LKR {Math.min(userCredits, cart.reduce((total, item) => {
+                              const discount = calculateDiscount(item.quantity);
+                              return total + (item.product.price * item.quantity * (1 - discount / 100));
+                            }, 0)).toLocaleString()}</span>
                         </div>
                     )}
                     <div className="flex justify-between text-xl font-black text-nestle-brown pt-2">

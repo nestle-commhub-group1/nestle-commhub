@@ -62,6 +62,8 @@ const getAllPromotions = async (req, res) => {
   try {
     const promotions = await Promotion.find({ status: 'active' })
       .populate('createdBy', 'fullName email')
+      .populate('participatingRetailers.retailerId', 'fullName email businessName')
+      .populate('salesData.retailerId', 'fullName email businessName')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -82,7 +84,8 @@ const getPromotionById = async (req, res) => {
     const promotion = await Promotion.findById(req.params.id)
       .populate('createdBy', 'fullName email')
       .populate('participatingRetailers.retailerId', 'fullName email businessName')
-      .populate('participatingRetailers.assignedDistributor', 'fullName email');
+      .populate('participatingRetailers.assignedDistributor', 'fullName email')
+      .populate('salesData.retailerId', 'fullName email businessName');
 
     if (!promotion) {
       return res.status(404).json({ error: 'Promotion not found' });
@@ -405,15 +408,15 @@ const submitSalesReport = async (req, res) => {
       existingSale.unitsSold = unitsSold;
       existingSale.submittedAt = new Date();
       existingSale.rewardTier = rewardTier;
-      existingSale.rewardAmount = rewardAmount;
+      existingSale.rewardAmount = unitsSold; // NEW: 1:1 reward ratio as requested
     } else {
       promotion.salesData.push({
         retailerId: req.user._id,
         unitsSold,
         submittedAt: new Date(),
         rewardTier,
-        rewardAmount,
-        rewardIssuedAt: new Date() // Mark locally as issued for demo simplicity
+        rewardAmount: unitsSold, // NEW: 1:1 reward ratio as requested
+        rewardIssuedAt: null // Explicitly null until PM approves
       });
     }
 
@@ -473,6 +476,70 @@ const sendSalesReminders = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/promotions/:id/approve-reward
+ * Promotion Manager approves and issues credits to retailer
+ */
+const approveReward = async (req, res) => {
+  try {
+    if (req.user.role !== 'promotion_manager') {
+      return res.status(403).json({ error: 'Only Promotion Managers can approve rewards' });
+    }
+
+    const { retailerId } = req.body;
+    if (!retailerId) {
+      return res.status(400).json({ error: 'retailerId required' });
+    }
+
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+
+    const salesEntry = promotion.salesData.find(
+      s => s.retailerId.toString() === retailerId
+    );
+
+    if (!salesEntry) {
+      return res.status(404).json({ error: 'No sales report found for this retailer' });
+    }
+
+    if (salesEntry.rewardIssuedAt) {
+      return res.status(400).json({ error: 'Reward already issued' });
+    }
+
+    // 1. Mark as issued in promotion
+    salesEntry.rewardIssuedAt = new Date();
+
+    // 2. Add credits to retailer user account
+    const retailer = await User.findById(retailerId);
+    if (!retailer) {
+        return res.status(404).json({ error: 'Retailer not found' });
+    }
+    
+    retailer.credits = (retailer.credits || 0) + (salesEntry.rewardAmount || 0);
+    await retailer.save();
+
+    await promotion.save();
+
+    // 3. Notify retailer
+    await Notification.create({
+      userId: retailerId,
+      type: 'reward_issued',
+      message: `Your reward of ${salesEntry.rewardAmount} credits for promotion "${promotion.title}" has been approved and added to your wallet!`,
+      relatedPromotion: promotion._id
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Reward approved and credits issued successfully',
+      credits: retailer.credits
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createPromotion,
   getAllPromotions,
@@ -484,5 +551,6 @@ module.exports = {
   getRetailerPromotions,
   addPromotionAttachment,
   submitSalesReport,
-  sendSalesReminders
+  sendSalesReminders,
+  approveReward
 };
