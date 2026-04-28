@@ -22,13 +22,30 @@ const PORT = process.env.PORT || 5001; // Render sets PORT automatically; 5001 i
 
 const mongoose = require('mongoose');
 if (process.env.MONGO_URI) {
-  // Connect to the MongoDB Atlas cluster using the URI from .env
-  mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB connected successfully"))
-    .catch((err) => console.log("MongoDB connection FAILED:", err.message));
+  console.log('[MONGO] Connection URI detected');
+  console.log('[MONGO] URI length:', process.env.MONGO_URI.length);
+  console.log('[MONGO] URI starts with:', process.env.MONGO_URI.substring(0, 30));
+  console.log('[MONGO] URI ends with:', process.env.MONGO_URI.substring(process.env.MONGO_URI.length - 30));
+  
+  mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 5000,
+    connectTimeoutMS: 5000
+  })
+    .then(() => {
+      console.log('[✅ MONGO] Connected successfully');
+      console.log('[✅ MONGO] Connection state:', mongoose.connection.readyState);
+    })
+    .catch((err) => {
+      console.log('[❌ MONGO] Connection failed');
+      console.log('[❌ MONGO] Error name:', err.name);
+      console.log('[❌ MONGO] Error code:', err.code);
+      console.log('[❌ MONGO] Error message:', err.message);
+      console.log('[❌ MONGO] Full error:', err);
+    });
 } else {
-  // Warn but don't crash — useful when running without a database for local testing
-  console.log('MongoDB URI not found in .env, skipping connection');
+  console.log('[⚠️ MONGO] MONGO_URI not found in environment');
+  console.log('[⚠️ MONGO] Available env vars:', Object.keys(process.env).slice(0, 20));
 }
 
 /* ─── CORS Configuration ──────────────────────────────────────────────────── */
