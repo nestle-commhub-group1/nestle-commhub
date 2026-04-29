@@ -12,6 +12,7 @@
 
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { generateInsight } = require("./insightController");
 
 // The ValidEmployee model is optional — if it doesn't exist yet (e.g., before seeding),
 // we load it gracefully rather than crashing the whole server on startup.
@@ -270,6 +271,15 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
+
+    /* ── Step 5b: Generate insight (non-blocking) ─────────────────────── */
+
+    // Fire-and-forget — insight generation should never block or break login
+    try {
+      await generateInsight(user._id);
+    } catch (insightError) {
+      console.error("[Login] Insight generation failed (non-critical):", insightError.message);
+    }
 
     /* ── Step 6: Respond with success ─────────────────────────────────── */
 

@@ -74,6 +74,7 @@ const promotionRoutes    = require('./routes/promotionRoutes');     // Promotion
 const messageRoutes      = require('./routes/messageRoutes');       // Multi-channel messaging
 const productRoutes      = require('./routes/productRoutes');       // Product management
 const orderRoutes        = require('./routes/orderRoutes');         // Order management
+const insightRoutes      = require('./routes/insightRoutes');       // AI insights
 
 app.use('/api/auth',          authRoutes);
 app.use('/api/tickets',       ticketRoutes);
@@ -83,6 +84,7 @@ app.use('/api/promotions',    promotionRoutes);
 app.use('/api/messages',      messageRoutes);
 app.use('/api/products',      productRoutes);
 app.use('/api/orders',        orderRoutes);
+app.use('/api/insights',      insightRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 

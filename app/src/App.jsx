@@ -30,6 +30,7 @@ import PromotionsWall    from "./pages/retailer/PromotionsWall";
 import MyPromotions      from "./pages/retailer/MyPromotions";
 import StockRequests     from "./pages/retailer/StockRequests";
 import DeliveryTracking  from "./pages/retailer/DeliveryTracking";
+import RetailerInsights  from "./pages/retailer/RetailerInsights";
 
 // ── Staff pages (role: "staff") ─────────────────────────────────────
 import StaffDashboard    from "./pages/staff/StaffDashboard";
@@ -47,6 +48,7 @@ import Analytics               from "./pages/admin/Analytics";
 import AdminBroadcasts         from "./pages/admin/Broadcasts";
 import DistributorEvaluations  from "./pages/admin/DistributorEvaluations";
 import AdminTicketDetail       from "./pages/admin/AdminTicketDetail";
+import InsightsDashboard        from "./pages/admin/InsightsDashboard";
 
 // ── Promotion Manager pages (role: "promotion_manager") ────────────────────
 import PromotionManagerDashboard from "./pages/promotion_manager/Dashboard";
@@ -109,6 +111,7 @@ function App() {
           <Route path="/retailer/my-promotions" element={<ProtectedRoute roles="retailer"><MyPromotions /></ProtectedRoute>} />
           <Route path="/retailer/stock-requests" element={<ProtectedRoute roles="retailer"><StockRequests /></ProtectedRoute>} />
           <Route path="/retailer/delivery"     element={<ProtectedRoute roles="retailer"><DeliveryTracking /></ProtectedRoute>} />
+          <Route path="/retailer/insights"     element={<ProtectedRoute roles="retailer"><RetailerInsights /></ProtectedRoute>} />
 
           {/* ── Sales Staff routes — only accessible with role="staff" ─────── */}
           <Route
@@ -186,6 +189,14 @@ function App() {
             element={
               <ProtectedRoute roles="hq_admin">
                 <AdminTicketDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/insights"
+            element={
+              <ProtectedRoute roles={["hq_admin", "staff", "promotion_manager", "stock_manager"]}>
+                <InsightsDashboard />
               </ProtectedRoute>
             }
           />
