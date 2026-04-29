@@ -1,7 +1,7 @@
 /**
- * devAuth.js — Developer authentication bypass utility.
  * Only intended for use during local development (import.meta.env.DEV === true).
  */
+import API_URL from '../config/api';
 
 const devUsers = {
   retailer: {
@@ -78,12 +78,31 @@ export const getRedirectPath = (role) => {
   return paths[role] || "/login";
 };
 
-export const loginAsRole = (role) => {
+export const loginAsRole = async (role) => {
   const user = devUsers[role];
   if (!user) return;
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("token", "dev-token-" + role);
-  window.location.href = getRedirectPath(role);
+  
+  try {
+    // Perform a REAL login request to get the REAL MongoDB ID and a valid JWT
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, password: "password123" })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      window.location.href = getRedirectPath(role);
+    } else {
+      alert("Dev Login Failed: " + (data.message || "User not found. Did you run 'npm run seed'?"));
+    }
+  } catch (err) {
+    console.error("Dev Login Error:", err);
+    alert("Dev Login Error: Check if backend is running on 5001");
+  }
 };
 
 export const clearDevAuth = () => {

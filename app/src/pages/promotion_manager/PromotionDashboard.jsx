@@ -76,7 +76,7 @@ const PromotionDashboard = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Reward approved and credits issued!');
+      alert('Reward approved and loyalty points issued!');
       fetchPromotions();
     } catch (err) {
       alert(err.response?.data?.error || 'Error approving reward');
@@ -245,16 +245,29 @@ const PromotionDashboard = () => {
                                 </div>
                               </td>
                               <td className="px-6 py-5">
-                                {r.rating ? (
-                                  <div className="flex items-center">
-                                    <div className="flex text-yellow-500 mr-2">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star key={i} size={14} fill={i < Math.floor(r.rating/2) ? "currentColor" : "none"} />
+                                <div className="flex flex-col">
+                                  {r.rating ? (
+                                    <div className="flex items-center">
+                                      <div className="flex text-yellow-500 mr-2">
+                                        {[...Array(5)].map((_, i) => (
+                                          <Star key={i} size={14} fill={i < Math.floor(r.rating/2) ? "currentColor" : "none"} />
+                                        ))}
+                                      </div>
+                                      <span className="text-[14px] font-black text-[#3D2B1F]">{r.rating}<span className="text-gray-300 font-bold ml-0.5">/10</span></span>
+                                    </div>
+                                  ) : <span className="text-gray-300 font-bold text-[12px] uppercase">Pending Final Review</span>}
+                                  
+                                  {r.midPromotionFeedbacks?.length > 0 && (
+                                    <div className="mt-2 flex flex-col space-y-1">
+                                      <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Mid-Campaign Feedbacks ({r.midPromotionFeedbacks.length})</p>
+                                      {r.midPromotionFeedbacks.map((f, i) => (
+                                        <div key={i} className="text-[11px] text-gray-500 italic bg-blue-50/50 p-1 rounded border border-blue-100/50">
+                                          "{f.feedback || 'No text'}" ({f.rating}/10)
+                                        </div>
                                       ))}
                                     </div>
-                                    <span className="text-[14px] font-black text-[#3D2B1F]">{r.rating}<span className="text-gray-300 font-bold ml-0.5">/10</span></span>
-                                  </div>
-                                ) : <span className="text-gray-300 font-bold text-[12px] uppercase">Pending Review</span>}
+                                  )}
+                                </div>
                               </td>
                               <td className="px-6 py-5">
                                 {r.assignedDistributor ? (
@@ -347,7 +360,7 @@ const PromotionDashboard = () => {
                                 {sale.rewardTier}
                               </span>
                             </td>
-                            <td className="px-6 py-5 text-nestle-brown font-black">{sale.rewardAmount} Credits</td>
+                            <td className="px-6 py-5 text-nestle-brown font-black">{sale.rewardAmount} Loyalty Points</td>
                             <td className="px-6 py-5 text-right">
                               {sale.rewardIssuedAt ? (
                                 <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[11px] font-black uppercase tracking-widest border border-green-100 flex items-center justify-center w-max ml-auto">

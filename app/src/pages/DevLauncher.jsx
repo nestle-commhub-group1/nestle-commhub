@@ -24,8 +24,8 @@ const roleConfig = {
     description: 'Distribution management portal',
   },
   promotion_manager: {
-    label: 'Promotion Manager',
-    badge: { text: 'Manager', bg: 'bg-purple-100', text_color: 'text-purple-800', border: 'border-purple-200' },
+    label: 'Project Manager',
+    badge: { text: 'Project Manager', bg: 'bg-purple-100', text_color: 'text-purple-800', border: 'border-purple-200' },
     description: 'Manage marketing promotions',
   },
   stock_manager: {
@@ -34,6 +34,16 @@ const roleConfig = {
     description: 'Manage inventory and orders',
   },
 };
+
+const allRoutes = [
+  { group: 'Retailer', paths: ['/retailer/dashboard', '/retailer/profile', '/retailer/submit-issue', '/retailer/tickets', '/retailer/promotions', '/retailer/stock-requests', '/retailer/delivery'] },
+  { group: 'Staff', paths: ['/staff/dashboard', '/staff/profile', '/staff/tickets', '/staff/broadcasts'] },
+  { group: 'HQ Admin', paths: ['/admin/dashboard', '/admin/profile', '/admin/users', '/admin/sla', '/admin/analytics', '/admin/broadcasts', '/admin/evaluations'] },
+  { group: 'Promotion Manager', paths: ['/promotion-manager/dashboard', '/promotion-manager/promotions', '/promotion-manager/create', '/promotion-manager/profile'] },
+  { group: 'Distributor', paths: ['/distributor/dashboard', '/distributor/promotions'] },
+  { group: 'Stock Manager', paths: ['/stock-manager/dashboard', '/stock-manager/inventory', '/stock-manager/orders', '/stock-manager/profile'] },
+  { group: 'Public/Auth', paths: ['/login', '/register', '/otp', '/forgot-password', '/unauthorized'] },
+];
 
 const initials = (name) => {
   const parts = name.trim().split(' ');
@@ -118,8 +128,35 @@ const DevLauncher = () => {
           })}
         </div>
 
+        {/* Sitemap / All Routes Section */}
+        <div className="mt-16 bg-white rounded-[32px] border border-[#E0DBD5] shadow-sm overflow-hidden">
+          <div className="bg-gray-50 px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-[14px] font-black text-[#2C1810] uppercase tracking-widest">Complete System Sitemap</h2>
+            <span className="text-[10px] bg-gray-200 text-gray-600 font-bold px-2 py-0.5 rounded-full uppercase">All Interfaces</span>
+          </div>
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {allRoutes.map((section, idx) => (
+              <div key={idx} className="space-y-3">
+                <h3 className="text-[12px] font-black text-nestle-brown uppercase tracking-wider border-b border-gray-100 pb-2">{section.group}</h3>
+                <div className="flex flex-col space-y-1.5">
+                  {section.paths.map((path, pIdx) => (
+                    <a 
+                      key={pIdx} 
+                      href={path}
+                      className="text-[13px] text-gray-500 hover:text-nestle-brown hover:underline font-medium flex items-center"
+                    >
+                      <span className="w-1.5 h-1.5 bg-gray-300 rounded-full mr-2"></span>
+                      {path}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Bottom clear session */}
-        <div className="mt-10 text-center">
+        <div className="mt-10 text-center pb-20">
           <button
             onClick={clearDevAuth}
             className="text-[14px] font-semibold text-gray-500 hover:text-[#2C1810] underline underline-offset-4 transition-colors"

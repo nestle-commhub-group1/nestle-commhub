@@ -26,10 +26,27 @@ const MyPromotions = () => {
       setPromotions(res.data.promotions || []);
       setLoading(false);
     } catch (err) {
-      console.error(err);
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (promotions.length > 0 && !ratingData.id) {
+      const myUserId = JSON.parse(localStorage.getItem('user'))?._id;
+      const pendingFeedback = promotions.find(p => {
+        const myRecord = p.participatingRetailers?.find(
+          r => r.retailerId === myUserId || r.retailerId?._id === myUserId
+        );
+        const alreadyRated = !!myRecord?.rating;
+        const isCompleted = new Date(p.endDate) < new Date();
+        return isCompleted && !alreadyRated;
+      });
+      
+      if (pendingFeedback) {
+        setRatingData({ id: pendingFeedback._id, score: 0, feedback: '', unitsSold: '' });
+      }
+    }
+  }, [promotions, ratingData.id]);
 
   const handleSubmitSales = async (promotionId, units) => {
     const val = units || unitsSold[promotionId];
@@ -41,7 +58,7 @@ const MyPromotions = () => {
         unitsSold: parseInt(val)
       }, { headers: { Authorization: `Bearer ${token}` } });
       
-      if (!units) alert(`Performance reported! Reward earned: $${res.data.rewardAmount} (${res.data.rewardTier})`);
+      if (!units) alert(`Performance reported! Reward earned: LKR ${res.data.rewardAmount} (${res.data.rewardTier})`);
       fetchMyPromotions();
     } catch (err) {
       if (!units) alert(err.response?.data?.error || 'Error submitting sales');
@@ -165,9 +182,9 @@ const MyPromotions = () => {
                               </span>
                             </div>
                             <div className="flex justify-between items-center bg-green-50/50 p-3 rounded-xl border border-green-100">
-                              <span className="text-[11px] font-bold text-green-700 uppercase tracking-tight">Reward Earned</span>
+                              <span className="text-[11px] font-bold text-green-700 uppercase tracking-tight">Points Earned</span>
                               <span className="text-[15px] font-black text-green-800 flex items-center">
-                                <DollarSign size={14} />{promo.salesData.find(s => s.retailerId === myUserId || s.retailerId?._id === myUserId).rewardAmount}
+                                LKR {promo.salesData.find(s => s.retailerId === myUserId || s.retailerId?._id === myUserId).rewardAmount}
                               </span>
                             </div>
                           </div>
@@ -218,14 +235,21 @@ const MyPromotions = () => {
                                </div>
                                <p className="text-[11px] text-gray-500 italic font-medium">"{myRecord.feedback || 'Excellent promotion!'}"</p>
                              </div>
-                           ) : (
-                             <button 
-                               onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '', unitsSold: '' })}
-                               className="w-full py-3 bg-[#F8F7F5] text-[#3D2B1F] rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-[#efede9] transition-all"
-                             >
-                               Rate Campaign
-                             </button>
-                           )}
+                           ) : (() => {
+                             const isCompleted = new Date(promo.endDate) < new Date();
+                             return (
+                               <button 
+                                 onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '', unitsSold: '' })}
+                                 className={`w-full py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
+                                   isCompleted 
+                                     ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-100' 
+                                     : 'bg-[#F8F7F5] text-[#3D2B1F] hover:bg-[#efede9]'
+                                 }`}
+                               >
+                                 {isCompleted ? 'Rate Completed Campaign' : 'Rate Campaign'}
+                               </button>
+                             );
+                           })()}
                         </div>
                       </div>
                     </div>
@@ -250,8 +274,22 @@ const MyPromotions = () => {
       {ratingData.id && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2C1810]/40 backdrop-blur-sm p-4">
            <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl">
-              <h3 className="text-[24px] font-black text-[#2C1810] mb-2">Campaign Feedback</h3>
-              <p className="text-sm text-gray-500 mb-6">How is your experience with this campaign?</p>
+              <h3 className="text-[24px] font-black text-[#2C1810] mb-2">
+                 {(() => {
+                    const promo = promotions.find(p => p._id === ratingData.id);
+                    const isCompleted = promo && new Date(promo.endDate) < new Date();
+                    return isCompleted ? "Final Campaign Review" : "Mid-Campaign Feedback";
+                 })()}
+               </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                 {(() => {
+                    const promo = promotions.find(p => p._id === ratingData.id);
+                    const isCompleted = promo && new Date(promo.endDate) < new Date();
+                    return isCompleted 
+                      ? "Thank you for participating! Please share your final experience." 
+                      : "How is the campaign going so far? Your feedback helps us improve.";
+                 })()}
+               </p>
               
               <form onSubmit={handleRate} className="space-y-5">
                  <div className="space-y-2">

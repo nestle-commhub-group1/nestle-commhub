@@ -43,10 +43,31 @@ const PromotionsWall = () => {
       setLoading(false);
     } catch (err) {
       console.error(err);
-      setError('Failed to load promotions');
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (promotions.length > 0 && !ratingData.id) {
+      const _stored = JSON.parse(localStorage.getItem('user'));
+      const myUserId = _stored?.id || _stored?._id;
+      
+      const pendingFeedback = promotions.find(p => {
+        const myRecord = p.participatingRetailers?.find(r => {
+          const rid = r.retailerId?._id || r.retailerId;
+          return rid?.toString() === myUserId?.toString();
+        });
+        const isOptedIn = !!myRecord;
+        const alreadyRated = !!myRecord?.rating;
+        const isCompleted = new Date(p.endDate) < new Date();
+        return isOptedIn && isCompleted && !alreadyRated;
+      });
+      
+      if (pendingFeedback) {
+        setRatingData({ id: pendingFeedback._id, score: 0, feedback: '', unitsSold: '' });
+      }
+    }
+  }, [promotions, ratingData.id]);
 
   const handleAskQuestion = (promoId) => {
     setChatPromotionId(promoId);
@@ -60,7 +81,6 @@ const PromotionsWall = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Successfully opted in!');
-      setRatingData({ id: promoId, score: 0, feedback: '', unitsSold: '' });
       fetchPromotions(); // Refresh state
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to opt in');
@@ -116,8 +136,8 @@ const PromotionsWall = () => {
                    <DollarSign size={20} />
                 </div>
                 <div>
-                   <p className="text-[9px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Rewards Wallet</p>
-                   <p className="text-xl font-black">{userCredits.toLocaleString()} <span className="text-[10px] opacity-80">CREDITS</span></p>
+                   <p className="text-[9px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Loyalty Points Wallet</p>
+                   <p className="text-xl font-black">{userCredits.toLocaleString()} <span className="text-[10px] opacity-80">POINTS</span></p>
                 </div>
              </div>
 
@@ -154,6 +174,7 @@ const PromotionsWall = () => {
               });
               const isOptedIn = !!myRecord;
               const alreadyRated = !!myRecord?.rating;
+              const isCompleted = new Date(promo.endDate) < new Date();
 
               return (
                 <div key={promo._id} className="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -231,19 +252,28 @@ const PromotionsWall = () => {
                         ) : (
                           <button 
                             onClick={() => setRatingData({ id: promo._id, score: 0, feedback: '', unitsSold: '' })}
-                            className="w-full py-2.5 rounded-xl bg-[#F8F7F5] text-nestle-brown font-bold text-[13px] hover:bg-nestle-brown/5 transition-colors flex items-center justify-center"
+                            className={`w-full py-2.5 rounded-xl font-bold text-[13px] transition-colors flex items-center justify-center ${
+                              isCompleted 
+                                ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-md shadow-orange-200' 
+                                : 'bg-[#F8F7F5] text-nestle-brown hover:bg-nestle-brown/5'
+                            }`}
                           >
                             <Star size={14} className="mr-2" />
-                            Rate Campaign
+                            {isCompleted ? 'Rate Completed Campaign' : 'Rate Campaign'}
                           </button>
                         )}
                       </div>
                     ) : (
                       <button 
+                        disabled={isCompleted}
                         onClick={() => handleOptIn(promo._id)}
-                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-lg shadow-blue-200/50"
+                        className={`w-full py-3 rounded-xl font-bold transition-colors shadow-lg ${
+                          isCompleted 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' 
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200/50'
+                        }`}
                       >
-                        Opt In Now
+                        {isCompleted ? 'Campaign Ended' : 'Opt In Now'}
                       </button>
                     )}
                     
@@ -273,8 +303,22 @@ const PromotionsWall = () => {
       {ratingData.id && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#2C1810]/40 backdrop-blur-sm p-4">
            <div className="bg-white rounded-[40px] p-8 w-full max-w-md shadow-2xl">
-              <h3 className="text-[24px] font-black text-[#2C1810] mb-2">Campaign Feedback</h3>
-              <p className="text-sm text-gray-500 mb-6">How is your experience with this campaign?</p>
+              <h3 className="text-[24px] font-black text-[#2C1810] mb-2">
+                 {(() => {
+                    const promo = promotions.find(p => p._id === ratingData.id);
+                    const isCompleted = promo && new Date(promo.endDate) < new Date();
+                    return isCompleted ? "Final Campaign Review" : "Mid-Campaign Feedback";
+                 })()}
+               </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                 {(() => {
+                    const promo = promotions.find(p => p._id === ratingData.id);
+                    const isCompleted = promo && new Date(promo.endDate) < new Date();
+                    return isCompleted 
+                      ? "Thank you for participating! Please share your final experience." 
+                      : "How is the campaign going so far? Your feedback helps us improve.";
+                 })()}
+               </p>
               
               <form onSubmit={handleRate} className="space-y-5">
                  <div className="space-y-2">

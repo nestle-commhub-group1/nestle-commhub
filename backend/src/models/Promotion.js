@@ -50,7 +50,14 @@ const promotionSchema = new Schema({
       assignedDistributor: { type: Schema.Types.ObjectId, ref: 'User' }, // distributor
       rating: { type: Number, min: 0, max: 10 }, // retailer rates promotion
       ratingDate: { type: Date },
-      feedback: { type: String }
+      feedback: { type: String },
+      midPromotionFeedbacks: [
+        {
+          rating: { type: Number, min: 0, max: 10 },
+          feedback: { type: String },
+          submittedAt: { type: Date, default: Date.now }
+        }
+      ]
     }
   ],
   createdAt: { type: Date, default: Date.now },

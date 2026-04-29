@@ -279,9 +279,23 @@ const ratePromotion = async (req, res) => {
       return res.status(400).json({ error: 'You have not opted into this promotion' });
     }
 
-    promotion.participatingRetailers[participantIndex].rating = rating;
-    promotion.participatingRetailers[participantIndex].ratingDate = new Date();
-    if (feedback) promotion.participatingRetailers[participantIndex].feedback = feedback;
+    const isCompleted = new Date(promotion.endDate) < new Date();
+
+    if (isCompleted) {
+      promotion.participatingRetailers[participantIndex].rating = rating;
+      promotion.participatingRetailers[participantIndex].ratingDate = new Date();
+      if (feedback) promotion.participatingRetailers[participantIndex].feedback = feedback;
+    } else {
+      // Store as mid-promotion feedback
+      if (!promotion.participatingRetailers[participantIndex].midPromotionFeedbacks) {
+        promotion.participatingRetailers[participantIndex].midPromotionFeedbacks = [];
+      }
+      promotion.participatingRetailers[participantIndex].midPromotionFeedbacks.push({
+        rating,
+        feedback,
+        submittedAt: new Date()
+      });
+    }
 
     await promotion.save();
 
@@ -526,13 +540,13 @@ const approveReward = async (req, res) => {
     await Notification.create({
       userId: retailerId,
       type: 'reward_issued',
-      message: `Your reward of ${salesEntry.rewardAmount} credits for promotion "${promotion.title}" has been approved and added to your wallet!`,
+      message: `Your reward of ${salesEntry.rewardAmount} loyalty points for promotion "${promotion.title}" has been approved and added to your wallet!`,
       relatedPromotion: promotion._id
     });
 
     res.status(200).json({
       success: true,
-      message: 'Reward approved and credits issued successfully',
+      message: 'Reward approved and loyalty points issued successfully',
       credits: retailer.credits
     });
   } catch (error) {

@@ -328,8 +328,8 @@ const StockRequests = () => {
                     <div className="bg-nestle-brown/5 p-4 rounded-2xl border border-nestle-brown/10 mb-4">
                       <div className="flex justify-between items-center">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-nestle-brown font-black uppercase tracking-widest">Rewards credits</span>
-                          <span className="text-[15px] font-black text-nestle-brown">{userCredits.toLocaleString()} Available</span>
+                          <span className="text-[10px] text-nestle-brown font-black uppercase tracking-widest">Loyalty Points</span>
+                          <span className="text-[15px] font-black text-nestle-brown">{userCredits.toLocaleString()} Points Available</span>
                         </div>
                         <button 
                           onClick={() => setUseCredits(!useCredits)}
@@ -358,7 +358,7 @@ const StockRequests = () => {
                     )}
                     {useCredits && userCredits > 0 && (
                         <div className="flex justify-between text-nestle-brown font-medium">
-                            <span>Credit Discount</span>
+                            <span>Points Discount</span>
                             <span className="font-black">-LKR {Math.min(userCredits, cart.reduce((total, item) => {
                               const discount = calculateDiscount(item.quantity);
                               return total + (item.product.price * item.quantity * (1 - discount / 100));
