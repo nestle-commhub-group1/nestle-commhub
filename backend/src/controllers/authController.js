@@ -275,11 +275,9 @@ const loginUser = async (req, res) => {
     /* ── Step 5b: Generate insight (non-blocking) ─────────────────────── */
 
     // Fire-and-forget — insight generation should never block or break login
-    try {
-      await generateInsight(user._id);
-    } catch (insightError) {
-      console.error("[Login] Insight generation failed (non-critical):", insightError.message);
-    }
+    generateInsight(user._id).catch(insightError => {
+      console.error("[Login] Insight generation failed (non-critical):", insightError?.message || insightError);
+    });
 
     /* ── Step 6: Respond with success ─────────────────────────────────── */
 

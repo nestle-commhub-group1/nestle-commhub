@@ -75,6 +75,7 @@ const messageRoutes      = require('./routes/messageRoutes');       // Multi-cha
 const productRoutes      = require('./routes/productRoutes');       // Product management
 const orderRoutes        = require('./routes/orderRoutes');         // Order management
 const insightRoutes      = require('./routes/insightRoutes');       // AI insights
+const analyticsRoutes    = require('./routes/analyticsRoutes');     // Analytics dashboard
 
 app.use('/api/auth',          authRoutes);
 app.use('/api/tickets',       ticketRoutes);
@@ -85,6 +86,7 @@ app.use('/api/messages',      messageRoutes);
 app.use('/api/products',      productRoutes);
 app.use('/api/orders',        orderRoutes);
 app.use('/api/insights',      insightRoutes);
+app.use('/api/analytics',     analyticsRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 
