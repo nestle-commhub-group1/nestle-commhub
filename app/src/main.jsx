@@ -9,6 +9,6 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-if (import.meta.env.DEV) {
-  import('./tests/runRoleDashboardTests.js')
-}
+// if (import.meta.env.DEV) {
+//   import('./tests/runRoleDashboardTests.js')
+// }

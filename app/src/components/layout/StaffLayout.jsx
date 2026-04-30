@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText
+  Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -79,8 +79,6 @@ const StaffLayout = ({ children }) => {
     // Navigation logic for Staff
     if (notif.ticketId || notif.type?.startsWith('ticket_')) {
       navigate(`/staff/tickets/${notif.ticketId || ''}`);
-    } else if (notif.type === 'broadcast') {
-      navigate('/staff/broadcasts');
     }
   };
 
@@ -120,7 +118,7 @@ const StaffLayout = ({ children }) => {
   const navItems = [
     { label: 'Home', path: '/staff/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'My Tickets', path: '/staff/tickets', icon: <FileText size={20} /> },
-    { label: 'Broadcasts', path: '/staff/broadcasts', icon: <Radio size={20} /> },
+    { label: 'Analytics & Insights', path: '/admin/insights', icon: <BarChart3 size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/staff/profile', icon: <User size={20} /> },
   ];

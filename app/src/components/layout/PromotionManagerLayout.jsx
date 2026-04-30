@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Bell, Menu, FileText, User, 
-  LogOut, X, LayoutDashboard, Radio, PlusCircle, CheckCircle, Ticket, Tag, MessageSquare
+  LogOut, X, LayoutDashboard, Radio, PlusCircle, CheckCircle, Ticket, Tag, MessageSquare, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -113,6 +113,7 @@ const PromotionManagerLayout = ({ children }) => {
     { label: 'Home', path: '/promotion-manager/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Create Promotion', path: '/promotion-manager/create', icon: <PlusCircle size={20} /> },
     { label: 'Promotions Dashboard', path: '/promotion-manager/promotions', icon: <FileText size={20} /> },
+    { label: 'Analytics & Insights', path: '/pm/insights', icon: <BarChart3 size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/promotion-manager/profile', icon: <User size={20} /> },
   ];

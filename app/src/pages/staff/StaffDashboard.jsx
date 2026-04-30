@@ -7,9 +7,6 @@ import StaffLayout from '../../components/layout/StaffLayout';
 import { getCurrentGreeting, formatCurrentDate, formatDate } from '../../utils/dateUtils';
 
 const StaffDashboard = () => {
-  console.log("StaffDashboard rendering");
-  console.log("User:", localStorage.getItem("user"));
-  console.log("Token:", localStorage.getItem("token"));
 
   const [user, setUser] = useState({ fullName: 'Nadeeka' });
   const [tickets, setTickets] = useState([]);

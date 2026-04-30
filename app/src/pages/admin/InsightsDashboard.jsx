@@ -168,7 +168,7 @@ const InsightsDashboard = () => {
   /* ── Renderers ── */
 
   return (
-    <div className="p-8 min-h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className="p-8 min-h-screen bg-nestle-gray text-gray-800 font-sans">
       <h1 className="text-3xl font-extrabold mb-6 text-gray-900 tracking-tight">HQ Analytics Dashboard</h1>
 
       {/* Filter Bar */}

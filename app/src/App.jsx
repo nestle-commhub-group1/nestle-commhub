@@ -127,7 +127,7 @@ function App() {
           <Route path="/staff/profile"    element={<ProtectedRoute roles="staff"><StaffProfile /></ProtectedRoute>} />
           <Route path="/staff/tickets"    element={<ProtectedRoute roles="staff"><StaffMyTickets /></ProtectedRoute>} />
           <Route path="/staff/tickets/:id" element={<ProtectedRoute roles="staff"><StaffTicketDetail /></ProtectedRoute>} />
-          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="staff"><StaffBroadcasts /></ProtectedRoute>} />
+          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="hq_admin"><StaffBroadcasts /></ProtectedRoute>} />
 
           {/* ── HQ Admin routes — only accessible with role="hq_admin" ──────────── */}
           <Route

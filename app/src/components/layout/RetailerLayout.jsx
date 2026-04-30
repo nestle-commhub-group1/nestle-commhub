@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Home, FileText, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, PiggyBank, Truck, Plus, Tag, LayoutDashboard, Loader2
+  Home, FileText, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, PiggyBank, Truck, Plus, Tag, LayoutDashboard, Loader2, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -116,6 +116,7 @@ const RetailerLayout = ({ children }) => {
     { label: 'Submit Issue', path: '/retailer/submit-issue', icon: <Plus size={20} /> },
     { label: 'Promotions', path: '/retailer/promotions', icon: <Tag size={20} /> },
     { label: 'Stock Requests', path: '/retailer/stock-requests', icon: <Package size={20} /> },
+    { label: 'My Performance', path: '/retailer/insights', icon: <BarChart3 size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/retailer/profile', icon: <User size={20} /> },
   ];

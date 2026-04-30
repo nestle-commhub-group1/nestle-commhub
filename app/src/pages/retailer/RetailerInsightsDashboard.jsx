@@ -23,46 +23,69 @@ ChartJS.register(
   PointElement, ArcElement, Title, Tooltip, Legend, Filler
 );
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Theme — dark dashboard matching the rest of the analytics suite
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-const C = {
-  bg: '#1a1f2e', card: '#232a3b', border: '#2e3650',
-  text: '#e2e8f0', dim: '#94a3b8',
-  accent: '#3b82f6', green: '#22c55e', emerald: '#10b981',
-  amber: '#f59e0b', red: '#ef4444', purple: '#a855f7',
-  teal: '#14b8a6', pink: '#ec4899',
-};
-
-const sty = {
-  page: { background: C.bg, minHeight: '100vh', padding: '32px', color: C.text, fontFamily: "'Inter','Segoe UI',sans-serif" },
-  h1: { fontSize: '26px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.02em' },
-  badge: { display: 'inline-block', background: 'rgba(16,185,129,0.15)', color: '#34d399', fontWeight: 700, fontSize: '12px', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' },
-  filterRow: { display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' },
-  filterGrp: { flex: 1, minWidth: '220px', maxWidth: '360px' },
-  label: { fontSize: '12px', color: C.dim, fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  select: {
-    width: '100%', padding: '12px 16px', background: C.card, border: `1px solid ${C.border}`,
-    borderRadius: '10px', color: C.text, fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center',
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { position: 'top', labels: { padding: 16, color: '#6B7280', font: { size: 12, weight: '600' } } },
   },
-  mg: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' },
-  mc: { background: C.card, border: `1px solid ${C.border}`, borderRadius: '14px', padding: '20px 24px' },
-  ml: { fontSize: '13px', color: C.dim, fontWeight: 600, marginBottom: '6px' },
-  mv: { fontSize: '32px', fontWeight: 800, lineHeight: 1.1, marginBottom: '4px' },
-  ms: { fontSize: '12px', fontWeight: 600 },
-  row: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' },
-  full: { display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' },
-  cc: { background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '24px' },
-  ct: { fontSize: '16px', fontWeight: 700, marginBottom: '16px' },
-  spin: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: C.dim },
-  noData: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: C.dim, fontWeight: 600, fontSize: '14px' },
+  scales: {
+    x: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+    y: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+  },
 };
 
-/* helpers */
+const Spinner = () => (
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400">
+    <Loader2 size={28} className="animate-spin" />
+  </div>
+);
+
+const NoData = () => (
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400 font-medium text-sm italic">
+    No data available
+  </div>
+);
+
+const MetricCard = ({ label, value, sub, subColor = '#9CA3AF', accentColor }) => (
+  <div
+    data-testid="metric-card"
+    className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E0DBD5]"
+    style={{ borderLeft: `4px solid ${accentColor}` }}
+  >
+    <p className="text-[13px] font-semibold text-gray-500 mb-1">{label}</p>
+    <p className="text-[32px] font-extrabold text-[#2C1810] leading-none">{value}</p>
+    <p className="text-[12px] mt-2 font-medium" style={{ color: subColor }}>{sub}</p>
+  </div>
+);
+
+/* ── Progress comparison bar (Retailer vs National) ── */
+const ProgressComparison = ({ label, myValue, avgValue, myLabel, avgLabel, max, suffix = '' }) => {
+  const clamp = v => Math.min(Math.max(v, 0), max);
+  const myPct = (clamp(myValue) / max) * 100;
+  const avgPct = (clamp(avgValue) / max) * 100;
+
+  return (
+    <div className="mb-6">
+      <p className="text-[14px] font-bold text-[#2C1810] mb-3">{label}</p>
+      <div className="flex items-center gap-3 mb-2">
+        <span className="w-20 text-[12px] font-semibold text-gray-500 flex-shrink-0">{myLabel}</span>
+        <div className="flex-1 h-3 bg-[#F5F3F0] rounded-full overflow-hidden border border-[#E0DBD5]">
+          <div className="h-full bg-[#22C55E] rounded-full transition-all duration-500" style={{ width: `${myPct}%` }} />
+        </div>
+        <span className="w-16 text-[13px] font-bold text-[#22C55E] text-right">{myValue}{suffix}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="w-20 text-[12px] font-semibold text-gray-500 flex-shrink-0">{avgLabel}</span>
+        <div className="flex-1 h-3 bg-[#F5F3F0] rounded-full overflow-hidden border border-[#E0DBD5]">
+          <div className="h-full bg-[#F59E0B] rounded-full transition-all duration-500" style={{ width: `${avgPct}%` }} />
+        </div>
+        <span className="w-16 text-[13px] font-bold text-[#F59E0B] text-right">{avgValue}{suffix}</span>
+      </div>
+    </div>
+  );
+};
+
 async function apiFetch(path) {
   const token = localStorage.getItem('token');
   const res = await fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -71,77 +94,15 @@ async function apiFetch(path) {
   return json.data ?? null;
 }
 
-const CHART_DEFAULTS = {
-  responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { labels: { color: C.dim, font: { size: 12, weight: 600 }, padding: 14 } } },
-  scales: {
-    x: { ticks: { color: C.dim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: C.dim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-  },
-};
-
-const Spinner = () => (
-  <div style={sty.spin}>
-    <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-  </div>
-);
-const NoData = () => <div style={sty.noData}>No data available</div>;
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  PROGRESS BAR COMPONENT (for performance vs national avg)
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-const ProgressComparison = ({ label, myValue, avgValue, myLabel, avgLabel, max, suffix = '' }) => {
-  const clamp = (v) => Math.min(Math.max(v, 0), max);
-  const myPct = (clamp(myValue) / max) * 100;
-  const avgPct = (clamp(avgValue) / max) * 100;
-
-  return (
-    <div style={{ marginBottom: '22px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <span style={{ fontWeight: 700, fontSize: '14px', color: C.text }}>{label}</span>
-      </div>
-      {/* My value */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-        <span style={{ width: '90px', fontSize: '12px', color: C.dim, fontWeight: 600, flexShrink: 0 }}>{myLabel}</span>
-        <div style={{ flex: 1, height: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ width: `${myPct}%`, height: '100%', background: C.emerald, borderRadius: '6px', transition: 'width 0.6s ease' }} />
-        </div>
-        <span style={{ width: '70px', fontSize: '13px', fontWeight: 700, color: C.emerald, textAlign: 'right' }}>
-          {myValue}{suffix}
-        </span>
-      </div>
-      {/* National avg */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ width: '90px', fontSize: '12px', color: C.dim, fontWeight: 600, flexShrink: 0 }}>{avgLabel}</span>
-        <div style={{ flex: 1, height: '12px', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ width: `${avgPct}%`, height: '100%', background: C.amber, borderRadius: '6px', transition: 'width 0.6s ease' }} />
-        </div>
-        <span style={{ width: '70px', fontSize: '13px', fontWeight: 700, color: C.amber, textAlign: 'right' }}>
-          {avgValue}{suffix}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  COMPONENT
- * ═══════════════════════════════════════════════════════════════════════════ */
-
 const RetailerInsightsDashboard = () => {
   const { user } = useAuth();
-
   const [period, setPeriod] = useState('30');
 
-  /* Data */
   const [perf, setPerf] = useState(null);
   const [orders, setOrders] = useState(null);
   const [products, setProducts] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
-  /* Loading */
   const [lPerf, setLPerf] = useState(true);
   const [lOrders, setLOrders] = useState(true);
   const [lProducts, setLProducts] = useState(true);
@@ -150,98 +111,52 @@ const RetailerInsightsDashboard = () => {
   const fetchAll = useCallback(async () => {
     setLPerf(true); setLOrders(true); setLProducts(true); setLFeedback(true);
     const qs = `?period=${period}d`;
-
-    apiFetch(`/api/analytics/my-performance${qs}`).then((d) => { setPerf(d); setLPerf(false); });
-    apiFetch(`/api/analytics/my-orders${qs}`).then((d) => { setOrders(d); setLOrders(false); });
-    apiFetch(`/api/analytics/my-products${qs}`).then((d) => { setProducts(d); setLProducts(false); });
-    apiFetch(`/api/analytics/my-feedback`).then((d) => { setFeedback(d); setLFeedback(false); });
+    apiFetch(`/api/analytics/my-performance${qs}`).then(d => { setPerf(d); setLPerf(false); });
+    apiFetch(`/api/analytics/my-orders${qs}`).then(d => { setOrders(d); setLOrders(false); });
+    apiFetch(`/api/analytics/my-products${qs}`).then(d => { setProducts(d); setLProducts(false); });
+    apiFetch(`/api/analytics/my-feedback`).then(d => { setFeedback(d); setLFeedback(false); });
   }, [period]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  /* ── Chart 1: Multi-line — ordered vs fulfilled vs rejected by week ── */
+  /* ── Chart data ── */
   const ordersLineData = orders && orders.length > 0 ? {
-    labels: orders.map((w) => w.week),
+    labels: orders.map(w => w.week),
     datasets: [
-      {
-        label: 'Ordered',
-        data: orders.map((w) => w.ordered),
-        borderColor: C.accent,
-        backgroundColor: 'rgba(59,130,246,0.08)',
-        pointBackgroundColor: '#fff',
-        pointBorderColor: C.accent,
-        pointRadius: 4,
-        tension: 0.35,
-        fill: true,
-      },
-      {
-        label: 'Fulfilled',
-        data: orders.map((w) => w.fulfilled),
-        borderColor: C.emerald,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: C.emerald,
-        pointRadius: 4,
-        tension: 0.35,
-      },
-      {
-        label: 'Rejected',
-        data: orders.map((w) => w.rejected),
-        borderColor: C.red,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: C.red,
-        pointRadius: 4,
-        tension: 0.35,
-      },
+      { label: 'Ordered', data: orders.map(w => w.ordered), borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.08)', pointBackgroundColor: '#fff', pointBorderColor: '#3B82F6', pointRadius: 4, tension: 0.35, fill: true },
+      { label: 'Fulfilled', data: orders.map(w => w.fulfilled), borderColor: '#22C55E', pointBackgroundColor: '#fff', pointBorderColor: '#22C55E', pointRadius: 4, tension: 0.35 },
+      { label: 'Rejected', data: orders.map(w => w.rejected), borderColor: '#EF4444', pointBackgroundColor: '#fff', pointBorderColor: '#EF4444', pointRadius: 4, tension: 0.35 },
     ],
   } : null;
 
-  /* ── Chart 2: Horizontal bar — top 5 products ── */
   const top5 = products ? products.slice(0, 5) : [];
   const productsBarData = {
-    labels: top5.map((p) => p.productName),
-    datasets: [{
-      label: 'Units ordered',
-      data: top5.map((p) => p.unitCount),
-      backgroundColor: C.accent,
-      borderRadius: 4,
-      barThickness: 22,
-    }],
+    labels: top5.map(p => p.productName),
+    datasets: [{ label: 'Units ordered', data: top5.map(p => p.unitCount), backgroundColor: '#3D2B1F', borderRadius: 4, barThickness: 22 }],
   };
-  const productsBarOpts = { ...CHART_DEFAULTS, indexAxis: 'y' };
 
-  /* ── Chart 3: Doughnut — my feedback sentiment ── */
   const doughnutData = feedback && feedback.total > 0 ? {
     labels: [`Positive ${feedback.positivePct}%`, `Neutral ${feedback.neutralPct}%`, `Negative ${feedback.negativePct}%`],
-    datasets: [{
-      data: [feedback.positive, feedback.neutral, feedback.negative],
-      backgroundColor: [C.green, C.amber, C.red],
-      borderColor: C.card,
-      borderWidth: 3,
-      cutout: '60%',
-    }],
+    datasets: [{ data: [feedback.positive, feedback.neutral, feedback.negative], backgroundColor: ['#22C55E', '#F59E0B', '#EF4444'], borderColor: '#FFFFFF', borderWidth: 3, cutout: '60%' }],
   } : null;
-  const doughnutOpts = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'top', labels: { color: C.dim, font: { size: 12, weight: 600 }, padding: 14 } } },
-  };
 
-  /* Derived metric cards */
-  const totalOrdered = orders ? orders.reduce((s, w) => s + w.ordered, 0) : 0;
+  const selectCls = 'w-full px-4 py-3 bg-[#F8F7F5] border border-[#E0DBD5] rounded-[14px] font-semibold text-[14px] text-[#3D2B1F] outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 cursor-pointer';
 
-  /* ═══════════════════════════════════════════════════════════════════════
-   *  RENDER
-   * ═══════════════════════════════════════════════════════════════════════ */
   return (
     <RetailerLayout>
-      <div style={sty.page}>
-        <h1 style={sty.h1}>Your Performance:</h1>
-        <div style={sty.badge}>Retailer view</div>
+      <div className="min-h-screen bg-nestle-gray p-6 lg:p-8 font-sans space-y-6">
 
-        {/* Filter bar — period only */}
-        <div style={sty.filterRow}>
-          <div style={sty.filterGrp}>
-            <div style={sty.label}>Period:</div>
-            <select style={sty.select} value={period} onChange={(e) => setPeriod(e.target.value)}>
+        {/* Header */}
+        <div>
+          <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">My Performance</h1>
+          <p className="text-[14px] text-gray-500 font-medium mt-1">Your orders, fulfillment and feedback vs national average</p>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-5 flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Period</label>
+            <select className={selectCls} value={period} onChange={e => setPeriod(e.target.value)}>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
@@ -250,123 +165,72 @@ const RetailerInsightsDashboard = () => {
           </div>
         </div>
 
-        {/* Metric cards */}
+        {/* Metric Cards */}
         {lPerf ? <Spinner /> : perf ? (
-          <div style={sty.mg}>
-            <div data-testid="metric-card" style={sty.mc}>
-              <div style={sty.ml}>My orders placed</div>
-              <div style={sty.mv}>{perf.myOrderVolume?.toLocaleString()}</div>
-              <div style={{ ...sty.ms, color: C.dim }}>This period</div>
-            </div>
-            <div data-testid="metric-card" style={sty.mc}>
-              <div style={sty.ml}>My fulfillment rate</div>
-              <div style={sty.mv}>{perf.myFulfillmentRate}%</div>
-              <div style={{
-                ...sty.ms,
-                color: perf.myOrderVolumePercentile >= 75 ? C.green : perf.myOrderVolumePercentile >= 50 ? C.amber : C.red,
-              }}>
-                Top {100 - perf.myOrderVolumePercentile}% of retailers
-              </div>
-            </div>
-            <div data-testid="metric-card" style={sty.mc}>
-              <div style={sty.ml}>My feedback score</div>
-              <div style={sty.mv}>{perf.myFeedbackScore} / 10</div>
-              <div style={{
-                ...sty.ms,
-                color: perf.myFeedbackScore >= 7 ? C.green : perf.myFeedbackScore >= 4 ? C.amber : C.red,
-              }}>
-                {perf.myFeedbackScore >= 7 ? 'Excellent' : perf.myFeedbackScore >= 4 ? 'Average' : 'Needs improvement'}
-              </div>
-            </div>
-            <div data-testid="metric-card" style={sty.mc}>
-              <div style={sty.ml}>My avg order value</div>
-              <div style={sty.mv}>Rs {perf.myAvgOrderValue?.toLocaleString()}</div>
-              <div style={{ ...sty.ms, color: C.dim }}>
-                National avg: Rs {perf.nationalAvgOrderValue?.toLocaleString()}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <MetricCard label="My Orders Placed" value={(perf.myOrderVolume ?? 0).toLocaleString()} sub="This period" accentColor="#3B82F6" />
+            <MetricCard
+              label="My Fulfillment Rate"
+              value={`${perf.myFulfillmentRate ?? 0}%`}
+              sub={`Top ${100 - (perf.myOrderVolumePercentile ?? 50)}% of retailers`}
+              subColor={perf.myOrderVolumePercentile >= 75 ? '#22C55E' : perf.myOrderVolumePercentile >= 50 ? '#F59E0B' : '#EF4444'}
+              accentColor="#22C55E"
+            />
+            <MetricCard
+              label="My Feedback Score"
+              value={`${perf.myFeedbackScore ?? 0} / 10`}
+              sub={perf.myFeedbackScore >= 7 ? 'Excellent' : perf.myFeedbackScore >= 4 ? 'Average' : 'Needs improvement'}
+              subColor={perf.myFeedbackScore >= 7 ? '#22C55E' : perf.myFeedbackScore >= 4 ? '#F59E0B' : '#EF4444'}
+              accentColor="#F59E0B"
+            />
+            <MetricCard label="Avg Order Value" value={`Rs ${(perf.myAvgOrderValue ?? 0).toLocaleString()}`} sub={`National avg: Rs ${(perf.nationalAvgOrderValue ?? 0).toLocaleString()}`} accentColor="#3D2B1F" />
           </div>
         ) : <NoData />}
 
-        {/* Chart 1: Orders timeline (full width) */}
-        <div style={sty.full}>
-          <div style={sty.cc}>
-            <div style={sty.ct}>Order history — ordered vs fulfilled vs rejected</div>
-            {lOrders ? <Spinner /> : ordersLineData ? (
-              <div style={{ height: '320px' }}>
-                <Line aria-label="Order history — ordered vs fulfilled vs rejected Line Chart" data={ordersLineData} options={CHART_DEFAULTS} />
-              </div>
-            ) : <NoData />}
-          </div>
+        {/* Chart: Order history */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+          <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Order History — Ordered vs Fulfilled vs Rejected</h2>
+          {lOrders ? <Spinner /> : ordersLineData ? (
+            <div className="h-[360px]">
+              <Line aria-label="Order history Line Chart" data={ordersLineData} options={CHART_DEFAULTS} />
+            </div>
+          ) : <NoData />}
         </div>
 
-        {/* Row: Top products + Feedback sentiment */}
-        <div style={sty.row}>
-          <div style={sty.cc}>
-            <div style={sty.ct}>My top 5 products</div>
+        {/* Charts row: top products + feedback */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">My Top 5 Products</h2>
             {lProducts ? <Spinner /> : top5.length > 0 ? (
-              <div style={{ height: '280px' }}>
-                <Bar aria-label="My top 5 products Bar Chart" data={productsBarData} options={productsBarOpts} />
+              <div className="h-[300px]">
+                <Bar aria-label="My top 5 products Bar Chart" data={productsBarData} options={{ ...CHART_DEFAULTS, indexAxis: 'y' }} />
               </div>
             ) : <NoData />}
           </div>
 
-          <div style={sty.cc}>
-            <div style={sty.ct}>My feedback sentiment</div>
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">My Feedback Sentiment</h2>
             {lFeedback ? <Spinner /> : doughnutData ? (
-              <div style={{ height: '280px' }}>
-                <Doughnut aria-label="My feedback sentiment Doughnut Chart" data={doughnutData} options={doughnutOpts} />
+              <div className="h-[300px]">
+                <Doughnut aria-label="My feedback sentiment Doughnut Chart" data={doughnutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { padding: 14, color: '#6B7280', font: { size: 12, weight: '600' } } } } }} />
               </div>
             ) : <NoData />}
           </div>
         </div>
 
-        {/* Performance vs National Average — styled progress bars */}
-        <div style={sty.full}>
-          <div style={sty.cc}>
-            <div style={sty.ct}>Performance vs national average</div>
-            {lPerf ? <Spinner /> : perf ? (
-              <div style={{ maxWidth: '700px' }}>
-                <ProgressComparison
-                  label="Fulfillment rate"
-                  myValue={perf.myFulfillmentRate}
-                  avgValue={perf.nationalAvgFulfillmentRate}
-                  myLabel="You"
-                  avgLabel="Avg"
-                  max={100}
-                  suffix="%"
-                />
-                <ProgressComparison
-                  label="Feedback score"
-                  myValue={perf.myFeedbackScore}
-                  avgValue={perf.nationalAvgFeedbackScore}
-                  myLabel="You"
-                  avgLabel="Avg"
-                  max={10}
-                  suffix="/10"
-                />
-                <ProgressComparison
-                  label="Order volume percentile"
-                  myValue={perf.myOrderVolumePercentile}
-                  avgValue={50}
-                  myLabel="You"
-                  avgLabel="Median"
-                  max={100}
-                  suffix="%"
-                />
-                <ProgressComparison
-                  label="Average order value"
-                  myValue={perf.myAvgOrderValue}
-                  avgValue={perf.nationalAvgOrderValue}
-                  myLabel="You"
-                  avgLabel="Avg"
-                  max={Math.max(perf.myAvgOrderValue, perf.nationalAvgOrderValue, 1) * 1.2}
-                  suffix=""
-                />
-              </div>
-            ) : <NoData />}
-          </div>
+        {/* Performance vs National Average */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+          <h2 className="text-[17px] font-black text-[#2C1810] mb-6">Performance vs National Average</h2>
+          {lPerf ? <Spinner /> : perf ? (
+            <div className="max-w-2xl">
+              <ProgressComparison label="Fulfillment rate" myValue={perf.myFulfillmentRate} avgValue={perf.nationalAvgFulfillmentRate} myLabel="You" avgLabel="Avg" max={100} suffix="%" />
+              <ProgressComparison label="Feedback score" myValue={perf.myFeedbackScore} avgValue={perf.nationalAvgFeedbackScore} myLabel="You" avgLabel="Avg" max={10} suffix="/10" />
+              <ProgressComparison label="Order volume percentile" myValue={perf.myOrderVolumePercentile} avgValue={50} myLabel="You" avgLabel="Median" max={100} suffix="%" />
+              <ProgressComparison label="Average order value" myValue={perf.myAvgOrderValue} avgValue={perf.nationalAvgOrderValue} myLabel="You" avgLabel="Avg" max={Math.max(perf.myAvgOrderValue, perf.nationalAvgOrderValue, 1) * 1.2} suffix="" />
+            </div>
+          ) : <NoData />}
         </div>
+
       </div>
     </RetailerLayout>
   );

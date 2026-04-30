@@ -15,65 +15,49 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 
 ChartJS.register(
-  BarElement,
-  LineElement,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-  Filler
+  BarElement, LineElement, ArcElement,
+  CategoryScale, LinearScale, PointElement,
+  Tooltip, Legend, Filler
 );
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Theme (dark, matching stock manager dashboard mockup)
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-const C = {
-  bg: '#1a1f2e',
-  card: '#232a3b',
-  border: '#2e3650',
-  text: '#e2e8f0',
-  dim: '#94a3b8',
-  accent: '#3b82f6',
-  green: '#22c55e',
-  emerald: '#10b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
-  teal: '#14b8a6',
-};
-
-const s = {
-  page: { background: C.bg, minHeight: '100vh', padding: '32px', color: C.text, fontFamily: "'Inter','Segoe UI',sans-serif" },
-  h1: { fontSize: '26px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.02em' },
-  badge: { display: 'inline-block', background: 'rgba(234,179,8,0.15)', color: '#eab308', fontWeight: 700, fontSize: '12px', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' },
-  filterRow: { display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' },
-  filterGrp: { flex: 1, minWidth: '180px' },
-  label: { fontSize: '12px', color: C.dim, fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  select: {
-    width: '100%', padding: '12px 16px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px',
-    color: C.text, fontSize: '14px', fontWeight: 600, cursor: 'pointer', appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center',
+const CHART_DEFAULTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { position: 'top', labels: { padding: 16, color: '#6B7280', font: { size: 12, weight: '600' } } },
   },
-  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' },
-  mc: { background: C.card, border: `1px solid ${C.border}`, borderRadius: '14px', padding: '20px 24px' },
-  ml: { fontSize: '13px', color: C.dim, fontWeight: 600, marginBottom: '6px' },
-  mv: { fontSize: '32px', fontWeight: 800, lineHeight: 1.1, marginBottom: '4px' },
-  ms: { fontSize: '12px', fontWeight: 600 },
-  chartRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' },
-  chartFull: { display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' },
-  cc: { background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '24px' },
-  ct: { fontSize: '16px', fontWeight: 700, marginBottom: '16px' },
-  spin: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: C.dim },
-  noData: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: C.dim, fontWeight: 600, fontSize: '14px' },
+  scales: {
+    x: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+    y: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+  },
 };
 
-/* ═══════════════════════════════════════════════════════════════════════════ */
+const Spinner = () => (
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400">
+    <Loader2 size={28} className="animate-spin" />
+  </div>
+);
+
+const NoData = () => (
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400 font-medium text-sm italic">
+    No data available
+  </div>
+);
+
+const MetricCard = ({ label, value, sub, subColor = '#9CA3AF', accentColor }) => (
+  <div
+    data-testid="metric-card"
+    className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E0DBD5]"
+    style={{ borderLeft: `4px solid ${accentColor}` }}
+  >
+    <p className="text-[13px] font-semibold text-gray-500 mb-1">{label}</p>
+    <p className="text-[32px] font-extrabold text-[#2C1810] leading-none">{value}</p>
+    <p className="text-[12px] mt-2 font-medium" style={{ color: subColor }}>{sub}</p>
+  </div>
+);
 
 async function apiFetch(path) {
   const token = localStorage.getItem('token');
@@ -83,37 +67,13 @@ async function apiFetch(path) {
   return json.data ?? null;
 }
 
-const CHART_DEFAULTS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { labels: { color: C.dim, font: { size: 12, weight: 600 }, padding: 14 } } },
-  scales: {
-    x: { ticks: { color: C.dim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: C.dim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-  },
-};
-
-const Spinner = () => (
-  <div style={s.spin}>
-    <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-  </div>
-);
-const NoData = () => <div style={s.noData}>No data available</div>;
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  COMPONENT
- * ═══════════════════════════════════════════════════════════════════════════ */
-
 const StockManagerInsightsDashboard = () => {
   const { user } = useAuth();
 
-  /* Filters */
   const [period, setPeriod] = useState('7');
   const [regionFilter, setRegionFilter] = useState('all');
   const [productFilter, setProductFilter] = useState('all');
 
-  /* Data */
   const [summary, setSummary] = useState(null);
   const [stock, setStock] = useState(null);
   const [products, setProducts] = useState(null);
@@ -121,7 +81,6 @@ const StockManagerInsightsDashboard = () => {
   const [fulfillment, setFulfillment] = useState(null);
   const [topRetailers, setTopRetailers] = useState(null);
 
-  /* Loading */
   const [lSummary, setLSummary] = useState(true);
   const [lStock, setLStock] = useState(true);
   const [lProducts, setLProducts] = useState(true);
@@ -129,40 +88,39 @@ const StockManagerInsightsDashboard = () => {
   const [lFulfillment, setLFulfillment] = useState(true);
   const [lRetailers, setLRetailers] = useState(true);
 
-  /* Regions (derived from fulfillment data) */
-  const regions = fulfillment ? fulfillment.map((f) => f.region) : [];
+  const regions = fulfillment ? fulfillment.map(f => f.region) : [];
 
-  /* Fetch */
   const fetchAll = useCallback(async () => {
     setLSummary(true); setLStock(true); setLProducts(true);
     setLLowStock(true); setLFulfillment(true); setLRetailers(true);
     const qs = `?period=${period}d`;
     const rqs = regionFilter !== 'all' ? `&region=${encodeURIComponent(regionFilter)}` : '';
 
-    apiFetch(`/api/analytics/sm-summary${qs}`).then((d) => { setSummary(d); setLSummary(false); });
-    apiFetch(`/api/analytics/stock${qs}`).then((d) => { setStock(d); setLStock(false); });
-    apiFetch(`/api/analytics/products${qs}`).then((d) => { setProducts(d); setLProducts(false); });
-    apiFetch(`/api/analytics/low-stock${qs}${rqs}`).then((d) => { setLowStock(d); setLLowStock(false); });
-    apiFetch(`/api/analytics/fulfillment${qs}`).then((d) => { setFulfillment(d); setLFulfillment(false); });
-    apiFetch(`/api/analytics/top-retailers${qs}${rqs}`).then((d) => { setTopRetailers(d); setLRetailers(false); });
+    apiFetch(`/api/analytics/sm-summary${qs}`).then(d => { setSummary(d); setLSummary(false); });
+    apiFetch(`/api/analytics/stock${qs}`).then(d => { setStock(d); setLStock(false); });
+    apiFetch(`/api/analytics/products${qs}`).then(d => { setProducts(d); setLProducts(false); });
+    apiFetch(`/api/analytics/low-stock${qs}${rqs}`).then(d => { setLowStock(d); setLLowStock(false); });
+    apiFetch(`/api/analytics/fulfillment${qs}`).then(d => { setFulfillment(d); setLFulfillment(false); });
+    apiFetch(`/api/analytics/top-retailers${qs}${rqs}`).then(d => { setTopRetailers(d); setLRetailers(false); });
   }, [period, regionFilter]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  /* ── Chart 1: Line — avg stock requests by day of week with threshold ── */
-  const maxUnits = stock ? Math.max(...stock.map((d) => d.totalUnits)) : 0;
-  const thresholdVal = maxUnits > 0 ? Math.round(maxUnits * 0.9) : 0; // 90th-percentile line
+  /* ── Chart data ── */
+
+  const maxUnits = stock ? Math.max(...stock.map(d => d.totalUnits)) : 0;
+  const thresholdVal = maxUnits > 0 ? Math.round(maxUnits * 0.9) : 0;
 
   const stockLineData = stock ? {
-    labels: stock.map((d) => d.day),
+    labels: stock.map(d => d.day),
     datasets: [
       {
         label: 'Avg requests',
-        data: stock.map((d) => d.totalUnits),
-        borderColor: C.accent,
-        backgroundColor: 'rgba(59,130,246,0.08)',
+        data: stock.map(d => d.totalUnits),
+        borderColor: '#3D2B1F',
+        backgroundColor: 'rgba(61,43,31,0.08)',
         pointBackgroundColor: '#fff',
-        pointBorderColor: C.accent,
+        pointBorderColor: '#3D2B1F',
         pointRadius: 5,
         pointHoverRadius: 7,
         tension: 0.4,
@@ -171,7 +129,7 @@ const StockManagerInsightsDashboard = () => {
       {
         label: 'High demand threshold',
         data: stock.map(() => thresholdVal),
-        borderColor: C.red,
+        borderColor: '#EF4444',
         borderDash: [8, 5],
         pointRadius: 0,
         borderWidth: 2,
@@ -180,194 +138,143 @@ const StockManagerInsightsDashboard = () => {
     ],
   } : null;
 
-  const stockLineOpts = {
-    ...CHART_DEFAULTS,
-    scales: {
-      ...CHART_DEFAULTS.scales,
-      y: {
-        ...CHART_DEFAULTS.scales.y,
-        ticks: {
-          ...CHART_DEFAULTS.scales.y.ticks,
-          callback: (v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v,
-        },
-      },
-    },
-  };
-
-  /* ── Chart 2: Horizontal bar — top 5 products ── */
   const top5Products = products ? products.slice(0, 5) : [];
   const productsBarData = {
-    labels: top5Products.map((p) => p.productName),
+    labels: top5Products.map(p => p.productName),
     datasets: [{
       label: 'Request count',
-      data: top5Products.map((p) => p.requestCount),
-      backgroundColor: C.accent,
+      data: top5Products.map(p => p.requestCount),
+      backgroundColor: '#3B82F6',
       borderRadius: 4,
       barThickness: 22,
     }],
   };
-  const productsBarOpts = { ...CHART_DEFAULTS, indexAxis: 'y' };
 
-  /* ── Chart 4: Horizontal bar — fulfillment by region ── */
   const fulfillmentBarData = fulfillment ? {
-    labels: fulfillment.map((f) => f.region),
+    labels: fulfillment.map(f => f.region),
     datasets: [{
       label: 'Fulfillment %',
-      data: fulfillment.map((f) => f.fulfillmentRate),
-      backgroundColor: fulfillment.map((f) =>
-        f.fulfillmentRate >= 90 ? C.emerald
-          : f.fulfillmentRate >= 70 ? C.amber
-          : C.red
+      data: fulfillment.map(f => f.fulfillmentRate),
+      backgroundColor: fulfillment.map(f =>
+        f.fulfillmentRate >= 90 ? '#22C55E' : f.fulfillmentRate >= 70 ? '#F59E0B' : '#EF4444'
       ),
       borderRadius: 4,
       barThickness: 24,
     }],
   } : null;
-  const fulfillmentBarOpts = {
-    ...CHART_DEFAULTS,
-    indexAxis: 'y',
-    scales: {
-      ...CHART_DEFAULTS.scales,
-      x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: (v) => `${v}%` } },
-    },
-  };
 
-  /* ── Chart 5: Vertical bar — top retailers ── */
   const retailerBarData = topRetailers ? {
-    labels: topRetailers.map((r) => r.retailerName),
+    labels: topRetailers.map(r => r.retailerName),
     datasets: [{
       label: 'Orders placed',
-      data: topRetailers.map((r) => r.orderCount),
-      backgroundColor: C.emerald,
+      data: topRetailers.map(r => r.orderCount),
+      backgroundColor: '#10B981',
       borderRadius: 6,
       barThickness: 36,
     }],
   } : null;
-  const retailerBarOpts = {
-    ...CHART_DEFAULTS,
-    scales: {
-      ...CHART_DEFAULTS.scales,
-      x: { ...CHART_DEFAULTS.scales.x, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } },
-    },
-  };
 
-  /* ═══════════════════════════════════════════════════════════════════════
-   *  RENDER
-   * ═══════════════════════════════════════════════════════════════════════ */
+  const selectCls = 'w-full px-4 py-3 bg-[#F8F7F5] border border-[#E0DBD5] rounded-[14px] font-semibold text-[14px] text-[#3D2B1F] outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 cursor-pointer';
+
   return (
     <StockManagerLayout>
-      <div style={s.page}>
-        <h1 style={s.h1}>Stock Manager Dashboard:</h1>
-        <div style={s.badge}>Stock Manager view</div>
+      <div className="min-h-screen bg-nestle-gray p-6 lg:p-8 font-sans space-y-6">
 
-        {/* Filter bar */}
-        <div style={s.filterRow}>
-          <div style={s.filterGrp}>
-            <div style={s.label}>Period:</div>
-            <select style={s.select} value={period} onChange={(e) => setPeriod(e.target.value)}>
+        {/* Header */}
+        <div>
+          <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">Stock Analytics</h1>
+          <p className="text-[14px] text-gray-500 font-medium mt-1">
+            Demand trends, fulfillment rates and low stock alerts
+          </p>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-5 flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Period</label>
+            <select className={selectCls} value={period} onChange={e => setPeriod(e.target.value)}>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
               <option value="all">All time</option>
             </select>
           </div>
-          <div style={s.filterGrp}>
-            <div style={s.label}>Region:</div>
-            <select style={s.select} value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Region</label>
+            <select className={selectCls} value={regionFilter} onChange={e => setRegionFilter(e.target.value)}>
               <option value="all">All regions</option>
-              {regions.map((r) => <option key={r} value={r}>{r}</option>)}
+              {regions.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
-          <div style={s.filterGrp}>
-            <div style={s.label}>Product:</div>
-            <select style={s.select} value={productFilter} onChange={(e) => setProductFilter(e.target.value)}>
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Product</label>
+            <select className={selectCls} value={productFilter} onChange={e => setProductFilter(e.target.value)}>
               <option value="all">All products</option>
-              {(products || []).map((p) => (
+              {(products || []).map(p => (
                 <option key={p.productId} value={p.productId}>{p.productName}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Metric cards */}
+        {/* Metric Cards */}
         {lSummary ? <Spinner /> : summary ? (
-          <div style={s.metricsGrid}>
-            <div data-testid="metric-card" style={s.mc}>
-              <div style={s.ml}>Total stock requests</div>
-              <div style={s.mv}>{summary.totalStockRequests?.toLocaleString()}</div>
-              <div style={{ ...s.ms, color: C.dim }}>This period</div>
-            </div>
-            <div data-testid="metric-card" style={s.mc}>
-              <div style={s.ml}>Peak demand day</div>
-              <div style={s.mv}>{summary.peakDemandDay}</div>
-              <div style={{ ...s.ms, color: C.dim }}>avg {summary.peakDemandAvg?.toLocaleString()} units</div>
-            </div>
-            <div data-testid="metric-card" style={s.mc}>
-              <div style={s.ml}>Fulfillment rate</div>
-              <div style={s.mv}>{summary.fulfillmentRate}%</div>
-              <div style={{ ...s.ms, color: summary.fulfillmentRate >= 90 ? C.green : C.amber }}>
-                Target: 90%
-              </div>
-            </div>
-            <div data-testid="metric-card" style={s.mc}>
-              <div style={s.ml}>Low stock alerts</div>
-              <div style={s.mv}>{summary.lowStockAlertCount}</div>
-              <div style={{ ...s.ms, color: summary.lowStockAlertCount > 0 ? C.red : C.green }}>
-                {summary.lowStockAlertCount > 0 ? 'Requires attention' : 'All clear'}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <MetricCard label="Total Stock Requests" value={(summary.totalStockRequests ?? 0).toLocaleString()} sub="This period" accentColor="#3B82F6" />
+            <MetricCard label="Peak Demand Day" value={summary.peakDemandDay ?? '--'} sub={`avg ${(summary.peakDemandAvg ?? 0).toLocaleString()} units`} accentColor="#F59E0B" />
+            <MetricCard
+              label="Fulfillment Rate"
+              value={`${summary.fulfillmentRate ?? 0}%`}
+              sub="Target: 90%"
+              subColor={(summary.fulfillmentRate ?? 0) >= 90 ? '#22C55E' : '#F59E0B'}
+              accentColor="#22C55E"
+            />
+            <MetricCard
+              label="Low Stock Alerts"
+              value={summary.lowStockAlertCount ?? 0}
+              sub={(summary.lowStockAlertCount ?? 0) > 0 ? 'Requires attention' : 'All clear'}
+              subColor={(summary.lowStockAlertCount ?? 0) > 0 ? '#EF4444' : '#22C55E'}
+              accentColor="#EF4444"
+            />
           </div>
         ) : <NoData />}
 
-        {/* Chart 1: Stock requests by day of week (full width) */}
-        <div style={s.chartFull}>
-          <div style={s.cc}>
-            <div style={s.ct}>Avg stock requests by day of week</div>
-            {lStock ? <Spinner /> : stockLineData ? (
-              <div style={{ height: '320px' }}>
-                <Line aria-label="Avg stock requests by day of week Line Chart" data={stockLineData} options={stockLineOpts} />
-              </div>
-            ) : <NoData />}
-          </div>
+        {/* Chart: Stock requests trend */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+          <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Avg Stock Requests by Day of Week</h2>
+          {lStock ? <Spinner /> : stockLineData ? (
+            <div className="h-[360px]">
+              <Line aria-label="Avg stock requests by day of week Line Chart" data={stockLineData} options={{
+                ...CHART_DEFAULTS,
+                scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v } } },
+              }} />
+            </div>
+          ) : <NoData />}
         </div>
 
-        {/* Row: Top products + Low stock alerts */}
-        <div style={s.chartRow}>
-          <div style={s.cc}>
-            <div style={s.ct}>Top 5 most requested products</div>
+        {/* Charts row: top products + low stock alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Top 5 Most Requested Products</h2>
             {lProducts ? <Spinner /> : top5Products.length > 0 ? (
-              <div style={{ height: '280px' }}>
-                <Bar aria-label="Top 5 most requested products Bar Chart" data={productsBarData} options={productsBarOpts} />
+              <div className="h-[300px]">
+                <Bar aria-label="Top 5 most requested products Bar Chart" data={productsBarData} options={{ ...CHART_DEFAULTS, indexAxis: 'y' }} />
               </div>
             ) : <NoData />}
           </div>
 
-          <div style={s.cc}>
-            <div style={{ ...s.ct, marginBottom: '12px' }}>Low stock alerts</div>
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-4">Low Stock Alerts</h2>
             {lLowStock ? <Spinner /> : lowStock && lowStock.length > 0 ? (
-              <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+              <div className="max-h-[300px] overflow-y-auto divide-y divide-[#E0DBD5]">
                 {lowStock.map((item, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '14px 16px',
-                      borderBottom: idx < lowStock.length - 1 ? `1px solid ${C.border}` : 'none',
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: '15px' }}>{item.productName}</span>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '3px 12px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        textTransform: 'capitalize',
-                        background: item.severity === 'critical' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
-                        color: item.severity === 'critical' ? C.red : C.amber,
-                      }}
-                    >
+                  <div key={idx} className="flex items-center justify-between py-3.5 px-1">
+                    <span className="font-semibold text-[15px] text-[#2C1810]">{item.productName}</span>
+                    <span className={`px-3 py-1 rounded-[6px] text-[12px] font-bold ${
+                      item.severity === 'critical'
+                        ? 'bg-red-100 text-red-700 border border-red-200'
+                        : 'bg-amber-100 text-amber-700 border border-amber-200'
+                    }`}>
                       {item.severity === 'critical' ? 'Critical' : 'Low'}
                     </span>
                   </div>
@@ -377,26 +284,34 @@ const StockManagerInsightsDashboard = () => {
           </div>
         </div>
 
-        {/* Row: Fulfillment by region + Top retailers */}
-        <div style={s.chartRow}>
-          <div style={s.cc}>
-            <div style={s.ct}>Fulfillment rate by region</div>
+        {/* Charts row: fulfillment by region + top retailers */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Fulfillment Rate by Region</h2>
             {lFulfillment ? <Spinner /> : fulfillmentBarData ? (
-              <div style={{ height: '280px' }}>
-                <Bar aria-label="Fulfillment rate by region Bar Chart" data={fulfillmentBarData} options={fulfillmentBarOpts} />
+              <div className="h-[300px]">
+                <Bar aria-label="Fulfillment rate by region Bar Chart" data={fulfillmentBarData} options={{
+                  ...CHART_DEFAULTS,
+                  indexAxis: 'y',
+                  scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: v => `${v}%` } } },
+                }} />
               </div>
             ) : <NoData />}
           </div>
 
-          <div style={s.cc}>
-            <div style={s.ct}>Top retailers by order volume</div>
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Top Retailers by Order Volume</h2>
             {lRetailers ? <Spinner /> : retailerBarData ? (
-              <div style={{ height: '280px' }}>
-                <Bar aria-label="Top retailers by order volume Bar Chart" data={retailerBarData} options={retailerBarOpts} />
+              <div className="h-[300px]">
+                <Bar aria-label="Top retailers by order volume Bar Chart" data={retailerBarData} options={{
+                  ...CHART_DEFAULTS,
+                  scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } } },
+                }} />
               </div>
             ) : <NoData />}
           </div>
         </div>
+
       </div>
     </StockManagerLayout>
   );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, TrendingUp, BarChart3, Star, Package } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
-import { useAuth } from '../../context/AuthContext';
 import API_URL from '../../config/api';
 import {
   Chart as ChartJS,
@@ -19,482 +18,392 @@ import {
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
+  CategoryScale, LinearScale, BarElement, LineElement, PointElement,
+  ArcElement, Title, Tooltip, Legend, Filler
 );
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Styles — dark dashboard theme matching the mockup screenshots
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-const COLORS = {
-  bg: '#1a1f2e',
-  card: '#232a3b',
-  cardBorder: '#2e3650',
-  text: '#e2e8f0',
-  textDim: '#94a3b8',
-  accent: '#3b82f6',
-  green: '#22c55e',
-  emerald: '#10b981',
-  orange: '#f59e0b',
-  red: '#ef4444',
-  purple: '#a855f7',
-  lime: '#84cc16',
-  chartBars: ['#3b82f6', '#10b981', '#d97706', '#a855f7', '#84cc16', '#ef4444', '#06b6d4', '#f472b6', '#eab308', '#6366f1', '#14b8a6', '#e11d48'],
-};
-
-const styles = {
-  page: {
-    background: COLORS.bg,
-    minHeight: '100vh',
-    padding: '32px',
-    color: COLORS.text,
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-  },
-  header: {
-    marginBottom: '8px',
-    fontSize: '26px',
-    fontWeight: '800',
-    letterSpacing: '-0.02em',
-  },
-  badge: {
-    display: 'inline-block',
-    background: 'rgba(59,130,246,0.15)',
-    color: '#60a5fa',
-    fontWeight: 700,
-    fontSize: '12px',
-    padding: '4px 14px',
-    borderRadius: '20px',
-    marginBottom: '24px',
-  },
-  filterRow: {
-    display: 'flex',
-    gap: '16px',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-  },
-  filterGroup: { flex: '1', minWidth: '200px' },
-  filterLabel: { fontSize: '12px', color: COLORS.textDim, fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  select: {
-    width: '100%',
-    padding: '12px 16px',
-    background: COLORS.card,
-    border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: '10px',
-    color: COLORS.text,
-    fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    appearance: 'none',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 16px center',
-  },
-  metricsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-    marginBottom: '28px',
-  },
-  metricCard: {
-    background: COLORS.card,
-    border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: '14px',
-    padding: '20px 24px',
-  },
-  metricLabel: { fontSize: '13px', color: COLORS.textDim, fontWeight: 600, marginBottom: '6px' },
-  metricValue: { fontSize: '32px', fontWeight: 800, lineHeight: 1.1, marginBottom: '4px' },
-  metricSub: { fontSize: '12px', fontWeight: 600 },
-  chartsGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '24px', marginBottom: '24px' },
-  chartsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' },
-  chartCard: {
-    background: COLORS.card,
-    border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: '16px',
-    padding: '24px',
-  },
-  chartTitle: { fontSize: '16px', fontWeight: 700, marginBottom: '16px' },
-  spinner: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: COLORS.textDim },
-  noData: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', color: COLORS.textDim, fontWeight: 600, fontSize: '14px' },
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Helper: fetch wrapper
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-async function apiFetch(path) {
-  const token = localStorage.getItem('token');
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json.data ?? null;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Chart defaults
- * ═══════════════════════════════════════════════════════════════════════════ */
-
+/* ── Chart defaults — warm palette to match app ── */
 const CHART_DEFAULTS = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { labels: { color: COLORS.textDim, font: { size: 12, weight: 600 }, padding: 16 } },
+    legend: {
+      position: 'top',
+      labels: { padding: 16, color: '#6B7280', font: { size: 12, weight: '600' } },
+    },
   },
   scales: {
-    x: { ticks: { color: COLORS.textDim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-    y: { ticks: { color: COLORS.textDim, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    x: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+    y: { ticks: { color: '#9CA3AF', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
   },
 };
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  Spinner + NoData
- * ═══════════════════════════════════════════════════════════════════════════ */
-
 const Spinner = () => (
-  <div style={styles.spinner}>
-    <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400">
+    <Loader2 size={28} className="animate-spin" />
   </div>
 );
 
-const NoData = () => <div style={styles.noData}>No data available</div>;
+const NoData = () => (
+  <div className="flex justify-center items-center min-h-[200px] text-gray-400 font-medium text-sm italic">
+    No data available
+  </div>
+);
 
-/* ═══════════════════════════════════════════════════════════════════════════
- *  COMPONENT
- * ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Metric Card ── */
+const MetricCard = ({ label, value, sub, accentColor }) => (
+  <div
+    data-testid="metric-card"
+    className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E0DBD5] flex items-center justify-between"
+    style={{ borderLeft: `4px solid ${accentColor}` }}
+  >
+    <div>
+      <p className="text-[13px] font-semibold text-gray-500 mb-1">{label}</p>
+      <p className="text-[32px] font-extrabold text-[#2C1810] leading-none">{value}</p>
+      <p className="text-[12px] text-gray-400 mt-2 font-medium">{sub}</p>
+    </div>
+  </div>
+);
 
 const PMInsightsDashboard = () => {
-  const { user } = useAuth();
-
-  /* ── Filters ────────────────────────────────────────────────────────── */
   const [period, setPeriod] = useState('30');
   const [promoFilter, setPromoFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('Promotions');
 
-  /* ── Data buckets ───────────────────────────────────────────────────── */
   const [summary, setSummary] = useState(null);
   const [promotions, setPromotions] = useState(null);
   const [conversions, setConversions] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [stock, setStock] = useState(null);
 
-  /* ── Loading flags ──────────────────────────────────────────────────── */
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingPromotions, setLoadingPromotions] = useState(true);
-  const [loadingConversions, setLoadingConversions] = useState(true);
-  const [loadingFeedback, setLoadingFeedback] = useState(true);
-  const [loadingStock, setLoadingStock] = useState(true);
+  const [loadState, setLoadState] = useState({
+    summary: true, promos: true, conversions: true, feedback: true, stock: true,
+  });
 
-  /* ── Fetch all data ─────────────────────────────────────────────────── */
+  const updateLoad = (key, val) =>
+    setLoadState(prev => ({ ...prev, [key]: val }));
+
+  const apiFetch = async (path, key) => {
+    updateLoad(key, true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      updateLoad(key, false);
+      return json.data ?? null;
+    } catch {
+      updateLoad(key, false);
+      return null;
+    }
+  };
+
   const fetchAll = useCallback(async () => {
-    setLoadingSummary(true);
-    setLoadingPromotions(true);
-    setLoadingConversions(true);
-    setLoadingFeedback(true);
-    setLoadingStock(true);
-
     const qs = `?period=${period}d`;
-
-    apiFetch(`/api/analytics/summary${qs}`).then((d) => { setSummary(d); setLoadingSummary(false); });
-    apiFetch(`/api/analytics/promotions`).then((d) => { setPromotions(d); setLoadingPromotions(false); });
-    apiFetch(`/api/analytics/conversions${qs}`).then((d) => { setConversions(d); setLoadingConversions(false); });
-    apiFetch(`/api/analytics/feedback`).then((d) => { setFeedback(d); setLoadingFeedback(false); });
-    apiFetch(`/api/analytics/stock${qs}`).then((d) => { setStock(d); setLoadingStock(false); });
+    apiFetch(`/api/analytics/summary${qs}`, 'summary').then(setSummary);
+    apiFetch(`/api/analytics/promotions`, 'promos').then(setPromotions);
+    apiFetch(`/api/analytics/conversions${qs}`, 'conversions').then(setConversions);
+    apiFetch(`/api/analytics/feedback`, 'feedback').then(setFeedback);
+    apiFetch(`/api/analytics/stock${qs}`, 'stock').then(setStock);
   }, [period]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  /* ── Filtered promotions ────────────────────────────────────────────── */
   const filteredPromos = promotions
     ? promoFilter === 'all'
       ? promotions
-      : promotions.filter((p) => p.promotionId === promoFilter)
+      : promotions.filter(p => p.promotionId === promoFilter)
     : [];
 
-  /* ═══════════════════════════════════════════════════════════════════════
-   *  CHART DATA BUILDERS
-   * ═══════════════════════════════════════════════════════════════════════ */
+  /* ── Chart data ── */
 
-  // 1. Vertical bar — units sold per campaign
-  const unitsSoldChartData = {
-    labels: filteredPromos.map((p) => p.title),
-    datasets: [
-      {
-        label: 'Units Sold',
-        data: filteredPromos.map((p) => p.totalUnitsSold),
-        backgroundColor: filteredPromos.map((_, i) => COLORS.chartBars[i % COLORS.chartBars.length]),
-        borderRadius: 6,
-        barThickness: 48,
-      },
-    ],
+  const unitsSoldData = {
+    labels: filteredPromos.map(p => p.title),
+    datasets: [{
+      label: 'Units Sold',
+      data: filteredPromos.map(p => p.totalUnitsSold),
+      backgroundColor: '#3D2B1F',
+      borderRadius: 6,
+    }],
   };
 
-  // 2. Horizontal bar — conversion rate per promotion
-  const conversionLabels = conversions ? conversions.map((c) => c.promotionName) : [];
-  const conversionChartData = {
-    labels: conversionLabels,
+  const conversionData = conversions ? {
+    labels: conversions.map(c => c.promotionName),
+    datasets: [{
+      label: 'Conversion %',
+      data: conversions.map(c => c.conversionRate),
+      backgroundColor: '#F59E0B',
+      borderRadius: 4,
+    }],
+  } : null;
+
+  const doughnutData = feedback && feedback.total > 0 ? {
+    labels: [
+      `Positive ${feedback.positivePct}%`,
+      `Neutral ${feedback.neutralPct}%`,
+      `Negative ${feedback.negativePct}%`,
+    ],
+    datasets: [{
+      data: [feedback.positive, feedback.neutral, feedback.negative],
+      backgroundColor: ['#22C55E', '#F59E0B', '#EF4444'],
+      borderWidth: 2,
+      borderColor: '#F8F7F5',
+    }],
+  } : null;
+
+  const maxStock = stock ? Math.max(...stock.map(s => s.totalUnits)) : 0;
+  const threshold = maxStock > 0 ? Math.round(maxStock * 0.9) : 0;
+  const stockLineData = stock ? {
+    labels: stock.map(s => s.day),
     datasets: [
       {
-        label: 'Conversion %',
-        data: conversions ? conversions.map((c) => c.conversionRate) : [],
-        backgroundColor: COLORS.accent,
+        label: 'Stock Requests',
+        data: stock.map(s => s.totalUnits),
+        borderColor: '#3D2B1F',
+        backgroundColor: 'rgba(61,43,31,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#3D2B1F',
+        pointRadius: 4,
+      },
+      {
+        label: 'High Demand Threshold',
+        data: stock.map(() => threshold),
+        borderColor: '#EF4444',
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+      },
+    ],
+  } : null;
+
+  const fulfillmentData = conversions ? {
+    labels: conversions.map(c => c.promotionName),
+    datasets: [
+      {
+        label: 'Fulfilled',
+        data: conversions.map(c => c.fulfillmentRate),
+        backgroundColor: '#22C55E',
         borderRadius: 4,
-        barThickness: 20,
+      },
+      {
+        label: 'Rejected',
+        data: conversions.map(c => parseFloat((100 - c.fulfillmentRate).toFixed(1))),
+        backgroundColor: '#FCA5A5',
+        borderRadius: 4,
       },
     ],
-  };
-  const conversionOpts = {
-    ...CHART_DEFAULTS,
-    indexAxis: 'y',
-    scales: {
-      ...CHART_DEFAULTS.scales,
-      x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: (v) => `${v}%` } },
-    },
-  };
+  } : null;
 
-  // 3. Doughnut — feedback sentiment
-  const doughnutData = feedback
-    ? {
-        labels: [`Positive ${feedback.positivePct}%`, `Neutral ${feedback.neutralPct}%`, `Negative ${feedback.negativePct}%`],
-        datasets: [
-          {
-            data: [feedback.positive, feedback.neutral, feedback.negative],
-            backgroundColor: [COLORS.green, COLORS.orange, COLORS.red],
-            borderColor: COLORS.card,
-            borderWidth: 3,
-            cutout: '60%',
-          },
-        ],
-      }
-    : null;
-  const doughnutOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top', labels: { color: COLORS.textDim, font: { size: 12, weight: 600 }, padding: 14 } },
-    },
-  };
-
-  // 4. Line chart — stock request trend
-  const stockChartData = stock
-    ? {
-        labels: stock.map((s) => s.day),
-        datasets: [
-          {
-            label: 'Requests',
-            data: stock.map((s) => s.totalUnits),
-            borderColor: COLORS.accent,
-            backgroundColor: 'rgba(59,130,246,0.10)',
-            pointBackgroundColor: '#fff',
-            pointBorderColor: COLORS.accent,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      }
-    : null;
-
-  // 5. Stacked bar — fulfilled vs rejected per promotion
-  const fulfillmentChartData = conversions
-    ? {
-        labels: conversions.map((c) => c.promotionName),
-        datasets: [
-          {
-            label: 'Fulfilled',
-            data: conversions.map((c) => c.fulfillmentRate),
-            backgroundColor: COLORS.emerald,
-            borderRadius: 3,
-          },
-          {
-            label: 'Rejected',
-            data: conversions.map((c) => parseFloat((100 - c.fulfillmentRate).toFixed(1))),
-            backgroundColor: COLORS.red,
-            borderRadius: 3,
-          },
-        ],
-      }
-    : null;
-  const fulfillmentOpts = {
-    ...CHART_DEFAULTS,
-    scales: {
-      ...CHART_DEFAULTS.scales,
-      x: { ...CHART_DEFAULTS.scales.x, stacked: true, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } },
-      y: { ...CHART_DEFAULTS.scales.y, stacked: true, max: 100, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: (v) => `${v}%` } },
-    },
-  };
-
-  /* ═══════════════════════════════════════════════════════════════════════
-   *  RENDER
-   * ═══════════════════════════════════════════════════════════════════════ */
+  /* ── Select style ── */
+  const selectCls =
+    'w-full px-4 py-3 bg-[#F8F7F5] border border-[#E0DBD5] rounded-[14px] font-semibold text-[14px] text-[#3D2B1F] outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 cursor-pointer appearance-none';
 
   return (
     <PromotionManagerLayout>
-      <div style={styles.page}>
-        {/* Header */}
-        <h1 style={styles.header}>PM Dashboard:</h1>
-        <div style={styles.badge}>Product Manager view</div>
+      {/* Page background matches app warm beige */}
+      <div className="min-h-screen bg-nestle-gray p-6 lg:p-8 font-sans space-y-6">
 
-        {/* Filter bar */}
-        <div style={styles.filterRow}>
-          <div style={styles.filterGroup}>
-            <div style={styles.filterLabel}>Period:</div>
-            <select style={styles.select} value={period} onChange={(e) => setPeriod(e.target.value)}>
+        {/* ── Page Header ── */}
+        <div>
+          <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">
+            Promotion Analytics
+          </h1>
+          <p className="text-[14px] text-gray-500 font-medium mt-1">
+            Insights for active campaigns, conversions and feedback
+          </p>
+        </div>
+
+        {/* ── Filter Bar ── */}
+        <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-5 flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Period
+            </label>
+            <select
+              className={selectCls}
+              value={period}
+              onChange={e => setPeriod(e.target.value)}
+            >
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
               <option value="all">All time</option>
             </select>
           </div>
-          <div style={styles.filterGroup}>
-            <div style={styles.filterLabel}>Promotion:</div>
-            <select style={styles.select} value={promoFilter} onChange={(e) => setPromoFilter(e.target.value)}>
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Promotion
+            </label>
+            <select
+              className={selectCls}
+              value={promoFilter}
+              onChange={e => setPromoFilter(e.target.value)}
+            >
               <option value="all">All promotions</option>
-              {(promotions || []).map((p) => (
-                <option key={p.promotionId} value={p.promotionId}>
-                  {p.title}
-                </option>
+              {(promotions || []).map(p => (
+                <option key={p.promotionId} value={p.promotionId}>{p.title}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Metric cards */}
-        {loadingSummary ? (
+        {/* ── Metric Cards ── */}
+        {loadState.summary ? (
           <Spinner />
         ) : summary ? (
-          <div style={styles.metricsGrid}>
-            <div data-testid="metric-card" style={styles.metricCard}>
-              <div style={styles.metricLabel}>Active promotions</div>
-              <div style={styles.metricValue}>{summary.activePromotions}</div>
-              <div style={{ ...styles.metricSub, color: COLORS.textDim }}>{summary.endingSoon} ending this week</div>
-            </div>
-            <div data-testid="metric-card" style={styles.metricCard}>
-              <div style={styles.metricLabel}>Total units sold</div>
-              <div style={styles.metricValue}>{summary.totalUnitsSold?.toLocaleString()}</div>
-              <div style={{ ...styles.metricSub, color: COLORS.textDim }}>via promotions</div>
-            </div>
-            <div data-testid="metric-card" style={styles.metricCard}>
-              <div style={styles.metricLabel}>Avg conversion rate</div>
-              <div style={styles.metricValue}>{summary.avgConversionRate}%</div>
-              <div style={{ ...styles.metricSub, color: COLORS.green }}>{summary.conversionDelta} vs last period</div>
-            </div>
-            <div data-testid="metric-card" style={styles.metricCard}>
-              <div style={styles.metricLabel}>Avg feedback rating</div>
-              <div style={styles.metricValue}>{summary.avgFeedbackRating} / 10</div>
-              <div style={{ ...styles.metricSub, color: COLORS.textDim }}>{summary.totalReviews} total reviews</div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <MetricCard
+              label="Active Promotions"
+              value={summary.activePromotions ?? 0}
+              sub={`${summary.endingSoon ?? 0} ending this week`}
+              accentColor="#F59E0B"
+            />
+            <MetricCard
+              label="Total Units Sold"
+              value={(summary.totalUnitsSold ?? 0).toLocaleString()}
+              sub="via promotions"
+              accentColor="#3D2B1F"
+            />
+            <MetricCard
+              label="Avg Conversion Rate"
+              value={`${summary.avgConversionRate ?? 0}%`}
+              sub={`${summary.conversionDelta ?? '--'} vs last period`}
+              accentColor="#22C55E"
+            />
+            <MetricCard
+              label="Avg Feedback Rating"
+              value={`${summary.avgFeedbackRating ?? 0} / 10`}
+              sub={`${summary.totalReviews ?? 0} total reviews`}
+              accentColor="#3B82F6"
+            />
           </div>
         ) : (
           <NoData />
         )}
 
-        {/* Chart 1: Promotion performance — units sold (full width) */}
-        <div style={styles.chartsGrid}>
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Promotion performance — units sold per campaign</div>
-            {loadingPromotions ? (
-              <Spinner />
-            ) : filteredPromos.length > 0 ? (
-              <div style={{ height: '320px' }}>
+        {/* ── Tab Bar ── */}
+        <div className="flex gap-2 bg-white border border-[#E0DBD5] p-1.5 rounded-[16px] w-fit shadow-sm">
+          {['Promotions', 'Feedback', 'Fulfillment'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2.5 rounded-[12px] font-black text-[13px] uppercase tracking-widest transition-all duration-200 ${
+                activeTab === tab
+                  ? 'bg-[#3D2B1F] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-[#2C1810]'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Tab Contents ── */}
+
+        {/* PROMOTIONS */}
+        {activeTab === 'Promotions' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+              <h2 className="text-[17px] font-black text-[#2C1810] mb-5">
+                Units Sold per Campaign
+              </h2>
+              {loadState.promos ? <Spinner /> : filteredPromos.length > 0 ? (
+                <div className="h-[380px]">
+                  <Bar
+                    aria-label="Units Sold per Campaign Bar Chart"
+                    data={unitsSoldData}
+                    options={{ ...CHART_DEFAULTS, indexAxis: 'y' }}
+                  />
+                </div>
+              ) : <NoData />}
+            </div>
+
+            <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+              <h2 className="text-[17px] font-black text-[#2C1810] mb-5">
+                Stock Request Trend — Promoted Products
+              </h2>
+              {loadState.stock ? <Spinner /> : stockLineData ? (
+                <div className="h-[380px]">
+                  <Line
+                    aria-label="Stock Request Trend Line Chart"
+                    data={stockLineData}
+                    options={CHART_DEFAULTS}
+                  />
+                </div>
+              ) : <NoData />}
+            </div>
+          </div>
+        )}
+
+        {/* FEEDBACK */}
+        {activeTab === 'Feedback' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+              <h2 className="text-[17px] font-black text-[#2C1810] mb-5">
+                Overall Feedback Sentiment
+              </h2>
+              {loadState.feedback ? <Spinner /> : doughnutData ? (
+                <div className="h-[380px]">
+                  <Doughnut
+                    aria-label="Feedback Sentiment Doughnut Chart"
+                    data={doughnutData}
+                    options={{ ...CHART_DEFAULTS, maintainAspectRatio: false }}
+                  />
+                </div>
+              ) : <NoData />}
+            </div>
+
+            <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+              <h2 className="text-[17px] font-black text-[#2C1810] mb-5">
+                Conversion Rate by Promotion
+              </h2>
+              {loadState.conversions ? <Spinner /> : conversionData ? (
+                <div className="h-[380px]">
+                  <Bar
+                    aria-label="Conversion Rate by Promotion Bar Chart"
+                    data={conversionData}
+                    options={{
+                      ...CHART_DEFAULTS,
+                      indexAxis: 'y',
+                      scales: {
+                        ...CHART_DEFAULTS.scales,
+                        x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: v => `${v}%` } },
+                      },
+                    }}
+                  />
+                </div>
+              ) : <NoData />}
+            </div>
+          </div>
+        )}
+
+        {/* FULFILLMENT */}
+        {activeTab === 'Fulfillment' && (
+          <div className="bg-white rounded-[24px] border border-[#E0DBD5] shadow-sm p-6">
+            <h2 className="text-[17px] font-black text-[#2C1810] mb-5">
+              Order Fulfillment Rate by Promotion
+            </h2>
+            {loadState.conversions ? <Spinner /> : fulfillmentData ? (
+              <div className="h-[400px]">
                 <Bar
-                  aria-label="Promotion performance — units sold per campaign Bar Chart"
-                  data={unitsSoldChartData}
+                  aria-label="Order Fulfillment Rate by Promotion Bar Chart"
+                  data={fulfillmentData}
                   options={{
                     ...CHART_DEFAULTS,
-                    plugins: {
-                      ...CHART_DEFAULTS.plugins,
-                      legend: {
-                        position: 'top',
-                        labels: {
-                          color: COLORS.textDim,
-                          font: { size: 12, weight: 600 },
-                          padding: 14,
-                          generateLabels: () =>
-                            filteredPromos.map((p, i) => ({
-                              text: `${p.title} ${p.totalUnitsSold}`,
-                              fillStyle: COLORS.chartBars[i % COLORS.chartBars.length],
-                              strokeStyle: 'transparent',
-                            })),
-                        },
-                      },
+                    scales: {
+                      x: { ...CHART_DEFAULTS.scales.x, stacked: true, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } },
+                      y: { ...CHART_DEFAULTS.scales.y, stacked: true, max: 100, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => `${v}%` } },
                     },
                   }}
                 />
               </div>
-            ) : (
-              <NoData />
-            )}
+            ) : <NoData />}
           </div>
-        </div>
+        )}
 
-        {/* Row: Conversion rate + Feedback sentiment */}
-        <div style={styles.chartsRow}>
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Conversion rate by promotion</div>
-            {loadingConversions ? (
-              <Spinner />
-            ) : conversions && conversions.length > 0 ? (
-              <div style={{ height: '300px' }}>
-                <Bar aria-label="Conversion rate by promotion Bar Chart" data={conversionChartData} options={conversionOpts} />
-              </div>
-            ) : (
-              <NoData />
-            )}
-          </div>
-
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Feedback sentiment — all promotions</div>
-            {loadingFeedback ? (
-              <Spinner />
-            ) : doughnutData ? (
-              <div style={{ height: '300px' }}>
-                <Doughnut aria-label="Feedback sentiment — all promotions Doughnut Chart" data={doughnutData} options={doughnutOpts} />
-              </div>
-            ) : (
-              <NoData />
-            )}
-          </div>
-        </div>
-
-        {/* Row: Stock trend + Fulfillment stacked */}
-        <div style={styles.chartsRow}>
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Stock request trend — promoted products</div>
-            {loadingStock ? (
-              <Spinner />
-            ) : stockChartData ? (
-              <div style={{ height: '300px' }}>
-                <Line aria-label="Stock request trend Line Chart" data={stockChartData} options={CHART_DEFAULTS} />
-              </div>
-            ) : (
-              <NoData />
-            )}
-          </div>
-
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Order fulfillment rate by promotion</div>
-            {loadingConversions ? (
-              <Spinner />
-            ) : fulfillmentChartData ? (
-              <div style={{ height: '300px' }}>
-                <Bar aria-label="Order fulfillment rate by promotion Bar Chart" data={fulfillmentChartData} options={fulfillmentOpts} />
-              </div>
-            ) : (
-              <NoData />
-            )}
-          </div>
-        </div>
       </div>
     </PromotionManagerLayout>
   );

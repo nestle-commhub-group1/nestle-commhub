@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Bell, Menu, FileText, User, 
-  LogOut, X, LayoutDashboard, Package, ShoppingBag, Truck, Map
+  LogOut, X, LayoutDashboard, Package, ShoppingBag, Truck, Map, BarChart3
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -107,6 +107,7 @@ const StockManagerLayout = ({ children }) => {
     { label: 'Dashboard', path: '/stock-manager/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Manage Inventory', path: '/stock-manager/inventory', icon: <Package size={20} /> },
     { label: 'Manage Orders', path: '/stock-manager/orders', icon: <ShoppingBag size={20} /> },
+    { label: 'Stock Analytics', path: '/stock/insights', icon: <BarChart3 size={20} /> },
     { label: 'Profile', path: '/stock-manager/profile', icon: <User size={20} /> },
   ];
 
