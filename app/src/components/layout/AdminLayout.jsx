@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
-  Home, Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, AlertCircle, BarChart2, Star
+  Home, Users, Ticket, Bell, User, LogOut, Menu, X, ChevronRight, CheckCircle, Package, TrendingUp, Radio, LayoutDashboard, Loader2, FileText, AlertCircle, BarChart2, Star, Tag
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -111,6 +111,7 @@ const AdminLayout = ({ children }) => {
     { label: 'All Tickets', path: '/admin/dashboard', icon: <FileText size={20} /> }, // Redirect for now
     { label: 'User Management', path: '/admin/users', icon: <Users size={20} /> },
     { label: 'Broadcasts', path: '/admin/broadcasts', icon: <Radio size={20} /> },
+    { label: 'Promotions', path: '/admin/promotions', icon: <Tag size={20} /> },
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChart2 size={20} /> },
     { label: 'SLA Monitor', path: '/admin/sla', icon: <AlertCircle size={20} /> },
     { label: 'Distributor Evaluations', path: '/admin/evaluations', icon: <Star size={20} /> },

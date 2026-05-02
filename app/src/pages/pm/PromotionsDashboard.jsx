@@ -5,7 +5,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Users, PlusCircle, RefreshCw, Percent, Package, CheckCircle, Loader2 } from 'lucide-react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
+import AdminLayout from '../../components/layout/AdminLayout';
 import API_URL from '../../config/api';
+import { Tag } from 'lucide-react';
 
 function fmt(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—'; }
 function StatusPill({ status }) {
@@ -128,8 +130,17 @@ export default function PromotionsDashboard() {
   const [b2b,     setB2b]     = useState([]);
   const [b2c,     setB2c]     = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user,    setUser]    = useState(null);
+  
   const token = localStorage.getItem('token');
   const headers = { Authorization:`Bearer ${token}` };
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try { setUser(JSON.parse(stored)); } catch (e) {}
+    }
+  }, []);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -146,9 +157,11 @@ export default function PromotionsDashboard() {
   useEffect(()=>{ fetchAll(); },[fetchAll]);
 
   const current = tab==='B2B' ? b2b : b2c;
+  const isAdmin = user?.role === 'hq_admin';
+  const Layout = isAdmin ? AdminLayout : PromotionManagerLayout;
 
   return (
-    <PromotionManagerLayout>
+    <Layout>
       <div className="space-y-6 pb-12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -171,11 +184,13 @@ export default function PromotionsDashboard() {
           ))}
         </div>
 
-        <div className="flex justify-end">
-          <button onClick={()=>navigate(tab==='B2B'?'/promotion-manager/create-b2b':'/promotion-manager/create-b2c')} className="flex items-center space-x-2 px-5 py-3 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-[14px] text-[13px] font-black transition-colors shadow-sm">
-            <PlusCircle size={16}/><span>Create {tab} Promotion</span>
-          </button>
-        </div>
+        {!isAdmin && (
+          <div className="flex justify-end">
+            <button onClick={()=>navigate(tab==='B2B'?'/promotion-manager/create-b2b':'/promotion-manager/create-b2c')} className="flex items-center space-x-2 px-5 py-3 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-[14px] text-[13px] font-black transition-colors shadow-sm">
+              <PlusCircle size={16}/><span>Create {tab} Promotion</span>
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center min-h-[200px]"><Loader2 size={24} className="animate-spin text-gray-400"/></div>
@@ -183,12 +198,14 @@ export default function PromotionsDashboard() {
           <div className="py-20 text-center space-y-4">
             <p className="text-5xl">{tab==='B2B'?'🏢':'🛍️'}</p>
             <p className="text-[16px] font-black text-gray-400">No {tab} promotions yet</p>
-            <button onClick={()=>navigate(tab==='B2B'?'/promotion-manager/create-b2b':'/promotion-manager/create-b2c')} className="inline-flex items-center space-x-2 px-5 py-3 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-[14px] text-[13px] font-black transition-colors">
-              <PlusCircle size={16}/><span>Create {tab} Promotion</span>
-            </button>
+            {!isAdmin && (
+              <button onClick={()=>navigate(tab==='B2B'?'/promotion-manager/create-b2b':'/promotion-manager/create-b2c')} className="inline-flex items-center space-x-2 px-5 py-3 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-[14px] text-[13px] font-black transition-colors">
+                <PlusCircle size={16}/><span>Create {tab} Promotion</span>
+              </button>
+            )}
           </div>
         ) : (<><AnalyticsStrip promotions={current} tab={tab}/>{tab==='B2B'?<B2BTable promotions={b2b}/>:<B2CTable promotions={b2c}/>}</>)}
       </div>
-    </PromotionManagerLayout>
+    </Layout>
   );
 }

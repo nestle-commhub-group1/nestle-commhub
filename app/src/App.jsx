@@ -177,6 +177,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/promotions"
+            element={
+              <ProtectedRoute roles="hq_admin">
+                <PromotionsDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/broadcasts"
             element={
               <ProtectedRoute roles="hq_admin">
