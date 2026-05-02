@@ -1082,7 +1082,8 @@ const getMyFeedbackSentiment = async (req, res) => {
 const getHeatMapData = async (req, res) => {
   try {
     const role = req.user?.role;
-    if (role !== "hq_admin" && role !== "staff" && role !== "hqAdmin") {
+    // Expanded role access for management roles
+    if (!["hq_admin", "staff", "promotion_manager", "stock_manager", "hqAdmin"].includes(role)) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -1110,8 +1111,8 @@ const getHeatMapData = async (req, res) => {
     const mappedType = typeMap[issueType] || issueType;
 
     const data = await Promise.all(retailers.map(async (retailer) => {
-      // Filter out any retailers where both latitude and longitude are null
-      if (retailer.latitude == null && retailer.longitude == null) {
+      // Both coordinates MUST be present for the heatmap
+      if (retailer.latitude == null || retailer.longitude == null) {
         return null;
       }
 

@@ -3,7 +3,7 @@ import {
   Loader2, BarChart3, TrendingUp, Users, Package, 
   Calendar, MapPin, ChevronRight, Filter, RefreshCw, CheckCircle
 } from 'lucide-react';
-// import HeatMap from './HeatMap'; // Disabled temporarily due to missing leaflet dependencies
+import HeatMap from './HeatMap';
 import {
   Chart as ChartJS,
   BarElement,
@@ -421,16 +421,7 @@ const InsightsDashboard = () => {
             </div>
           )}
 
-          {activeTab === 'HeatMap' && (
-            <div className="flex flex-col items-center justify-center h-[500px] text-center space-y-4">
-              <div className="p-6 bg-amber-50 rounded-[24px] border border-amber-100">
-                <p className="text-[14px] font-bold text-amber-800">Map Dependencies Missing</p>
-                <p className="text-[12px] text-amber-600 mt-1 max-w-xs">
-                  The Issue HeatMap requires leaflet dependencies. Please run <code>npm install</code> in your terminal to enable this feature.
-                </p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'HeatMap' && <HeatMap embedded={true} />}
         </div>
       </div>
     </div>

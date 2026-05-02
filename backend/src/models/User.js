@@ -106,6 +106,17 @@ const userSchema = new mongoose.Schema({
     default: 0, // NEW: Earned credits from promotions to be used as discounts in stock requests
   },
 
+  // Geo-location for heatmap visualization (Sri Lanka coordinates)
+  latitude: {
+    type: Number,
+    default: null,
+  },
+
+  longitude: {
+    type: Number,
+    default: null,
+  },
+
   /* ─── Nestlé Employee-Only Fields ───────────────────────────────────────── */
   // These are only filled in for staff, hq_admin, and distributor roles.
   // employeeId is cross-referenced against the ValidEmployee collection at registration

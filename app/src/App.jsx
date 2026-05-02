@@ -26,7 +26,7 @@ import RetailerProfile from "./pages/retailer/RetailerProfile";
 import SubmitIssue from "./pages/retailer/SubmitIssue";
 import MyTickets from "./pages/retailer/MyTickets";
 import TicketDetail from "./pages/retailer/TicketDetail";
-import PromotionsWall from "./pages/retailer/PromotionsWall";
+import Promotions from "./pages/retailer/Promotions";
 import MyPromotions from "./pages/retailer/MyPromotions";
 import StockRequests from "./pages/retailer/StockRequests";
 import DeliveryTracking from "./pages/retailer/DeliveryTracking";
@@ -114,7 +114,7 @@ function App() {
           <Route path="/retailer/submit-issue" element={<ProtectedRoute roles="retailer"><SubmitIssue /></ProtectedRoute>} />
           <Route path="/retailer/tickets" element={<ProtectedRoute roles="retailer"><MyTickets /></ProtectedRoute>} />
           <Route path="/retailer/tickets/:id" element={<ProtectedRoute roles="retailer"><TicketDetail /></ProtectedRoute>} />
-          <Route path="/retailer/promotions" element={<ProtectedRoute roles="retailer"><PromotionsWall /></ProtectedRoute>} />
+          <Route path="/retailer/promotions" element={<ProtectedRoute roles="retailer"><Promotions /></ProtectedRoute>} />
           <Route path="/retailer/my-promotions" element={<ProtectedRoute roles="retailer"><MyPromotions /></ProtectedRoute>} />
           <Route path="/retailer/stock-requests" element={<ProtectedRoute roles="retailer"><StockRequests /></ProtectedRoute>} />
           <Route path="/retailer/delivery" element={<ProtectedRoute roles="retailer"><DeliveryTracking /></ProtectedRoute>} />

@@ -4,6 +4,8 @@ import {
   Bell, Menu, FileText, Users, Radio, User, 
   LogOut, X, LayoutDashboard, AlertCircle, BarChart2, Star, CheckCircle, Map
 } from 'lucide-react';
+import axios from 'axios';
+import API_URL from '../../config/api';
 
 const ManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -34,7 +36,7 @@ const ManagerLayout = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications`, {
+      const res = await axios.get(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data.notifications || []);
@@ -47,7 +49,7 @@ const ManagerLayout = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/${id}`, {}, {
+      await axios.put(`${API_URL}/api/notifications/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
@@ -60,7 +62,7 @@ const ManagerLayout = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/read-all`, {}, {
+      await axios.put(`${API_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
@@ -74,7 +76,7 @@ const ManagerLayout = ({ children }) => {
     if (!window.confirm('Are you sure you want to clear all notifications?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/notifications/clear`, {
+      await axios.delete(`${API_URL}/api/notifications/clear`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications([]);

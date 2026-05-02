@@ -117,8 +117,6 @@ const RetailerLayout = ({ children }) => {
     { label: 'Promotions', path: '/retailer/promotions', icon: <Tag size={20} /> },
     { label: 'Stock Requests', path: '/retailer/stock-requests', icon: <Package size={20} /> },
     { label: 'My Performance',       path: '/retailer/insights',          icon: <BarChart3 size={20} /> },
-    { label: '🛍️ Customer Offers',    path: '/retailer/available-b2c',      icon: <Users size={20} className="text-purple-400" /> },
-    { label: '💝 Smart Promotions',   path: '/retailer/smart-promotions',  icon: <Sparkles size={20} className="text-amber-400" /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/retailer/profile', icon: <User size={20} /> },
   ];

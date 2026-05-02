@@ -14,13 +14,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
 });
 
+const MapResizer = () => {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 400);
+  }, [map]);
+  return null;
+};
+
 const HeatLayer = ({ data, onRetailerClick }) => {
   const map = useMap();
 
   useEffect(() => {
     if (!data || data.length === 0) return;
     
-    const points = data.map(r => [r.latitude, r.longitude, (r.rejectionRate || 0) / 100]);
+    const points = data
+      .filter(r => r.latitude != null && r.longitude != null)
+      .map(r => [r.latitude, r.longitude, (r.rejectionRate || 0) / 100]);
     const heat = L.heatLayer(points, {
       radius: 35, 
       blur: 25, 
@@ -38,7 +50,7 @@ const HeatLayer = ({ data, onRetailerClick }) => {
 
   return (
     <>
-      {data.map((r, i) => (
+      {data.filter(r => r.latitude != null && r.longitude != null).map((r, i) => (
         <CircleMarker
           key={r.id || i}
           center={[r.latitude, r.longitude]}
@@ -72,6 +84,14 @@ const HeatMap = ({ embedded = false }) => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const role = user?.role?.toLowerCase();
+
+        // Expanded role access for heatmap
+        if (!["hq_admin", "staff", "promotion_manager", "stock_manager", "hqadmin"].includes(role)) {
+          throw new Error("Access denied");
+        }
         const res = await axios.get(`${API_URL}/api/analytics/heatmap`, {
           params: filters,
           headers: { Authorization: `Bearer ${token}` }
@@ -96,6 +116,31 @@ const HeatMap = ({ embedded = false }) => {
       clearInterval(interval);
     };
   }, [filters]);
+
+  const forceRefresh = () => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const role = user?.role?.toLowerCase();
+
+    if (!["hq_admin", "staff", "promotion_manager", "stock_manager", "hqadmin"].includes(role)) {
+      setError("Access denied");
+      setLoading(false);
+      return;
+    }
+
+    axios.get(`${API_URL}/api/analytics/heatmap`, {
+      params: filters,
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      setRetailerData(res.data.data || []);
+      setError('');
+    })
+    .catch(() => setError('Refresh failed'))
+    .finally(() => setLoading(false));
+  };
 
   const totalRetailers = retailerData.length;
   const highIssueZones = retailerData.filter(r => (r.rejectionRate || 0) >= 30).length;
@@ -169,12 +214,21 @@ const HeatMap = ({ embedded = false }) => {
             <option value="90">Last 90 days</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 mt-4 lg:mt-0 text-sm font-medium text-gray-600">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          Live — updates every 30 mins
+        <div className="flex items-center gap-4 mt-4 lg:mt-0 text-sm font-medium text-gray-600">
+          <button 
+            onClick={forceRefresh}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-black text-[11px] uppercase tracking-wider"
+          >
+            <Loader2 size={14} className={loading ? 'animate-spin' : ''} />
+            <span>Sync Data</span>
+          </button>
+          <div className="flex items-center space-x-2 ml-2">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span className="text-[11px] font-bold">LIVE — UPDATING...</span>
+          </div>
         </div>
       </div>
 
@@ -222,18 +276,28 @@ const HeatMap = ({ embedded = false }) => {
             </div>
           )}
 
-          <MapContainer center={[7.8731, 80.7718]} zoom={7} style={{ width: '100%', height: '100%' }}>
+          <MapContainer center={[7.8731, 80.7718]} zoom={7} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapResizer />
             <HeatLayer data={retailerData} onRetailerClick={setSelectedRetailer} />
           </MapContainer>
 
+          {retailerData.length === 0 && !loading && (
+            <div className="absolute inset-0 z-[500] bg-white/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+              <div className="bg-white/90 px-6 py-3 rounded-2xl shadow-xl border border-[#E0DBD5]">
+                <p className="text-[13px] font-black text-[#2C1810] uppercase tracking-widest">No Issue Data Found</p>
+                <p className="text-[11px] text-gray-500 font-bold mt-1 text-center">Try adjusting filters or regions</p>
+              </div>
+            </div>
+          )}
+
           {/* Legend */}
-          <div className="absolute bottom-4 left-4 z-[999] bg-white p-3 rounded-lg shadow-md border border-gray-100 text-xs font-medium">
-            <div className="mb-2 text-gray-600">Rejection Rate</div>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500 opacity-80"></div>Low 0%</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-yellow-400 opacity-80"></div>Medium 15%</div>
-              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500 opacity-80"></div>High 30%+</div>
+          <div className="absolute bottom-4 left-4 z-[500] bg-white/90 p-4 rounded-2xl shadow-lg border border-[#E0DBD5] text-[11px] font-black backdrop-blur-md">
+            <div className="mb-3 text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">Issue Intensity</div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-green-500 shadow-sm shadow-green-200"></div><span className="text-[#2C1810]">LOW (0%)</span></div>
+              <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-yellow-400 shadow-sm shadow-yellow-200"></div><span className="text-[#2C1810]">MEDIUM (15%)</span></div>
+              <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-500 shadow-sm shadow-red-200"></div><span className="text-[#2C1810]">CRITICAL (30%+)</span></div>
             </div>
           </div>
         </div>

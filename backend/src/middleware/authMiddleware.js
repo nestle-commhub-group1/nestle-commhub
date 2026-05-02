@@ -46,19 +46,21 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // Step 2: Dev token bypass — ONLY active in local development, never in production.
+    // Step 2: Dev token bypass — ONLY active if DEV_MODE_ENABLED is true.
     // DevLauncher issues tokens like "dev-token-retailer" to simulate roles without login.
-    if (process.env.NODE_ENV !== 'production' && token.startsWith("dev-token-")) {
+    const isDevEnabled = process.env.DEV_MODE_ENABLED === 'true' && process.env.NODE_ENV !== 'production';
+
+    if (isDevEnabled && token.startsWith("dev-token-")) {
       const role = token.replace("dev-token-", ""); // Extract role from token string
 
-      // Map each role to a known test account email in the database
+      // Map each role to the standardized test accounts seeded in seed-data.js
       const emailMap = {
-        retailer:    "chamara@test.com",
-        staff: "nadeeka@nestle.com",
-        hq_admin:    "dilini@nestle.com",
-        distributor: "kamal@distributor.com",
-        promotion_manager: "sonia@nestle.com",
-        stock_manager: "mahesh@nestle.com"
+        retailer:    "retailer1@test.com",
+        staff:       "staff@nestle.com",
+        hq_admin:    "admin@nestle.com",
+        distributor: "distributor1@test.com",
+        promotion_manager: "pm@nestle.com",
+        stock_manager: "sm@nestle.com"
       };
 
       const email = emailMap[role];

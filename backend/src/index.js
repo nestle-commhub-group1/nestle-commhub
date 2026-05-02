@@ -50,12 +50,25 @@ if (process.env.MONGO_URI) {
 
 /* ─── CORS Configuration ──────────────────────────────────────────────────── */
 
-// ─── Simplifed CORS configuration for production troubleshooting ──────────────────
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'];
+
+console.log('[SECURITY] Allowed Origins:', ALLOWED_ORIGINS);
+
 app.use(cors({
-  origin: '*',
-  credentials: false,
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-dev-password']
 }));
 
 /* ─── Body Parsers ────────────────────────────────────────────────────────── */
@@ -79,6 +92,7 @@ const analyticsRoutes    = require('./routes/analyticsRoutes');     // Analytics
 const smartStockRoutes   = require('./routes/smartStockRoutes');     // Smart Stock Ordering
 const retailerPromoIntelRoutes = require('./routes/retailerPromotionIntelligenceRoutes'); // Retailer Smart Promotions
 const promotionIntelRoutes       = require('./routes/promotionIntelligenceRoutes');         // PM Smart Promotion Builder
+const devRoutes                  = require('./routes/devRoutes');                           // Secure dev utilities
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
@@ -93,6 +107,7 @@ app.use('/api/analytics',            analyticsRoutes);
 app.use('/api/stock',                smartStockRoutes);
 app.use('/api/retailer-promo-intel', retailerPromoIntelRoutes);
 app.use('/api/promotions-intelligence', promotionIntelRoutes);
+app.use('/api/dev',                   devRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 
