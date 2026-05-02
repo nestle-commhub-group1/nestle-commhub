@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
+import HeatMap from './HeatMap';
 import {
   Chart as ChartJS,
   BarElement,
@@ -27,8 +28,7 @@ ChartJS.register(
   Filler
 );
 
-// We won't wrap it in AdminLayout here because the Analytics.jsx router already wraps it for the appropriate roles.
-// Returning just a div wrapper ensures we don't get a double-sidebar layout.
+
 
 const CHART_DEFAULTS = {
   responsive: true,
@@ -165,8 +165,6 @@ const InsightsDashboard = () => {
     }]
   } : null;
 
-  /* ── Renderers ── */
-
   return (
     <div className="p-8 min-h-screen bg-nestle-gray text-gray-800 font-sans">
       <h1 className="text-3xl font-extrabold mb-6 text-gray-900 tracking-tight">HQ Analytics Dashboard</h1>
@@ -227,15 +225,21 @@ const InsightsDashboard = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-xl w-fit">
-        {['Promotions', 'Stock', 'Feedback', 'Fulfillment'].map(tab => (
+        {[
+          { id: 'Promotions', label: 'Promotions' },
+          { id: 'Stock', label: 'Stock' },
+          { id: 'Feedback', label: 'Feedback' },
+          { id: 'Fulfillment', label: 'Fulfillment' },
+          { id: 'heatmap', label: 'Issue Heat Map' }
+        ].map(tab => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all duration-200 ${
-              activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              activeTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -300,8 +304,10 @@ const InsightsDashboard = () => {
             </div>
           </div>
         )}
-      </div>
 
+        {/* HEATMAP TAB */}
+        { activeTab === 'heatmap' && <HeatMap embedded={true} /> }
+      </div>
     </div>
   );
 };

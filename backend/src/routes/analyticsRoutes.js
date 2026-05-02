@@ -65,5 +65,8 @@ router.get("/my-performance", protect, getMyPerformanceVsAverage);
 
 // GET /api/analytics/my-feedback
 router.get("/my-feedback", protect, getMyFeedbackSentiment);
+// GET /api/analytics/heatmap
+const { getHeatMapData } = require("../controllers/analyticsController");
+router.get("/heatmap", protect, getHeatMapData);
 
 module.exports = router;

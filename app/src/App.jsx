@@ -198,7 +198,7 @@ function App() {
             path="/admin/insights"
             element={
               <ProtectedRoute roles={["hq_admin", "staff", "promotion_manager", "stock_manager"]}>
-                <InsightsDashboard />
+                <Analytics />
               </ProtectedRoute>
             }
           />

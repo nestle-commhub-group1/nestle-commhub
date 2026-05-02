@@ -16,6 +16,7 @@ const Promotion = require("../models/Promotion");
 const Order     = require("../models/Order");
 const Product   = require("../models/Product");
 const User      = require("../models/User");
+const Ticket    = require("../models/Ticket");
 
 /* ─── Allowed roles ───────────────────────────────────────────────────────── */
 
@@ -1056,6 +1057,106 @@ const getMyFeedbackSentiment = async (req, res) => {
   }
 };
 
+/* ─── getHeatMapData ──────────────────────────────────────────────────────── */
+
+const getHeatMapData = async (req, res) => {
+  try {
+    const role = req.user?.role;
+    if (role !== "hq_admin" && role !== "staff" && role !== "hqAdmin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { period = "30", region = "all", issueType = "all" } = req.query;
+
+    const dateFilter = {};
+    if (period !== "all") {
+      const days = parseInt(period, 10) || 30;
+      dateFilter.createdAt = { $gte: new Date(Date.now() - days * 86400000) };
+    }
+
+    const retailerQuery = { role: "retailer" };
+    if (region !== "all") {
+      retailerQuery.province = { $regex: region, $options: "i" };
+    }
+
+    const retailers = await User.find(retailerQuery).lean();
+
+    const typeMap = {
+      "Stock rejection": "stock_out",
+      "Delivery delay": "logistics_delay",
+      "Quality complaint": "product_quality",
+      "Payment dispute": "pricing_issue"
+    };
+    const mappedType = typeMap[issueType] || issueType;
+
+    const data = await Promise.all(retailers.map(async (retailer) => {
+      // Filter out any retailers where both latitude and longitude are null
+      if (retailer.latitude == null && retailer.longitude == null) {
+        return null;
+      }
+
+      const orders = await Order.find({ retailer: retailer._id }).lean();
+      
+      let totalOrders = orders.length;
+      let rejectedOrders = 0;
+      let totalAmount = 0;
+      let lastOrderDate = null;
+
+      orders.forEach(o => {
+        if (o.status === "denied") rejectedOrders++;
+        totalAmount += o.totalAmount || 0;
+        if (!lastOrderDate || new Date(o.createdAt) > new Date(lastOrderDate)) {
+          lastOrderDate = o.createdAt;
+        }
+      });
+
+      const avgOrderValue = totalOrders > 0 ? parseFloat((totalAmount / totalOrders).toFixed(2)) : 0;
+      const rejectionRate = totalOrders > 0 ? parseFloat(((rejectedOrders / totalOrders) * 100).toFixed(1)) : 0;
+
+      const ticketQuery = { retailerId: retailer._id, ...dateFilter };
+      if (issueType !== "all") {
+        ticketQuery.category = mappedType;
+      }
+
+      const ticketsDb = await Ticket.find(ticketQuery).lean();
+      
+      const tickets = ticketsDb.map(t => ({
+        ticketId: t.ticketNumber || t._id,
+        type: Object.keys(typeMap).find(key => typeMap[key] === t.category) || t.category,
+        description: t.description,
+        status: t.status,
+        createdAt: t.createdAt,
+        orderId: t.relatedOrder || null
+      }));
+
+      const totalTickets = tickets.length;
+      const openTickets = tickets.filter(t => ["open", "in_progress", "pending"].includes(t.status)).length;
+
+      return {
+        retailerId: retailer._id,
+        businessName: retailer.businessName || retailer.fullName || "Unknown",
+        region: retailer.province || retailer.district || "Unknown",
+        latitude: retailer.latitude,
+        longitude: retailer.longitude,
+        rejectionRate,
+        totalOrders,
+        avgOrderValue,
+        lastOrderDate,
+        openTickets,
+        totalTickets,
+        tickets
+      };
+    }));
+
+    const filteredData = data.filter(d => d !== null);
+
+    return res.status(200).json({ data: filteredData });
+  } catch (error) {
+    console.error("[Analytics] getHeatMapData error:", error);
+    return res.status(500).json({ message: "Failed to fetch heatmap data" });
+  }
+};
+
 module.exports = {
   getPromotionConversionRates,
   getLowStockAlerts,
@@ -1071,4 +1172,5 @@ module.exports = {
   getProductsList,
   getFulfillmentByRegion,
   getMyFeedbackSentiment,
+  getHeatMapData,
 };

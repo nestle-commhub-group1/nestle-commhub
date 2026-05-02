@@ -12,3 +12,7 @@ createRoot(document.getElementById('root')).render(
 // if (import.meta.env.DEV) {
 //   import('./tests/runRoleDashboardTests.js')
 // }
+
+if (import.meta.env.DEV) {
+  import('./tests/runHeatMapTests.js')
+}
