@@ -170,12 +170,12 @@ const StaffDashboard = () => {
       <div className="space-y-8 pb-10">
         {isDevMode && (
           <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center mb-4">
-            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+            Dev mode — showing sample data
           </div>
         )}
 
         <div>
-          <h1 className="text-[26px] font-extrabold text-[#2C1810]">{getCurrentGreeting()}, {user.fullName} 👋</h1>
+          <h1 className="text-[26px] font-extrabold text-[#2C1810]">{getCurrentGreeting()}, {user.fullName}</h1>
           <div className="flex items-center text-gray-500 mt-1 text-[14px]">
             <Clock className="w-4 h-4 mr-2" />
             {formatCurrentDate()}

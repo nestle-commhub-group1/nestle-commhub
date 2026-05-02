@@ -13,12 +13,19 @@ const {
   addPromotionAttachment,
   submitSalesReport,
   sendSalesReminders,
-  approveReward
+  approveReward,
+  getB2BPromotions,
+  getB2CPromotions,
+  activateB2CPromotion,
 } = require('../controllers/promotionController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Promotion Manager: create promotion
 router.post('/', protect, createPromotion);
+
+// Typed filter routes — MUST be before /:id wildcard
+router.get('/b2b', protect, getB2BPromotions);
+router.get('/b2c', protect, getB2CPromotions);
 
 // All users: view all active promotions
 router.get('/', protect, getAllPromotions);
@@ -34,6 +41,9 @@ router.delete('/:id', protect, deletePromotion);
 
 // Retailer: opt-in to promotion
 router.post('/:id/opt-in', protect, retailerOptInPromotion);
+
+// Retailer: activate B2C promotion in their store
+router.post('/:id/activate', protect, activateB2CPromotion);
 
 // Promotion Manager: assign distributor to retailer for a promotion
 router.post('/:id/assign-distributor', protect, assignDistributorToRetailer);

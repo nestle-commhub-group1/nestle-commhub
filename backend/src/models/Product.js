@@ -37,6 +37,13 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  howStatus: {
+    isHOW:      { type: Boolean, default: false },
+    markedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    markedAt:   { type: Date },
+    expiryDate: { type: Date },
+    reason:     { type: String }
+  }
 });
 
 const Product = mongoose.model("Product", productSchema);

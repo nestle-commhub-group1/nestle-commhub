@@ -26,7 +26,7 @@ if (process.env.MONGO_URI) {
   console.log('[MONGO] URI length:', process.env.MONGO_URI.length);
   console.log('[MONGO] URI starts with:', process.env.MONGO_URI.substring(0, 30));
   console.log('[MONGO] URI ends with:', process.env.MONGO_URI.substring(process.env.MONGO_URI.length - 30));
-  
+
   mongoose.connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 5000,
@@ -66,27 +66,33 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 /* ─── Route Groups ────────────────────────────────────────────────────────── */
 
-const authRoutes         = require('./routes/authRoutes');         // Register + Login
-const ticketRoutes       = require('./routes/ticketRoutes');       // CRUD for support tickets
+const authRoutes = require('./routes/authRoutes');         // Register + Login
+const ticketRoutes = require('./routes/ticketRoutes');       // CRUD for support tickets
 const notificationRoutes = require('./routes/notificationRoutes'); // In-app notifications
-const userRoutes         = require('./routes/userRoutes');          // User management (admin)
-const promotionRoutes    = require('./routes/promotionRoutes');     // Promotions management
-const messageRoutes      = require('./routes/messageRoutes');       // Multi-channel messaging
-const productRoutes      = require('./routes/productRoutes');       // Product management
-const orderRoutes        = require('./routes/orderRoutes');         // Order management
+const userRoutes = require('./routes/userRoutes');          // User management (admin)
+const promotionRoutes = require('./routes/promotionRoutes');     // Promotions management
+const messageRoutes = require('./routes/messageRoutes');       // Multi-channel messaging
+const productRoutes = require('./routes/productRoutes');       // Product management
+const orderRoutes = require('./routes/orderRoutes');         // Order management
 const insightRoutes      = require('./routes/insightRoutes');       // AI insights
 const analyticsRoutes    = require('./routes/analyticsRoutes');     // Analytics dashboard
+const smartStockRoutes   = require('./routes/smartStockRoutes');     // Smart Stock Ordering
+const retailerPromoIntelRoutes = require('./routes/retailerPromotionIntelligenceRoutes'); // Retailer Smart Promotions
+const promotionIntelRoutes       = require('./routes/promotionIntelligenceRoutes');         // PM Smart Promotion Builder
 
-app.use('/api/auth',          authRoutes);
-app.use('/api/tickets',       ticketRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/tickets', ticketRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/users',         userRoutes);
-app.use('/api/promotions',    promotionRoutes);
-app.use('/api/messages',      messageRoutes);
-app.use('/api/products',      productRoutes);
-app.use('/api/orders',        orderRoutes);
-app.use('/api/insights',      insightRoutes);
-app.use('/api/analytics',     analyticsRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/promotions', promotionRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/insights',             insightRoutes);
+app.use('/api/analytics',            analyticsRoutes);
+app.use('/api/stock',                smartStockRoutes);
+app.use('/api/retailer-promo-intel', retailerPromoIntelRoutes);
+app.use('/api/promotions-intelligence', promotionIntelRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 

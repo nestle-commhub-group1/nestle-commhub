@@ -111,8 +111,7 @@ const PromotionManagerLayout = ({ children }) => {
 
   const navItems = [
     { label: 'Home', path: '/promotion-manager/dashboard', icon: <LayoutDashboard size={20} /> },
-    { label: 'Create Promotion', path: '/promotion-manager/create', icon: <PlusCircle size={20} /> },
-    { label: 'Promotions Dashboard', path: '/promotion-manager/promotions', icon: <FileText size={20} /> },
+    { label: 'Manage Promotions', path: '/promotion-manager/promotions', icon: <FileText size={20} /> },
     { label: 'Analytics & Insights', path: '/pm/insights', icon: <BarChart3 size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/promotion-manager/profile', icon: <User size={20} /> },

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  Bell, Menu, FileText, User, 
-  LogOut, X, LayoutDashboard, Package, ShoppingBag, Truck, Map, BarChart3
+import {
+  Bell, Menu, FileText, User,
+  LogOut, X, LayoutDashboard, Package, ShoppingBag, Truck, Map, BarChart3, Zap
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -25,7 +25,7 @@ const StockManagerLayout = ({ children }) => {
         const parts = name.split(' ');
         const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
         setUser({ ...parsedUser, fullName: name, initials: initials.toUpperCase() });
-      } catch (e) {}
+      } catch (e) { }
     }
     fetchNotifications();
   }, []);
@@ -58,7 +58,7 @@ const StockManagerLayout = ({ children }) => {
     if (!notif.isRead) {
       await markAsRead(notif._id);
     }
-    
+
     setIsNotificationsOpen(false);
 
     // Navigation logic for Stock Manager
@@ -105,10 +105,11 @@ const StockManagerLayout = ({ children }) => {
 
   const navItems = [
     { label: 'Dashboard', path: '/stock-manager/dashboard', icon: <LayoutDashboard size={20} /> },
-    { label: 'Manage Inventory', path: '/stock-manager/inventory', icon: <Package size={20} /> },
-    { label: 'Manage Orders', path: '/stock-manager/orders', icon: <ShoppingBag size={20} /> },
-    { label: 'Stock Analytics', path: '/stock/insights', icon: <BarChart3 size={20} /> },
-    { label: 'Profile', path: '/stock-manager/profile', icon: <User size={20} /> },
+    { label: 'Manage Inventory',   path: '/stock-manager/inventory',  icon: <Package size={20} /> },
+    { label: 'Manage Orders',       path: '/stock-manager/orders',     icon: <ShoppingBag size={20} /> },
+    { label: '⚡ Smart Ordering',   path: '/stock-manager/smart-ordering', icon: <Zap size={20} className="text-amber-400" /> },
+    { label: 'Stock Analytics',     path: '/stock/insights',           icon: <BarChart3 size={20} /> },
+    { label: 'Profile',             path: '/stock-manager/profile',    icon: <User size={20} /> },
   ];
 
   const TopBar = () => (
@@ -129,7 +130,7 @@ const StockManagerLayout = ({ children }) => {
     <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -160,8 +161,8 @@ const StockManagerLayout = ({ children }) => {
           {navItems.map((item, idx) => {
             const isActive = location.pathname === item.path;
             return (
-              <Link 
-                key={idx} 
+              <Link
+                key={idx}
                 to={item.path}
                 className={`flex items-center space-x-3.5 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-white/10 text-white font-bold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
                 onClick={() => setIsSidebarOpen(false)}
@@ -174,7 +175,7 @@ const StockManagerLayout = ({ children }) => {
         </nav>
 
         <div className="p-4 mt-auto border-t border-white/5 mx-2">
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors font-bold text-[14px]"
           >
@@ -187,7 +188,7 @@ const StockManagerLayout = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar />
-        
+
         <div className="hidden lg:flex absolute top-6 right-8 z-10">
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
@@ -222,14 +223,14 @@ const StockManagerLayout = ({ children }) => {
                 )}
               </div>
               <div className="flex items-center space-x-4">
-                <button 
+                <button
                   onClick={markAllAsRead}
                   disabled={unreadCount === 0}
                   className="text-[11px] font-black text-nestle-brown-light hover:text-nestle-brown disabled:opacity-30 transition-colors uppercase tracking-widest bg-nestle-brown/5 px-3 py-1.5 rounded-lg"
                 >
                   Mark all as read
                 </button>
-                <button 
+                <button
                   onClick={clearAllNotifications}
                   className="text-[11px] font-black text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg border border-red-100/50"
                 >
@@ -250,8 +251,8 @@ const StockManagerLayout = ({ children }) => {
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div 
-                      key={notif._id} 
+                    <div
+                      key={notif._id}
                       onClick={() => handleNotificationClick(notif)}
                       className={`p-5 flex items-start space-x-4 transition-colors cursor-pointer hover:bg-gray-50 ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
                     >

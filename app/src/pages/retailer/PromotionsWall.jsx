@@ -47,27 +47,6 @@ const PromotionsWall = () => {
     }
   };
 
-  useEffect(() => {
-    if (promotions.length > 0 && !ratingData.id) {
-      const _stored = JSON.parse(localStorage.getItem('user'));
-      const myUserId = _stored?.id || _stored?._id;
-      
-      const pendingFeedback = promotions.find(p => {
-        const myRecord = p.participatingRetailers?.find(r => {
-          const rid = r.retailerId?._id || r.retailerId;
-          return rid?.toString() === myUserId?.toString();
-        });
-        const isOptedIn = !!myRecord;
-        const alreadyRated = !!myRecord?.rating;
-        const isCompleted = new Date(p.endDate) < new Date();
-        return isOptedIn && isCompleted && !alreadyRated;
-      });
-      
-      if (pendingFeedback) {
-        setRatingData({ id: pendingFeedback._id, score: 0, feedback: '', unitsSold: '' });
-      }
-    }
-  }, [promotions, ratingData.id]);
 
   const handleAskQuestion = (promoId) => {
     setChatPromotionId(promoId);

@@ -30,23 +30,6 @@ const MyPromotions = () => {
     }
   };
 
-  useEffect(() => {
-    if (promotions.length > 0 && !ratingData.id) {
-      const myUserId = JSON.parse(localStorage.getItem('user'))?._id;
-      const pendingFeedback = promotions.find(p => {
-        const myRecord = p.participatingRetailers?.find(
-          r => r.retailerId === myUserId || r.retailerId?._id === myUserId
-        );
-        const alreadyRated = !!myRecord?.rating;
-        const isCompleted = new Date(p.endDate) < new Date();
-        return isCompleted && !alreadyRated;
-      });
-      
-      if (pendingFeedback) {
-        setRatingData({ id: pendingFeedback._id, score: 0, feedback: '', unitsSold: '' });
-      }
-    }
-  }, [promotions, ratingData.id]);
 
   const handleSubmitSales = async (promotionId, units) => {
     const val = units || unitsSold[promotionId];

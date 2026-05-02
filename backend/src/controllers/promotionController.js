@@ -13,7 +13,13 @@ const createPromotion = async (req, res) => {
       return res.status(403).json({ error: 'Only Promotion Managers can create promotions' });
     }
 
-    const { title, description, category, startDate, endDate, discount } = req.body;
+    const {
+      title, description, category, startDate, endDate, discount,
+      // B2B / B2C
+      promotionType = 'B2B_RETAILER',
+      b2bConfig,
+      b2cConfig,
+    } = req.body;
 
     if (!title || !description || !startDate || !endDate) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -27,19 +33,30 @@ const createPromotion = async (req, res) => {
       endDate,
       discount,
       createdBy: req.user._id,
-      participatingRetailers: []
+      participatingRetailers: [],
+      promotionType,
+      ...(promotionType === 'B2B_RETAILER' && b2bConfig ? { b2bConfig } : {}),
+      ...(promotionType === 'B2C_CUSTOMER' && b2cConfig  ? { b2cConfig }  : {}),
     });
 
     await newPromotion.save();
     await newPromotion.populate('createdBy', 'fullName email');
 
-    // Notify all retailers of new promotion
+    // For B2C without approval required → mark all retailers as active automatically
+    if (promotionType === 'B2C_CUSTOMER' && b2cConfig?.requiresRetailerApproval === false) {
+      const retailers = await User.find({ role: 'retailer', isActive: true }).select('_id').lean();
+      newPromotion.b2cConfig.currentlyActive = retailers.map(r => r._id);
+      await newPromotion.save();
+    }
+
+    // Notify all retailers
     const retailers = await User.find({ role: 'retailer' });
+    const typeLabel = promotionType === 'B2C_CUSTOMER' ? 'customer offer' : 'promotion';
     for (const retailer of retailers) {
       await Notification.create({
         userId: retailer._id,
         type: 'promotion',
-        message: `New promotion available: ${title}`,
+        message: `New ${typeLabel} available: ${title}`,
         relatedPromotion: newPromotion._id
       });
     }
@@ -581,6 +598,111 @@ const deletePromotion = async (req, res) => {
   }
 };
 
+/* ─── getB2BPromotions ───────────────────────────────────────────────────── */
+
+/**
+ * GET /api/promotions/b2b
+ * Returns only B2B_RETAILER type promotions.
+ */
+const getB2BPromotions = async (req, res) => {
+  try {
+    const promotions = await Promotion.find({
+      promotionType: 'B2B_RETAILER',
+    })
+      .populate('createdBy', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, promotions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/* ─── getB2CPromotions ───────────────────────────────────────────────────── */
+
+/**
+ * GET /api/promotions/b2c
+ * Returns only B2C_CUSTOMER type promotions.
+ * If the caller is a retailer, enriches each promo with `isActiveInMyStore`.
+ */
+const getB2CPromotions = async (req, res) => {
+  try {
+    const promotions = await Promotion.find({
+      promotionType: 'B2C_CUSTOMER',
+      status: { $ne: 'archived' },
+    })
+      .populate('createdBy', 'fullName email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // For retailer callers, annotate each promo with activation state
+    const retailerId = req.user?.role === 'retailer' ? req.user._id.toString() : null;
+
+    const enriched = promotions.map(p => ({
+      ...p,
+      isActiveInMyStore: retailerId
+        ? (p.b2cConfig?.currentlyActive || []).some(id => id.toString() === retailerId)
+        : undefined,
+      activationCount: (p.b2cConfig?.currentlyActive || []).length,
+    }));
+
+    res.status(200).json({ success: true, promotions: enriched });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/* ─── activateB2CPromotion ────────────────────────────────────────────────── */
+
+/**
+ * POST /api/promotions/:id/activate
+ * Retailer activates (or deactivates) a B2C promotion in their store.
+ * Body: { activate: boolean }  — defaults to true (toggle)
+ */
+const activateB2CPromotion = async (req, res) => {
+  try {
+    if (req.user?.role !== 'retailer') {
+      return res.status(403).json({ error: 'Only retailers can activate B2C promotions' });
+    }
+
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ error: 'Promotion not found' });
+    }
+    if (promotion.promotionType !== 'B2C_CUSTOMER') {
+      return res.status(400).json({ error: 'Only B2C promotions can be activated' });
+    }
+    if (!promotion.b2cConfig.requiresRetailerApproval) {
+      return res.status(400).json({ error: 'This promotion is auto-active for all retailers' });
+    }
+
+    const retailerId   = req.user._id;
+    const currentList = promotion.b2cConfig.currentlyActive || [];
+    const isActive     = currentList.some(id => id.toString() === retailerId.toString());
+    const shouldEnable = req.body.activate !== false; // default true
+
+    if (shouldEnable && !isActive) {
+      promotion.b2cConfig.currentlyActive.push(retailerId);
+    } else if (!shouldEnable && isActive) {
+      promotion.b2cConfig.currentlyActive = currentList.filter(
+        id => id.toString() !== retailerId.toString()
+      );
+    }
+
+    await promotion.save();
+
+    res.status(200).json({
+      success:        true,
+      isActiveInMyStore: shouldEnable && !(!shouldEnable && !isActive),
+      message: shouldEnable
+        ? `"${promotion.title}" is now active in your store.`
+        : `"${promotion.title}" has been deactivated in your store.`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createPromotion,
   getAllPromotions,
@@ -594,5 +716,8 @@ module.exports = {
   addPromotionAttachment,
   submitSalesReport,
   sendSalesReminders,
-  approveReward
+  approveReward,
+  getB2BPromotions,
+  getB2CPromotions,
+  activateB2CPromotion,
 };

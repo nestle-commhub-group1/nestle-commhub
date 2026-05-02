@@ -624,15 +624,35 @@ const getPromotionsSummary = async (req, res) => {
     const avgFeedbackRating =
       ratingCount > 0 ? parseFloat((totalRating / ratingCount).toFixed(1)) : 0;
 
+    // B2B vs B2C Breakdown
+    const b2bPromos = promotions.filter(p => p.promotionType === 'B2B_RETAILER' || !p.promotionType);
+    const b2cPromos = promotions.filter(p => p.promotionType === 'B2C_CUSTOMER');
+
+    const b2bStats = {
+      count: b2bPromos.length,
+      totalOptIns: b2bPromos.reduce((s, p) => s + (p.participatingRetailers?.filter(r => r.optedIn).length || 0), 0),
+      avgDiscount: b2bPromos.length > 0 ? (b2bPromos.reduce((s, p) => s + (p.b2bConfig?.discountPercentage || p.discount || 0), 0) / b2bPromos.length).toFixed(1) : 0,
+      totalUnits: b2bPromos.reduce((s, p) => s + (p.salesData || []).reduce((sum, sd) => sum + (sd.unitsSold || 0), 0), 0)
+    };
+
+    const b2cStats = {
+      count: b2cPromos.length,
+      totalActivations: b2cPromos.reduce((s, p) => s + (p.b2cConfig?.currentlyActive?.length || 0), 0),
+      avgPrice: b2cPromos.length > 0 ? (b2cPromos.reduce((s, p) => s + (p.b2cConfig?.customerFacingPrice || 0), 0) / b2cPromos.filter(p => p.b2cConfig?.customerFacingPrice).length || 1).toFixed(0) : 0,
+      totalUnits: b2cPromos.reduce((s, p) => s + (p.salesData || []).reduce((sum, sd) => sum + (sd.unitsSold || 0), 0), 0)
+    };
+
     return res.status(200).json({
       data: {
         activePromotions: activePromotions.length,
         endingSoon,
         totalUnitsSold,
         avgConversionRate,
-        conversionDelta: "+4%", // placeholder delta — requires historical comparison
+        conversionDelta: "+4%",
         avgFeedbackRating,
         totalReviews: ratingCount,
+        b2bStats,
+        b2cStats
       },
     });
   } catch (error) {

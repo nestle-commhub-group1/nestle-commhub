@@ -118,7 +118,7 @@ const StaffLayout = ({ children }) => {
   const navItems = [
     { label: 'Home', path: '/staff/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'My Tickets', path: '/staff/tickets', icon: <FileText size={20} /> },
-    { label: 'Analytics & Insights', path: '/admin/insights', icon: <BarChart3 size={20} /> },
+    { label: 'Analytics & Insights', path: '/admin/analytics', icon: <BarChart3 size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/staff/profile', icon: <User size={20} /> },
   ];

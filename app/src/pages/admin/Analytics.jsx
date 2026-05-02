@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
+import StaffLayout from '../../components/layout/StaffLayout';
 import { useAuth } from '../../context/AuthContext';
 import InsightsDashboard from './InsightsDashboard';
 import PMInsightsDashboard from '../pm/PMInsightsDashboard';
@@ -23,15 +24,22 @@ const Analytics = () => {
   // Pick the right dashboard — fall back to InsightsDashboard for unknown roles
   const DashboardComponent = DASHBOARD_BY_ROLE[role] || InsightsDashboard;
 
-  // hq_admin and staff get the AdminLayout wrapper + the dashboard;
+  // hq_admin gets AdminLayout, staff gets StaffLayout;
   // other roles render their dashboard directly (it brings its own layout)
-  const needsAdminLayout = role === 'hq_admin' || role === 'staff';
-
-  if (needsAdminLayout) {
+  
+  if (role === 'hq_admin') {
     return (
       <AdminLayout>
         <DashboardComponent />
       </AdminLayout>
+    );
+  }
+
+  if (role === 'staff') {
+    return (
+      <StaffLayout>
+        <DashboardComponent />
+      </StaffLayout>
     );
   }
 

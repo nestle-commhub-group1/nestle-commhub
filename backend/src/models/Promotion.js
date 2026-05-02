@@ -9,10 +9,35 @@ const promotionSchema = new Schema({
   endDate: { type: Date, required: true },
   discount: { type: Number }, // percentage
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // promotion_manager
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ["active", "inactive", "archived"],
     default: "active"
+  },
+
+  // ── NEW: Promotion type ────────────────────────────────────────
+  promotionType: {
+    type: String,
+    enum: ['B2B_RETAILER', 'B2C_CUSTOMER'],
+    default: 'B2B_RETAILER',
+  },
+
+  // ── B2B Configuration (bulk retailer discounts) ────────────────
+  b2bConfig: {
+    minUnitsRequired:   { type: Number, default: 0 },
+    discountPercentage: { type: Number, default: 0 },
+    // targetRetailers: 'ALL' | 'HIGH_VOLUME' | 'LOW_VOLUME' | [retailerObjectId strings]
+    targetRetailers:    { type: [String], default: ['ALL'] },
+  },
+
+  // ── B2C Configuration (customer-facing offers) ─────────────────
+  b2cConfig: {
+    displayName:              { type: String },
+    customerFacingPrice:      { type: Number },
+    bundleRules:              { type: String }, // '2 for 1', 'Buy 2 Get 1', 'Special Price', custom
+    requiresRetailerApproval: { type: Boolean, default: true },
+    // IDs of retailers who have activated this B2C promo in their store
+    currentlyActive:          [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   // NEW: File attachments
   attachments: [
