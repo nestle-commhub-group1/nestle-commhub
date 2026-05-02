@@ -5,64 +5,34 @@ import API_URL from '../config/api';
 
 const devUsers = {
   retailer: {
-    id: "dev-retailer-001",
-    fullName: "Chamara Perera",
-    email: "chamara@test.com",
+    fullName: "Silva Super Center",
+    email: "retailer1@test.com",
     role: "retailer",
-    phone: "0771234567",
-    businessName: "Perera Grocery",
-    businessAddress: "123 Kandy Road",
-    taxId: "TAX123456"
   },
   staff: {
-    id: "dev-staff-001",
-    fullName: "Nadeeka Perera",
-    email: "nadeeka@nestle.com",
+    fullName: "Kasun Perera",
+    email: "staff@nestle.com",
     role: "staff",
-    phone: "0777654321",
-    employeeId: "NES002",
-    department: "Sales & Distribution",
-    officeLocation: "Colombo Head Office"
   },
   hq_admin: {
-    id: "dev-admin-001",
     fullName: "Dilini Fernando",
-    email: "dilini@nestle.com",
+    email: "admin@nestle.com",
     role: "hq_admin",
-    phone: "0112345678",
-    employeeId: "NES001",
-    department: "HQ Operations",
-    officeLocation: "Colombo Head Office"
   },
   distributor: {
-    id: "dev-distributor-001",
-    fullName: "Kamal Jayawardena",
-    email: "kamal@distributor.com",
+    fullName: "Distributor One",
+    email: "distributor1@test.com",
     role: "distributor",
-    phone: "0761234567",
-    employeeId: "NES004",
-    department: "Distribution",
-    officeLocation: "Colombo Distribution Centre"
   },
   promotion_manager: {
-    id: "dev-proms-001",
-    fullName: "Sonia Perera",
-    email: "sonia@nestle.com",
+    fullName: "Mahesh Wickramasinghe",
+    email: "pm@nestle.com",
     role: "promotion_manager",
-    phone: "0771122334",
-    employeeId: "NES005",
-    department: "Promotions",
-    officeLocation: "Colombo Head Office"
   },
   stock_manager: {
-    id: "dev-stock-001",
-    fullName: "Mahesh Silve",
-    email: "mahesh@nestle.com",
+    fullName: "Nadeeka Ratnayake",
+    email: "sm@nestle.com",
     role: "stock_manager",
-    phone: "0771239988",
-    employeeId: "NES-DEV-444",
-    department: "Logistics",
-    officeLocation: "Colombo Main Store"
   },
 };
 

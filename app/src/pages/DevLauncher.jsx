@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { loginAsRole, clearDevAuth, devUsers } from '../utils/devAuth';
+import { Lock, ShieldAlert, Key } from 'lucide-react';
 
 const roleConfig = {
   retailer: {
@@ -51,8 +52,78 @@ const initials = (name) => {
 };
 
 const DevLauncher = () => {
-  if (!import.meta.env.DEV) {
-    return <Navigate to="/login" replace />;
+  const [password, setPassword] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [error, setError] = useState('');
+
+  // Default dev password if not provided in ENV
+  const DEV_PASSWORD = import.meta.env.VITE_DEV_PASSWORD || 'nestle_dev_2024';
+
+  const handleAuth = (e) => {
+    e.preventDefault();
+    if (password === DEV_PASSWORD) {
+      setIsAuthorized(true);
+      setError('');
+    } else {
+      setError('Invalid developer password');
+    }
+  };
+
+  // Skip auth screen in local development
+  if (!isAuthorized && !import.meta.env.DEV) {
+    return (
+      <div className="min-h-screen bg-[#F5F3F0] flex items-center justify-center p-6 font-sans">
+        <div className="w-full max-w-md bg-white rounded-[32px] border border-[#E0DBD5] shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-[#2C1810] p-10 text-center">
+            <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
+              <Lock className="text-white" size={40} />
+            </div>
+            <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Dev Entry Point</h1>
+            <p className="text-gray-400 text-sm mt-2 font-medium">Remote development tools are restricted</p>
+          </div>
+          
+          <form onSubmit={handleAuth} className="p-10 space-y-8">
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Verification Required</label>
+              <div className="relative group">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Master Password"
+                  className="w-full bg-[#F5F3F0] border-2 border-transparent rounded-2xl py-4.5 px-6 text-[16px] font-bold focus:border-[#3D2B1F] focus:bg-white transition-all outline-none"
+                  autoFocus
+                />
+                <Key className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D2B1F] transition-colors" size={24} />
+              </div>
+              {error && (
+                <div className="flex items-center space-x-2 mt-4 px-2 text-red-500 animate-bounce">
+                  <ShieldAlert size={16} />
+                  <span className="text-[13px] font-black uppercase">{error}</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[#3D2B1F] text-white font-black py-5 rounded-2xl hover:bg-[#2C1810] active:scale-[0.97] transition-all shadow-xl shadow-[#3D2B1F]/20 text-[15px] uppercase tracking-widest"
+            >
+              Verify Identity
+            </button>
+            
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => window.location.href = '/login'}
+                className="text-gray-400 font-bold text-[13px] hover:text-[#2C1810] transition-colors flex items-center justify-center mx-auto"
+              >
+                Return to Public Portal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -71,7 +142,7 @@ const DevLauncher = () => {
             onClick={clearDevAuth}
             className="text-[13px] font-semibold text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-4 py-2 rounded-lg transition-colors"
           >
-            Clear Session &amp; Go to Login
+            Logout & Exit
           </button>
         </div>
       </div>
@@ -79,7 +150,7 @@ const DevLauncher = () => {
       {/* Warning banner */}
       <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-2.5">
         <p className="max-w-4xl mx-auto text-[13px] text-yellow-800 font-medium">
-          ⚠️ This page is only visible in development mode (<code className="bg-yellow-100 px-1 rounded font-mono text-[12px]">import.meta.env.DEV === true</code>). It will redirect to /login in production.
+          ⚠️ You are accessing the system via the <strong>Developer Entry Point</strong>. All actions will use standardized test accounts.
         </p>
       </div>
 
@@ -100,11 +171,11 @@ const DevLauncher = () => {
                 {/* Avatar + name */}
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="h-12 w-12 rounded-full bg-[#2C1810] text-white flex items-center justify-center text-[16px] font-bold flex-shrink-0">
-                    {initials(user.fullName)}
+                    {user ? initials(user.fullName) : '?'}
                   </div>
                   <div>
-                    <p className="text-[16px] font-extrabold text-[#2C1810] leading-tight">{user.fullName}</p>
-                    <p className="text-[12px] text-gray-400 font-medium mt-0.5">{user.email}</p>
+                    <p className="text-[16px] font-extrabold text-[#2C1810] leading-tight">{user ? user.fullName : 'Unknown'}</p>
+                    <p className="text-[12px] text-gray-400 font-medium mt-0.5">{user ? user.email : ''}</p>
                   </div>
                 </div>
 

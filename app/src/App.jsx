@@ -89,7 +89,7 @@ function App() {
           {/* In production (import.meta.env.DEV === false), this redirects to /login */}
           <Route
             path="/dev"
-            element={import.meta.env.DEV ? <DevLauncher /> : <Navigate to="/login" replace />}
+            element={<DevLauncher />}
           />
 
           {/* ── Public routes — anyone can access these without logging in ──────── */}
