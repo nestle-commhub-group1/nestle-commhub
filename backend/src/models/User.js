@@ -47,6 +47,9 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
 
+  phoneNumber: { type: String, default: null },
+  isPhoneVerified: { type: Boolean, default: false },
+
   role: {
     type: String,
     required: [true, "Role is required"],

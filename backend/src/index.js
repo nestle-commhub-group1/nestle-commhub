@@ -93,6 +93,8 @@ const smartStockRoutes   = require('./routes/smartStockRoutes');     // Smart St
 const retailerPromoIntelRoutes = require('./routes/retailerPromotionIntelligenceRoutes'); // Retailer Smart Promotions
 const promotionIntelRoutes       = require('./routes/promotionIntelligenceRoutes');         // PM Smart Promotion Builder
 const devRoutes                  = require('./routes/devRoutes');                           // Secure dev utilities
+const otpRoutes                  = require('./routes/otpRoutes');                           // OTP routes
+const forgotPasswordRoutes       = require('./routes/forgotPasswordRoutes');                // Forgot password routes
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
@@ -108,6 +110,8 @@ app.use('/api/stock',                smartStockRoutes);
 app.use('/api/retailer-promo-intel', retailerPromoIntelRoutes);
 app.use('/api/promotions-intelligence', promotionIntelRoutes);
 app.use('/api/dev',                   devRoutes);
+app.use('/api/otp',                   otpRoutes);
+app.use('/api/auth',                  forgotPasswordRoutes);
 
 /* ─── Background Jobs ─────────────────────────────────────────────────────── */
 

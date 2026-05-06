@@ -18,6 +18,8 @@ import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import OTP from "./pages/auth/OTP";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import OTPVerify from "./pages/auth/OTPVerify";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Unauthorized from "./pages/Unauthorized";
 
 // ── Retailer pages (role: "retailer") ─────────────────────────────────────
@@ -96,6 +98,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/otp" element={<OTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<OTPVerify />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* ── Retailer routes — only accessible with role="retailer" ──────────── */}

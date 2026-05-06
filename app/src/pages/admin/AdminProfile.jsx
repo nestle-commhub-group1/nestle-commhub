@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Save, Loader2 } from 'lucide-react';
+import { Camera, Save, Loader2, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -13,12 +13,17 @@ const AdminProfile = () => {
     employeeId: '',
     department: '',
     officeLocation: '',
+    phoneNumber: '',
+    isPhoneVerified: false,
   });
 
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
+    phoneNumber: '',
   });
+
+  const [phoneError, setPhoneError] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -41,11 +46,14 @@ const AdminProfile = () => {
           employeeId: parsed.employeeId || '',
           department: parsed.department || '',
           officeLocation: parsed.officeLocation || '',
+          phoneNumber: parsed.phoneNumber || '',
+          isPhoneVerified: parsed.isPhoneVerified || false,
         });
 
         setFormData({
           fullName: name,
           phone: parsed.phone || '',
+          phoneNumber: parsed.phoneNumber || '',
         });
       } catch (e) {
         console.error('Failed to parse stored user:', e);
@@ -57,12 +65,21 @@ const AdminProfile = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setSuccessMsg('');
     setErrorMsg('');
+    if (e.target.name === 'phoneNumber') setPhoneError('');
   };
 
   const handleSave = async () => {
     if (!formData.fullName.trim()) {
       setErrorMsg('Full name cannot be empty.');
       return;
+    }
+
+    if (formData.phoneNumber) {
+      const phoneRegex = /^07\d{8}$/;
+      if (!phoneRegex.test(formData.phoneNumber)) {
+        setPhoneError('Please enter a valid Sri Lankan phone number (07XXXXXXXX)');
+        return;
+      }
     }
     try {
       setSaving(true);
@@ -83,7 +100,7 @@ const AdminProfile = () => {
           ...updated,
           initials: initials.toUpperCase(),
         }));
-        setFormData({ fullName: updated.fullName, phone: updated.phone || '' });
+        setFormData({ fullName: updated.fullName, phone: updated.phone || '', phoneNumber: updated.phoneNumber || '' });
 
         // Persist updated user to localStorage so layout reflects changes
         const storedUser = localStorage.getItem('user');
@@ -156,6 +173,27 @@ const AdminProfile = () => {
                 className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
               />
             </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide flex items-center">
+              Phone Number
+              {user.isPhoneVerified && (
+                <span className="ml-2 bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center">
+                  <CheckCircle2 size={12} className="mr-1" />
+                  Verified
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              name="phoneNumber"
+              placeholder="07XXXXXXXX"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className="w-full border border-nestle-border rounded-[10px] px-4 py-3 text-[15px] font-medium text-nestle-brown focus:outline-none focus:ring-2 focus:ring-nestle-brown/20 focus:border-nestle-brown bg-white shadow-sm"
+            />
+            {phoneError && <p className="text-red-500 text-xs mt-1 font-medium">{phoneError}</p>}
           </div>
 
           <div>
