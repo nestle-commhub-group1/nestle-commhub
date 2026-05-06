@@ -53,7 +53,7 @@ Plain-English explanation of every technology used in this project.
 ## vite-plugin-pwa
 **What it is:** A Vite plugin that turns the app into an installable Progressive Web App.
 **Why we chose it:** Allows the app to be installed on mobile and work with poor connectivity.
-**How we use it:** Configured in `vite.config.js` with a custom manifest and Nestlé branding.
+**How we use it:** Currently disabled due to a version conflict with Vite 8 — pending fix.
 
 ---
 

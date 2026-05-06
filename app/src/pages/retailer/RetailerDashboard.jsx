@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FileText, Tag, Package, Truck, CheckCircle, Clock, RefreshCw
+  FileText, Tag, Package, Truck, CheckCircle, Clock, RefreshCw, PiggyBank
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
@@ -49,15 +49,33 @@ const RetailerDashboard = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
+    fetchProfile();
     fetchTickets();
     fetchPromotions();
   }, []);
 
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (res.data.success) {
+        setUser(res.data.user);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+    }
+  };
+
   // Refetch when user navigates back to this tab/window
   useEffect(() => {
-    const handleFocus = () => fetchTickets();
+    const handleFocus = () => {
+      fetchProfile();
+      fetchTickets();
+      fetchPromotions();
+    };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
@@ -113,10 +131,10 @@ const RetailerDashboard = () => {
   };
 
   const summaryCards = [
+    { title: 'Loyalty Wallet', count: (user?.credits || 0).toLocaleString(), label: 'Points available', icon: <PiggyBank size={20} className="text-amber-500" />, borderColor: 'border-amber-200', bgColor: 'bg-amber-50', link: '/retailer/promotions' },
     { title: 'Open Tickets', count: openCount, label: 'Awaiting response', icon: <FileText size={20} className="text-nestle-danger" />, borderColor: 'border-red-200', bgColor: 'bg-red-50', link: '#' },
     { title: 'In Progress', count: inProgressCount, label: 'Being handled', icon: <Package size={20} className="text-nestle-warning" />, borderColor: 'border-yellow-200', bgColor: 'bg-yellow-50', link: '#' },
     { title: 'Resolved', count: resolvedCount, label: 'Completed', icon: <CheckCircle size={20} className="text-nestle-success" />, borderColor: 'border-green-200', bgColor: 'bg-green-50', link: '/retailer/tickets' },
-    { title: 'Promotions', count: promotions.length, label: 'Available now', icon: <Tag size={20} className="text-blue-500" />, borderColor: 'border-blue-200', bgColor: 'bg-blue-50', link: '/retailer/promotions' }
   ];
 
   if (loading) {

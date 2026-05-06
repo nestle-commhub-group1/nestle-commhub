@@ -418,46 +418,53 @@ const submitSalesReport = async (req, res) => {
     }
 
     // Calculate reward tier based on tiered config
-    let rewardTier, rewardAmount;
-    if (unitsSold <= promotion.rewards.tier1.maxUnits) {
+    let rewardTier, calculatedReward;
+    const units = Number(unitsSold) || 0;
+
+    if (units <= (promotion.rewards?.tier1?.maxUnits || 100)) {
       rewardTier = 'tier1';
-      rewardAmount = promotion.rewards.tier1.rewardAmount;
-    } else if (unitsSold <= promotion.rewards.tier2.maxUnits) {
+      calculatedReward = promotion.rewards?.tier1?.rewardAmount || 10;
+    } else if (units <= (promotion.rewards?.tier2?.maxUnits || 500)) {
       rewardTier = 'tier2';
-      rewardAmount = promotion.rewards.tier2.rewardAmount;
+      calculatedReward = promotion.rewards?.tier2?.rewardAmount || 50;
     } else {
       rewardTier = 'tier3';
-      rewardAmount = promotion.rewards.tier3.rewardAmount;
+      calculatedReward = promotion.rewards?.tier3?.rewardAmount || 100;
     }
+
+    // Note: We currently use a 1:0.5 reward ratio (1 unit = 0.5 points) as per recent request,
+    // but we still track the tier for analytics.
+    const finalRewardAmount = units * 0.5; 
 
     // Upsert sales entry for this retailer
     const existingSale = promotion.salesData.find(
-      s => s.retailerId.toString() === req.user._id.toString()
+      s => s.retailerId && (s.retailerId._id || s.retailerId).toString() === req.user._id.toString()
     );
 
     if (existingSale) {
-      existingSale.unitsSold = unitsSold;
+      existingSale.unitsSold = units;
       existingSale.submittedAt = new Date();
       existingSale.rewardTier = rewardTier;
-      existingSale.rewardAmount = unitsSold; // NEW: 1:1 reward ratio as requested
+      existingSale.rewardAmount = finalRewardAmount;
     } else {
       promotion.salesData.push({
         retailerId: req.user._id,
-        unitsSold,
+        unitsSold: units,
         submittedAt: new Date(),
         rewardTier,
-        rewardAmount: unitsSold, // NEW: 1:1 reward ratio as requested
+        rewardAmount: finalRewardAmount,
         rewardIssuedAt: null // Explicitly null until PM approves
       });
     }
 
+    promotion.markModified('salesData');
     await promotion.save();
 
     // Notify PM of performance
     await Notification.create({
       userId: promotion.createdBy,
       type: 'sales_report',
-      message: `Retailer reported ${unitsSold} units for promotion: ${promotion.title}. Tier: ${rewardTier}.`,
+      message: `Retailer reported ${units} units for promotion: ${promotion.title}. Tier: ${rewardTier}.`,
       relatedPromotion: promotion._id
     });
 
@@ -465,7 +472,7 @@ const submitSalesReport = async (req, res) => {
       success: true,
       message: 'Sales report submitted successfully',
       rewardTier,
-      rewardAmount,
+      rewardAmount: finalRewardAmount,
       promotion
     });
   } catch (error) {
@@ -528,7 +535,7 @@ const approveReward = async (req, res) => {
     }
 
     const salesEntry = promotion.salesData.find(
-      s => (s.retailerId._id || s.retailerId).toString() === retailerId
+      s => s.retailerId && (s.retailerId._id || s.retailerId).toString() === retailerId
     );
 
     if (!salesEntry) {
@@ -541,6 +548,7 @@ const approveReward = async (req, res) => {
 
     // 1. Mark as issued in promotion
     salesEntry.rewardIssuedAt = new Date();
+    promotion.markModified('salesData');
 
     // 2. Add credits to retailer user account
     const retailer = await User.findById(retailerId);
@@ -548,7 +556,11 @@ const approveReward = async (req, res) => {
         return res.status(404).json({ error: 'Retailer not found' });
     }
     
-    retailer.credits = (retailer.credits || 0) + (salesEntry.rewardAmount || 0);
+    // Ensure both values are treated as numbers to avoid string concatenation bugs
+    const currentCredits = Number(retailer.credits) || 0;
+    const addedCredits = Number(salesEntry.rewardAmount) || 0;
+    
+    retailer.credits = currentCredits + addedCredits;
     await retailer.save();
 
     await promotion.save();

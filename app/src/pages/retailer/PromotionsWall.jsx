@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tag, Calendar, Percent, CheckCircle, Search, FileText, Star, Download, Package, DollarSign } from 'lucide-react';
 // Assuming use of standard context and layout, though not explicit in prompt
 import RetailerLayout from '../../components/layout/RetailerLayout';
@@ -16,24 +16,21 @@ const PromotionsWall = () => {
   const [ratingData, setRatingData] = useState({ id: null, score: 0, feedback: '', unitsSold: '' });
   const [userCredits, setUserCredits] = useState(0);
 
-  useEffect(() => {
-    fetchPromotions();
-    fetchUserCredits();
-  }, []);
-
-  const fetchUserCredits = async () => {
+  const fetchUserCredits = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       const res = await axios.get(`${API_URL}/api/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setUserCredits(res.data.user?.credits || 0);
+      if (res.data.user) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+      }
     } catch (err) {
-      console.error('Error fetching credits:', err);
+      console.error(err);
     }
-  };
+  }, []);
 
-  const fetchPromotions = async () => {
+  const fetchPromotions = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(`${API_URL}/api/promotions`, {
@@ -45,7 +42,22 @@ const PromotionsWall = () => {
       console.error(err);
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPromotions();
+    fetchUserCredits();
+  }, [fetchPromotions, fetchUserCredits]);
+
+  // Refetch when user navigates back or tab gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchPromotions();
+      fetchUserCredits();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchPromotions, fetchUserCredits]);
 
 
   const handleAskQuestion = (promoId) => {

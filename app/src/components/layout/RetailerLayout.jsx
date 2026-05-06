@@ -48,6 +48,34 @@ const RetailerLayout = ({ children }) => {
     }
   };
 
+  const fetchLatestProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success && res.data.user) {
+        const u = res.data.user;
+        const name = u.fullName || 'User';
+        const parts = name.split(' ');
+        const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
+        setUser({ ...u, fullName: name, initials: initials.toUpperCase() });
+        // Update localStorage so other components stay in sync
+        localStorage.setItem('user', JSON.stringify(u));
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchLatestProfile();
+    // Refresh profile every 2 minutes to keep credits in sync
+    const interval = setInterval(fetchLatestProfile, 120000);
+    return () => clearInterval(interval);
+  }, []);
+
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
@@ -177,9 +205,15 @@ const RetailerLayout = ({ children }) => {
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="font-semibold truncate text-[15px]">{user.fullName}</span>
-            <span className="bg-nestle-warning text-nestle-brown text-[10px] font-bold px-2 py-0.5 rounded-full w-max mt-1">
-              Retailer
-            </span>
+            <div className="flex items-center space-x-2 mt-1">
+                <span className="bg-nestle-warning text-nestle-brown text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  Retailer
+                </span>
+                <div className="flex items-center space-x-1 bg-white/10 px-2 py-0.5 rounded-full text-[10px] font-black text-amber-300 border border-amber-300/20">
+                    <PiggyBank size={10} />
+                    <span>{(user.credits || 0).toLocaleString()} PTS</span>
+                </div>
+            </div>
           </div>
         </div>
 

@@ -110,11 +110,9 @@ const AdminLayout = ({ children }) => {
     { label: 'Home', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'All Tickets', path: '/admin/dashboard', icon: <FileText size={20} /> }, // Redirect for now
     { label: 'User Management', path: '/admin/users', icon: <Users size={20} /> },
-    { label: 'Broadcasts', path: '/admin/broadcasts', icon: <Radio size={20} /> },
     { label: 'Promotions', path: '/admin/promotions', icon: <Tag size={20} /> },
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChart2 size={20} /> },
     { label: 'SLA Monitor', path: '/admin/sla', icon: <AlertCircle size={20} /> },
-    { label: 'Distributor Evaluations', path: '/admin/evaluations', icon: <Star size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
     { label: 'Profile', path: '/admin/profile', icon: <User size={20} /> },
   ];

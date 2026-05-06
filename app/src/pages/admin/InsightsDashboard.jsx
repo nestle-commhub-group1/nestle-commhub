@@ -3,7 +3,7 @@ import {
   Loader2, BarChart3, TrendingUp, Users, Package, 
   Calendar, MapPin, ChevronRight, Filter, RefreshCw, CheckCircle
 } from 'lucide-react';
-import HeatMap from './HeatMap';
+import HeatmapDashboard from './HeatmapDashboard';
 import {
   Chart as ChartJS,
   BarElement,
@@ -421,7 +421,7 @@ const InsightsDashboard = () => {
             </div>
           )}
 
-          {activeTab === 'HeatMap' && <HeatMap embedded={true} />}
+          {activeTab === 'HeatMap' && <HeatmapDashboard embedded={true} />}
         </div>
       </div>
     </div>

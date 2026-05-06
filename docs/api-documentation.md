@@ -57,98 +57,12 @@ Error responses:
 
 ## Tickets
 
-### POST /api/tickets
-Auth required: Yes (Retailer)
-Create a new support ticket.
-
-### GET /api/tickets/my
-Auth required: Yes (Retailer)
-View your own tickets.
-
-### GET /api/tickets
-Auth required: Yes (Staff/Admin/Distributor)
-View all tickets.
-
-### GET /api/tickets/:id
-Auth required: Yes
-Get single ticket details.
-
-### PUT /api/tickets/:id/status
-Auth required: Yes (Staff/Admin)
-Update ticket status.
-
-### POST /api/tickets/:id/messages
-Auth required: Yes (Staff/Admin/Distributor)
-Send a message in a ticket.
+*(No endpoints documented yet)*
 
 ---
 
 ## Notifications
 
-### GET /api/notifications
-Auth required: Yes
-Get all notifications for the current user.
-
-### DELETE /api/notifications/clear
-Auth required: Yes
-Clear all notifications.
-
-### PUT /api/notifications/read-all
-Auth required: Yes
-Mark all notifications as read.
-
-### PUT /api/notifications/:id
-Auth required: Yes
-Mark a single notification as read.
+*(No endpoints documented yet)*
 
 ---
-
-## Promotions
-
-### POST /api/promotions
-Auth required: Yes (Promotion Manager)
-Create a new promotion.
-
-### GET /api/promotions
-Auth required: Yes
-Get all active promotions.
-
-### GET /api/promotions/:id
-Auth required: Yes
-Get single promotion details.
-
-### POST /api/promotions/:id/opt-in
-Auth required: Yes (Retailer)
-Opt-in to a promotion.
-
-### POST /api/promotions/:id/sales-report
-Auth required: Yes (Retailer)
-Submit a sales report for an opted-in promotion.
-
-### POST /api/promotions/:id/approve-reward
-Auth required: Yes (Promotion Manager)
-Approve reward and issue credits.
-
----
-
-## Products & Orders
-
-### GET /api/products
-Auth required: Yes
-Get product catalog.
-
-### GET /api/orders
-Auth required: Yes
-Get order history.
-
----
-
-## Analytics & Intelligence
-
-### GET /api/analytics/dashboard
-Auth required: Yes
-Get dashboard analytics based on role.
-
-### GET /api/stock/how-status
-Auth required: Yes
-Get "High Overstock Warning" status for products.

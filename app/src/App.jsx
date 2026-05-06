@@ -48,8 +48,6 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import UserManagement from "./pages/admin/UserManagement";
 import SLAMonitor from "./pages/admin/SLAMonitor";
 import Analytics from "./pages/admin/Analytics";
-import AdminBroadcasts from "./pages/admin/Broadcasts";
-import DistributorEvaluations from "./pages/admin/DistributorEvaluations";
 import AdminTicketDetail from "./pages/admin/AdminTicketDetail";
 import InsightsDashboard from "./pages/admin/InsightsDashboard";
 
@@ -133,7 +131,7 @@ function App() {
           <Route path="/staff/profile" element={<ProtectedRoute roles="staff"><StaffProfile /></ProtectedRoute>} />
           <Route path="/staff/tickets" element={<ProtectedRoute roles="staff"><StaffMyTickets /></ProtectedRoute>} />
           <Route path="/staff/tickets/:id" element={<ProtectedRoute roles="staff"><StaffTicketDetail /></ProtectedRoute>} />
-          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="hq_admin"><StaffBroadcasts /></ProtectedRoute>} />
+          <Route path="/staff/broadcasts" element={<ProtectedRoute roles="staff"><StaffBroadcasts /></ProtectedRoute>} />
 
           {/* ── HQ Admin routes — only accessible with role="hq_admin" ──────────── */}
           <Route
@@ -184,22 +182,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/broadcasts"
-            element={
-              <ProtectedRoute roles="hq_admin">
-                <AdminBroadcasts />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/evaluations"
-            element={
-              <ProtectedRoute roles="hq_admin">
-                <DistributorEvaluations />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/admin/tickets/:id"
             element={

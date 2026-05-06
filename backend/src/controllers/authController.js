@@ -214,7 +214,8 @@ const registerUser = async (req, res) => {
         phone: newUser.phone,
         officeLocation: newUser.officeLocation,
         employeeId: newUser.employeeId,
-        staffCategory: User.staffCategory,
+        staffCategory: newUser.staffCategory,
+        credits: newUser.credits || 0,
       },
     });
 
@@ -294,6 +295,7 @@ const loginUser = async (req, res) => {
         officeLocation: user.officeLocation,
         employeeId: user.employeeId,
         staffCategory: user.staffCategory,
+        credits: user.credits || 0,
       },
     });
 

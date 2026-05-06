@@ -39,7 +39,7 @@ const roleConfig = {
 const allRoutes = [
   { group: 'Retailer', paths: ['/retailer/dashboard', '/retailer/profile', '/retailer/submit-issue', '/retailer/tickets', '/retailer/promotions', '/retailer/stock-requests', '/retailer/delivery'] },
   { group: 'Staff', paths: ['/staff/dashboard', '/staff/profile', '/staff/tickets', '/staff/broadcasts'] },
-  { group: 'HQ Admin', paths: ['/admin/dashboard', '/admin/profile', '/admin/users', '/admin/sla', '/admin/analytics', '/admin/broadcasts', '/admin/evaluations'] },
+  { group: 'HQ Admin', paths: ['/admin/dashboard', '/admin/profile', '/admin/users', '/admin/sla', '/admin/analytics'] },
   { group: 'Promotion Manager', paths: ['/promotion-manager/dashboard', '/promotion-manager/promotions', '/promotion-manager/create', '/promotion-manager/profile'] },
   { group: 'Distributor', paths: ['/distributor/dashboard', '/distributor/promotions'] },
   { group: 'Stock Manager', paths: ['/stock-manager/dashboard', '/stock-manager/inventory', '/stock-manager/orders', '/stock-manager/profile'] },

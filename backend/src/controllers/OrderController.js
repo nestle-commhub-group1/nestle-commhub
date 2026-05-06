@@ -83,7 +83,7 @@ exports.placeOrder = async (req, res) => {
 // Get orders for current retailer
 exports.getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ retailer: req.user.id })
+    const orders = await Order.find({ retailer: req.user._id })
       .populate("items.product")
       .populate("distributor", "fullName phone")
       .sort({ createdAt: -1 });
@@ -115,21 +115,31 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    const oldStatus = order.status;
+
     if (status) order.status = status;
     if (distributor) order.distributor = distributor;
     if (eta) order.eta = eta;
 
-    // If accepted, we might want to deduct stock, but user said:
-    // "if the stock is not enough to fullfill the oder... accept or denie it for now"
-    // "if products are not available stock manager will say it will take us a bit longer"
-    // So we don't strictly prevent accepting based on stock.
-    
-    // Logic for stock deduction if accepted:
-    if (status === "accepted" && order.status !== "accepted") {
+    // Logic for stock deduction if accepted now (and wasn't before)
+    if (status === "accepted" && oldStatus !== "accepted") {
         for (const item of order.items) {
             await Product.findByIdAndUpdate(item.product, {
                 $inc: { stockQuantity: -item.quantity }
             });
+        }
+    }
+
+    // Logic for points refund if denied now (and wasn't before)
+    if (status === "denied" && oldStatus !== "denied") {
+        if (order.creditsUsed > 0) {
+            const retailer = await User.findById(order.retailer);
+            if (retailer) {
+                // Use Number() to prevent string concatenation
+                retailer.credits = (Number(retailer.credits) || 0) + Number(order.creditsUsed);
+                await retailer.save();
+                console.log(`💎 [Order] Refunded ${order.creditsUsed} credits to retailer ${retailer._id} because order was denied.`);
+            }
         }
     }
 
@@ -161,7 +171,7 @@ exports.reorder = async (req, res) => {
         if (!originalOrder) return res.status(404).json({ message: "Order not found" });
 
         const newOrder = new Order({
-            retailer: req.user.id,
+            retailer: req.user._id,
             items: originalOrder.items.map(item => ({
                 product: item.product,
                 quantity: item.quantity,
@@ -182,7 +192,7 @@ exports.reorder = async (req, res) => {
 // Get orders for distributor
 exports.getDistributorOrders = async (req, res) => {
     try {
-        const orders = await Order.find({ distributor: req.user.id })
+        const orders = await Order.find({ distributor: req.user._id })
             .populate("retailer", "fullName businessName businessAddress businessPhone")
             .populate("items.product")
             .sort({ createdAt: -1 });

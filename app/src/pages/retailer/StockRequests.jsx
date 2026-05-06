@@ -23,14 +23,26 @@ const StockRequests = () => {
   const fetchUserCredits = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) return;
       const res = await axios.get(`${API_URL}/api/users/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUserCredits(res.data.user?.credits || 0);
+      if (res.data.success) {
+        setUserCredits(res.data.user?.credits || 0);
+        // Also sync to localStorage for other components
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+      }
     } catch (err) {
       console.error('Error fetching credits:', err);
     }
   };
+
+  // Refetch when user navigates back or tab gains focus
+  useEffect(() => {
+    const handleFocus = () => fetchUserCredits();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -180,9 +192,22 @@ const StockRequests = () => {
 
   return (
     <RetailerLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-nestle-brown">Order Stock</h1>
-        <p className="text-gray-500 font-medium tracking-tight">Replenish your inventory with original Nestlé products.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-nestle-brown">Order Stock</h1>
+          <p className="text-gray-500 font-medium tracking-tight">Replenish your inventory with original Nestlé products.</p>
+        </div>
+        
+        {/* Points Display Card */}
+        <div className="bg-white border border-nestle-brown/20 rounded-[24px] p-5 flex items-center space-x-4 shadow-sm min-w-[240px]">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+            <Tag size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available Points</p>
+            <p className="text-2xl font-black text-nestle-brown">{userCredits.toLocaleString()}</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex space-x-1 p-1 bg-gray-100 rounded-2xl w-max mb-8">
