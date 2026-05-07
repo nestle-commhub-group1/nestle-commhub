@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = 'https://nestle-commhub-app.onrender.com';
 const PM_EMAIL = 'pm@nestle.com';
 const PM_PASSWORD = 'password123';
 
@@ -18,7 +18,7 @@ test.describe('SPRINT 3: Smart Promotion Builder', () => {
     await loginAsPM(page);
 
     // Navigate to Smart Builder (integrated in B2B creation)
-    await page.goto(`${BASE_URL}/pm/create-b2b`);
+    await page.goto(`${BASE_URL}/promotion-manager/create-b2b`);
     await page.waitForLoadState('networkidle');
 
     // Verify top performers section
@@ -38,7 +38,7 @@ test.describe('SPRINT 3: Smart Promotion Builder', () => {
     await loginAsPM(page);
 
     // Go to Smart Builder
-    await page.goto(`${BASE_URL}/pm/create-b2b`);
+    await page.goto(`${BASE_URL}/promotion-manager/create-b2b`);
     await page.waitForLoadState('networkidle');
 
     // Wait for Top Performers to load
@@ -70,7 +70,7 @@ test.describe('SPRINT 3: Smart Promotion Builder', () => {
     await loginAsPM(page);
 
     // Go to Smart Builder
-    await page.goto(`${BASE_URL}/pm/create-b2b`);
+    await page.goto(`${BASE_URL}/promotion-manager/create-b2b`);
     await page.waitForLoadState('networkidle');
 
     // Verify AI insights text

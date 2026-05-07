@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = 'https://nestle-commhub-app.onrender.com';
 const STOCK_MGR_EMAIL = 'sm@nestle.com';
 const STOCK_MGR_PASSWORD = 'password123';
 

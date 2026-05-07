@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = 'https://nestle-commhub-app.onrender.com';
 const PM_EMAIL = 'pm@nestle.com';
 const PM_PASSWORD = 'password123';
 
@@ -17,7 +17,7 @@ test.describe('SPRINT 3: B2B vs B2C Promotions', () => {
   test('PM can create B2B promotion with bulk discount', async ({ page }) => {
     await loginAsPM(page);
 
-    await page.goto(`${BASE_URL}/pm/create-b2b`);
+    await page.goto(`${BASE_URL}/promotion-manager/create-b2b`);
     await page.waitForLoadState('networkidle');
 
     // Wait for the page to render
@@ -45,7 +45,7 @@ test.describe('SPRINT 3: B2B vs B2C Promotions', () => {
   test('PM can create B2C promotion with bundle rules', async ({ page }) => {
     await loginAsPM(page);
 
-    await page.goto(`${BASE_URL}/pm/create-b2c`);
+    await page.goto(`${BASE_URL}/promotion-manager/create-b2c`);
     await page.waitForLoadState('networkidle');
 
     // Wait for the page to render

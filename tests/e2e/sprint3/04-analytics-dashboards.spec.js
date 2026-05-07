@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
 
-const BASE_URL = 'http://localhost:5173';
+const BASE_URL = 'https://nestle-commhub-app.onrender.com';
 
 const testUsers = {
   admin: { email: 'admin@nestle.com', password: 'password123', dashboard: '/admin/analytics' },
-  pm: { email: 'pm@nestle.com', password: 'password123', dashboard: '/pm/insights' },
-  stockMgr: { email: 'sm@nestle.com', password: 'password123', dashboard: '/stock/insights' },
+  pm: { email: 'pm@nestle.com', password: 'password123', dashboard: '/promotion-manager/insights' },
+  stockMgr: { email: 'sm@nestle.com', password: 'password123', dashboard: '/stock-manager/insights' },
   retailer: { email: 'retailer1@test.com', password: 'password123', dashboard: '/retailer/insights' }
 };
 
