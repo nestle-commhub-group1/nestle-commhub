@@ -125,9 +125,20 @@ app.get('/', (req, res) => {
   res.json({ message: 'Nestlé CommHub API is running 🚀' });
 });
 
-// Health check — returns minimal status only (no internal info exposed)
+// Health check — returns minimal status and database connection state
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  const dbStatus = mongoose.connection.readyState;
+  const statusMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  res.json({ 
+    status: 'ok', 
+    database: statusMap[dbStatus] || 'unknown',
+    readyState: dbStatus
+  });
 });
 
 /* ─── Server Start ────────────────────────────────────────────────────────── */

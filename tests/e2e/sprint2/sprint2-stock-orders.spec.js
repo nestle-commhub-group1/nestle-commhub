@@ -119,11 +119,11 @@ test.describe('Sprint 3: Stock Management System (21 Cases)', () => {
   test('TC-APPROVE-001: Stock Manager processes pending order', async ({ page }) => {
     await login(page, accounts.stock_manager.email, password);
     await page.goto(`${baseUrl}/stock-manager/orders`);
-    const processBtn = page.locator('button:has-text("Process")').first();
+    const processBtn = page.locator('button:has-text("View & Process")').first();
     if (await processBtn.isVisible()) {
       await processBtn.click();
       await page.selectOption('select', 'accepted');
-      await page.click('button:has-text("Update")');
+      await page.click('button:has-text("Update Order Details")');
       await expect(page.locator('text=accepted').first()).toBeVisible();
     }
   });
@@ -131,12 +131,12 @@ test.describe('Sprint 3: Stock Management System (21 Cases)', () => {
   test('TC-APPROVE-002: Stock Manager rejects an order', async ({ page }) => {
     await login(page, accounts.stock_manager.email, password);
     await page.goto(`${baseUrl}/stock-manager/orders`);
-    const processBtn = page.locator('button:has-text("Process")').first();
+    const processBtn = page.locator('button:has-text("View & Process")').first();
     if (await processBtn.isVisible()) {
       await processBtn.click();
-      await page.selectOption('select', 'rejected');
-      await page.click('button:has-text("Update")');
-      await expect(page.locator('text=rejected').first()).toBeVisible();
+      await page.selectOption('select', 'denied');
+      await page.click('button:has-text("Update Order Details")');
+      await expect(page.locator('text=denied').first()).toBeVisible();
     }
   });
 

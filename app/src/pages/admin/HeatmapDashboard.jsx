@@ -127,9 +127,10 @@ const HeatmapDashboard = ({ embedded = false }) => {
 
     Object.keys(provinceMap).forEach(province => {
       const data = provinceMap[province];
-      data.issueRate = data.totalRetailers > 0 ? (data.issueCount / (data.totalRetailers * 2)) : 0;
+      data.issueRate = data.totalRetailers > 0 ? (data.issueCount / data.totalRetailers) : 0; // Removed division by 2 to boost
       
-      if (data.issueRate >= 0.25) data.color = '#E74C3C';
+      if (data.issueRate >= 0.5) data.color = '#8B0000';
+      else if (data.issueRate >= 0.25) data.color = '#E74C3C';
       else if (data.issueRate >= 0.15) data.color = '#E67E22';
       else if (data.issueRate >= 0.05) data.color = '#F1C40F';
       else data.color = '#2ECC71';

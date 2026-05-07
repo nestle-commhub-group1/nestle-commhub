@@ -93,12 +93,15 @@ const UserManagement = () => {
     }
   };
 
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(null);
+
   return (
     <AdminLayout>
       <div className="space-y-6 pb-10">
         <div className="flex justify-between items-center">
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">User Management</h1>
-          <button className="bg-nestle-brown text-white px-5 py-2.5 rounded-[12px] text-[14px] font-bold flex items-center shadow-sm hover:bg-[#2e1f15] transition-colors">
+          <button onClick={() => setShowAddModal(true)} className="bg-nestle-brown text-white px-5 py-2.5 rounded-[12px] text-[14px] font-bold flex items-center shadow-sm hover:bg-[#2e1f15] transition-colors">
             <Plus size={18} className="mr-2" /> Add New User
           </button>
         </div>
@@ -210,7 +213,7 @@ const UserManagement = () => {
                             >
                               {u.isActive ? 'Deactivate' : 'Activate'}
                             </button>
-                            <button className="text-gray-400 font-bold hover:text-nestle-brown transition-colors">Details</button>
+                            <button onClick={() => setShowDetailsModal(u)} className="text-gray-400 font-bold hover:text-nestle-brown transition-colors">Details</button>
                           </div>
                         </td>
                       </tr>
@@ -232,8 +235,51 @@ const UserManagement = () => {
             )}
           </div>
         </div>
-
       </div>
+
+      {showAddModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-white rounded-[20px] shadow-2xl p-6 max-w-sm w-full pointer-events-auto">
+              <h3 className="text-[18px] font-extrabold text-[#2C1810] mb-4">Add New User</h3>
+              <p className="text-[13px] text-gray-500 mb-6">User creation is currently restricted to backend seeding for security in this sprint.</p>
+              <button onClick={() => setShowAddModal(false)} className="w-full bg-[#3D2B1F] text-white font-bold py-3 rounded-[12px] hover:bg-[#2C1810]">
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showDetailsModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => setShowDetailsModal(null)}></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-white rounded-[20px] shadow-2xl p-6 max-w-md w-full pointer-events-auto space-y-4">
+              <div className="flex items-center space-x-4 mb-4 border-b border-gray-100 pb-4">
+                <div className="w-12 h-12 rounded-full bg-nestle-brown text-white flex items-center justify-center text-[18px] font-bold">
+                  {showDetailsModal.fullName.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="text-[18px] font-extrabold text-[#2C1810]">{showDetailsModal.fullName}</h3>
+                  <span className={`inline-block px-2 py-0.5 rounded-[4px] text-[10px] font-bold border mt-1 ${getRoleBadge(showDetailsModal.role)}`}>
+                    {getRoleLabel(showDetailsModal.role)}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2 text-[14px]">
+                <p className="flex items-center text-gray-600"><Mail size={16} className="mr-3 text-gray-400" /> {showDetailsModal.email}</p>
+                {showDetailsModal.phone && <p className="flex items-center text-gray-600"><Phone size={16} className="mr-3 text-gray-400" /> {showDetailsModal.phone}</p>}
+                <p className="flex items-center text-gray-600"><Calendar size={16} className="mr-3 text-gray-400" /> Joined: {formatDate(showDetailsModal.createdAt)}</p>
+              </div>
+              <button onClick={() => setShowDetailsModal(null)} className="w-full mt-6 bg-gray-100 text-gray-700 font-bold py-3 rounded-[12px] hover:bg-gray-200">
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </AdminLayout>
   );
 };

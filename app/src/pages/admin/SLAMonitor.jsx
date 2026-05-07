@@ -1,14 +1,23 @@
-import React from 'react';
-import { Target, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, AlertCircle, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import AdminLayout from '../../components/layout/AdminLayout';
 
 const SLAMonitor = () => {
+  const [period, setPeriod] = useState('Last 30 days');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, [period]);
+
   const regionalSLA = [
-    { region: 'Western Province', total: 48, resolved: 41, sla: '85%', status: 'On Track', statusColor: 'text-nestle-success bg-green-50 border-green-200' },
-    { region: 'Central Province', total: 31, resolved: 24, sla: '77%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
-    { region: 'Southern Province', total: 27, resolved: 21, sla: '78%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
-    { region: 'Northern Province', total: 22, resolved: 15, sla: '68%', status: 'Breached', statusColor: 'text-nestle-danger bg-red-50 border-red-200' },
-    { region: 'Eastern Province', total: 14, resolved: 10, sla: '71%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' }
+    { region: 'Western Province', total: period === 'Last 7 days' ? 12 : period === 'This Quarter' ? 124 : 48, resolved: period === 'Last 7 days' ? 10 : period === 'This Quarter' ? 110 : 41, sla: '85%', status: 'On Track', statusColor: 'text-nestle-success bg-green-50 border-green-200' },
+    { region: 'Central Province', total: period === 'Last 7 days' ? 8 : period === 'This Quarter' ? 95 : 31, resolved: period === 'Last 7 days' ? 5 : period === 'This Quarter' ? 80 : 24, sla: '77%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
+    { region: 'Southern Province', total: period === 'Last 7 days' ? 6 : period === 'This Quarter' ? 82 : 27, resolved: period === 'Last 7 days' ? 5 : period === 'This Quarter' ? 70 : 21, sla: '78%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' },
+    { region: 'Northern Province', total: period === 'Last 7 days' ? 4 : period === 'This Quarter' ? 60 : 22, resolved: period === 'Last 7 days' ? 2 : period === 'This Quarter' ? 45 : 15, sla: '68%', status: 'Breached', statusColor: 'text-nestle-danger bg-red-50 border-red-200' },
+    { region: 'Eastern Province', total: period === 'Last 7 days' ? 2 : period === 'This Quarter' ? 40 : 14, resolved: period === 'Last 7 days' ? 2 : period === 'This Quarter' ? 35 : 10, sla: '71%', status: 'At Risk', statusColor: 'text-nestle-warning bg-yellow-50 border-yellow-200' }
   ];
 
   const breaches = [
@@ -24,7 +33,7 @@ const SLAMonitor = () => {
       <div className="space-y-6 pb-10">
         <div className="flex justify-between items-center">
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">SLA Monitor</h1>
-          <select className="bg-white border border-gray-200 text-nestle-brown font-bold text-[14px] px-4 py-2.5 rounded-[12px] shadow-sm outline-none focus:border-nestle-brown">
+          <select value={period} onChange={(e) => setPeriod(e.target.value)} className="bg-white border border-gray-200 text-nestle-brown font-bold text-[14px] px-4 py-2.5 rounded-[12px] shadow-sm outline-none focus:border-nestle-brown">
             <option>Last 30 days</option>
             <option>Last 7 days</option>
             <option>This Quarter</option>

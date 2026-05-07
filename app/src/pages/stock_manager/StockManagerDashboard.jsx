@@ -101,11 +101,11 @@ const StockManagerDashboard = () => {
             Quick Inventory Actions
           </h2>
           <div className="space-y-4">
-            <button className="w-full text-left p-4 rounded-2xl border border-gray-100 hover:border-nestle-brown hover:bg-nestle-brown/5 transition-all group">
+            <button onClick={() => window.location.href = '/stock-manager/inventory'} className="w-full text-left p-4 rounded-2xl border border-gray-100 hover:border-nestle-brown hover:bg-nestle-brown/5 transition-all group">
               <span className="block font-black text-nestle-brown group-hover:translate-x-1 transition-transform">Add New Product Catalog</span>
               <span className="text-sm text-gray-500">Add new items to Nestlé's product line.</span>
             </button>
-            <button className="w-full text-left p-4 rounded-2xl border border-gray-100 hover:border-nestle-brown hover:bg-nestle-brown/5 transition-all group">
+            <button onClick={() => window.location.href = '/stock-manager/inventory'} className="w-full text-left p-4 rounded-2xl border border-gray-100 hover:border-nestle-brown hover:bg-nestle-brown/5 transition-all group">
               <span className="block font-black text-nestle-brown group-hover:translate-x-1 transition-transform">Bulk Stock Update</span>
               <span className="text-sm text-gray-500">Update quantity for multiple products at once.</span>
             </button>

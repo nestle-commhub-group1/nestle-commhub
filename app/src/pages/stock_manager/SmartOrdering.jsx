@@ -261,17 +261,22 @@ export default function SmartOrdering() {
 
         {/* ── Section 1: Top Demand Products ── */}
         <section>
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="text-xl">🚀</span>
-            <h2 className="text-[16px] font-black text-[#2C1810] uppercase tracking-widest">
-              Top Demand Products
-            </h2>
-            {!recLoading && (
-              <span className="bg-gray-100 text-gray-500 text-[11px] font-black px-2 py-0.5 rounded-full">
-                {recommendations.length} products
-              </span>
-            )}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">🚀</span>
+              <h2 className="text-[16px] font-black text-[#2C1810] uppercase tracking-widest">
+                Top Demand Products
+              </h2>
+              {!recLoading && (
+                <span className="bg-gray-100 text-gray-500 text-[11px] font-black px-2 py-0.5 rounded-full">
+                  {recommendations.length} products
+                </span>
+              )}
+            </div>
           </div>
+          <p className="text-[13px] text-gray-500 font-medium mb-4">
+            Review AI-predicted stock demands. <strong>Click any row</strong> to view its 4-week forecast below. Use <strong>Quick Order</strong> to instantly generate a purchase order, or click the <strong>⭐ (Star)</strong> to flag a product for your watchlist.
+          </p>
 
           <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm overflow-hidden">
             {recLoading ? (

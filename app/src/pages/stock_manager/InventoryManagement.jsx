@@ -91,14 +91,12 @@ const InventoryManagement = () => {
 
   return (
     <StockManagerLayout>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-black text-nestle-brown">Manage Inventory</h1>
-          <p className="text-gray-500 font-medium">Add, edit, or update Nestlé products and stock levels.</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-nestle-brown mb-2">Manage Inventory</h1>
+        <p className="text-gray-500 font-medium mb-6">Add, edit, or update Nestlé products and stock levels.</p>
         <button 
           onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-          className="bg-nestle-brown text-white px-6 py-3 rounded-xl font-black flex items-center shadow-lg shadow-nestle-brown/20 hover:-translate-y-1 transition-all"
+          className="bg-nestle-brown text-white px-6 py-3 rounded-xl font-black flex items-center w-max shadow-lg shadow-nestle-brown/20 hover:-translate-y-1 transition-all"
         >
           <Plus size={20} className="mr-2" />
           Add Product
@@ -123,7 +121,7 @@ const InventoryManagement = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0">
-                        <img src={product.image} alt="" className="w-full h-full object-cover rounded-lg" />
+                        <img src={product.image || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }} />
                       </div>
                       <div>
                         <p className="font-bold text-nestle-brown">{product.name}</p>

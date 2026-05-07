@@ -156,6 +156,30 @@ async function seedDatabase() {
     });
     console.log('✅ Stock Manager created:', stockManager.fullName);
 
+    const distributor1 = await User.create({
+      fullName: 'Kamal Jayawardena',
+      email: 'dist1@nestle.com',
+      password: 'password123',
+      role: 'distributor',
+      employeeId: 'NES-DIST-001',
+      department: 'Logistics',
+      phone: '+94112345686',
+      isActive: true
+    });
+    console.log('✅ Distributor 1 created:', distributor1.fullName);
+
+    const distributor2 = await User.create({
+      fullName: 'Saman Kumara',
+      email: 'dist2@nestle.com',
+      password: 'password123',
+      role: 'distributor',
+      employeeId: 'NES-DIST-002',
+      department: 'Logistics',
+      phone: '+94112345687',
+      isActive: true
+    });
+    console.log('✅ Distributor 2 created:', distributor2.fullName);
+
     const retailers = [];
     const retailerSeeds = [
       { name: 'Aruna Silva', biz: 'Silva Super Center', prov: 'Western Province', dist: 'Colombo', lat: 6.9271, lng: 79.8612, email: 'retailer1@test.com' },
@@ -344,6 +368,7 @@ async function seedDatabase() {
         }],
         totalAmount: amount,
         status: ['delivered', 'shipped', 'accepted', 'pending'][i % 4],
+        distributor: i % 2 === 0 ? distributor1._id : distributor2._id,
         createdAt: new Date(Date.now() - (i * 12 * 60 * 60 * 1000)) // Spread over past 20 days
       });
     }

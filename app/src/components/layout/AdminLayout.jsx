@@ -108,7 +108,6 @@ const AdminLayout = ({ children }) => {
 
   const navItems = [
     { label: 'Home', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
-    { label: 'All Tickets', path: '/admin/dashboard', icon: <FileText size={20} /> }, // Redirect for now
     { label: 'User Management', path: '/admin/users', icon: <Users size={20} /> },
     { label: 'Promotions', path: '/admin/promotions', icon: <Tag size={20} /> },
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChart2 size={20} /> },

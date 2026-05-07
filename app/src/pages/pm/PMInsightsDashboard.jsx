@@ -100,7 +100,7 @@ const PMInsightsDashboard = () => {
   };
 
   const fetchAll = useCallback(async () => {
-    const qs = `?period=${period}d`;
+    const qs = period === 'all' ? '?period=all' : `?period=${period}d`;
     apiFetch(`/api/analytics/summary${qs}`, 'summary').then(setSummary);
     apiFetch(`/api/analytics/promotions`, 'promos').then(setPromotions);
     apiFetch(`/api/analytics/conversions${qs}`, 'conversions').then(setConversions);
@@ -128,11 +128,17 @@ const PMInsightsDashboard = () => {
     }],
   };
 
-  const conversionData = conversions ? {
-    labels: conversions.map(c => c.promotionName),
+  const filteredConversions = conversions
+    ? promoFilter === 'all'
+      ? conversions
+      : conversions.filter(c => c.promotionId === promoFilter)
+    : [];
+
+  const conversionData = filteredConversions.length > 0 ? {
+    labels: filteredConversions.map(c => c.promotionName),
     datasets: [{
       label: 'Conversion %',
-      data: conversions.map(c => c.conversionRate),
+      data: filteredConversions.map(c => c.conversionRate),
       backgroundColor: '#F59E0B',
       borderRadius: 4,
     }],
@@ -179,18 +185,18 @@ const PMInsightsDashboard = () => {
     ],
   } : null;
 
-  const fulfillmentData = conversions ? {
-    labels: conversions.map(c => c.promotionName),
+  const fulfillmentData = filteredConversions.length > 0 ? {
+    labels: filteredConversions.map(c => c.promotionName),
     datasets: [
       {
         label: 'Fulfilled',
-        data: conversions.map(c => c.fulfillmentRate),
+        data: filteredConversions.map(c => c.fulfillmentRate),
         backgroundColor: '#22C55E',
         borderRadius: 4,
       },
       {
         label: 'Rejected',
-        data: conversions.map(c => parseFloat((100 - c.fulfillmentRate).toFixed(1))),
+        data: filteredConversions.map(c => parseFloat((100 - c.fulfillmentRate).toFixed(1))),
         backgroundColor: '#FCA5A5',
         borderRadius: 4,
       },

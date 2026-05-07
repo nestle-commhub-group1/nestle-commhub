@@ -112,7 +112,7 @@ const InsightsDashboard = () => {
   };
 
   const fetchAll = useCallback(async () => {
-    const qs = `?period=${period}d${region !== 'all' ? `&region=${encodeURIComponent(region)}` : ''}`;
+    const qs = `?period=${period === 'all' ? 'all' : period + 'd'}${region !== 'all' ? `&region=${encodeURIComponent(region)}` : ''}`;
     apiFetch(`/api/analytics/summary${qs}`, 'summary').then(setSummary);
     apiFetch(`/api/analytics/promotions${qs}`, 'promos').then(setPromotions);
     apiFetch(`/api/analytics/stock${qs}`, 'stock').then(setStock);
@@ -293,13 +293,13 @@ const InsightsDashboard = () => {
                   <div key={m.label} className="bg-[#F8F7F5] rounded-[20px] border border-[#F0EDE8] p-5">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">{m.label}</p>
                     <div className="flex items-center justify-around">
-                      <div className="text-center">
-                        <p className="text-[20px] font-black text-blue-600">{(m.b2b || 0).toLocaleString()}{m.unit}</p>
+                      <div className="text-center w-1/2 px-1">
+                        <p className="text-[16px] font-black text-blue-600 break-all">{(m.b2b || 0).toLocaleString()}{m.unit}</p>
                         <p className="text-[9px] font-black text-blue-400 uppercase mt-1">B2B</p>
                       </div>
                       <div className="h-8 w-px bg-gray-200" />
-                      <div className="text-center">
-                        <p className="text-[20px] font-black text-purple-600">{(m.b2c || 0).toLocaleString()}{m.unit}</p>
+                      <div className="text-center w-1/2 px-1">
+                        <p className="text-[16px] font-black text-purple-600 break-all">{(m.b2c || 0).toLocaleString()}{m.unit}</p>
                         <p className="text-[9px] font-black text-purple-400 uppercase mt-1">B2C</p>
                       </div>
                     </div>

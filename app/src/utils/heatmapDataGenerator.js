@@ -14,8 +14,8 @@ export const generateHeatmapData = (retailerData) => {
     const rejectionRate = retailer.rejectionRate || 0;
     
     // Calculate intensity (0-1 scale)
-    // Add a base intensity of 0.1 so healthy retailers show up as "Stable" green
-    let intensity = 0.1 + Math.min((rejectionRate / 30) + (issueCount * 0.1), 0.9);
+    // Boosted multipliers to make issue severities visible
+    let intensity = 0.1 + Math.min((rejectionRate / 10) + (issueCount * 0.4), 0.9);
     
     if (intensity > 0) {
       // Center point
