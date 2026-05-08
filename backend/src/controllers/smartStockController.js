@@ -234,7 +234,7 @@ const getSmartStockRecommendations = async (req, res) => {
 
     const sorted = results
       .filter(r => r.demandScore >= 0) // show all — frontend can filter
-      .sort((a, b) => b.demandScore - a.demandScore);
+      .sort((a, b) => b.avgRequestsPerWeek - a.avgRequestsPerWeek);
 
     return res.status(200).json({ success: true, data: sorted });
   } catch (error) {
