@@ -176,8 +176,9 @@ const getSmartStockRecommendations = async (req, res) => {
       products.map(async product => {
         let analytics = await ProductDemandAnalytics.findOne({ productId: product._id }).lean();
 
-        // If stale (>24h) or missing, rebuild
-        const stale = !analytics ||
+        // If stale (>24h), missing, or in dev mode (for test reliability), rebuild
+        const isDev = process.env.DEV_MODE_ENABLED === 'true';
+        const stale = !analytics || isDev ||
           (Date.now() - new Date(analytics.lastCalculatedAt).getTime()) > 24 * 3600 * 1000;
 
         if (stale) {

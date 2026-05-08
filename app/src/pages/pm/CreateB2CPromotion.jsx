@@ -173,7 +173,7 @@ export default function CreateB2CPromotion() {
           </p>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {/* Names */}
           <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm p-6 space-y-5">
             <h2 className="text-[13px] font-black text-gray-400 uppercase tracking-widest">Promotion Identity</h2>

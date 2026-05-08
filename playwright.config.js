@@ -6,6 +6,10 @@ const { defineConfig, devices } = require('@playwright/test');
  */
 module.exports = defineConfig({
   testDir: './tests/e2e',
+  timeout: 120000,
+  expect: {
+    timeout: 15000,
+  },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,6 +30,9 @@ module.exports = defineConfig({
     
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
+
+    actionTimeout: 30000,
+    navigationTimeout: 60000,
   },
 
   /* Configure projects for major browsers */

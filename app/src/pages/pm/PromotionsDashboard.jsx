@@ -35,7 +35,7 @@ function AnalyticsStrip({ promotions, tab }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       {items.map(i=>(
-        <div key={i.label} className="bg-white rounded-[14px] border border-[#E0DBD5] p-4 shadow-sm" style={{borderLeft:`3px solid ${i.color}`}}>
+        <div key={i.label} data-testid="metric-card" className="bg-white rounded-[14px] border border-[#E0DBD5] p-4 shadow-sm" style={{borderLeft:`3px solid ${i.color}`}}>
           <div className="flex items-center space-x-1.5 mb-1">
             <span className="text-sm">{i.icon}</span>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{i.label}</p>

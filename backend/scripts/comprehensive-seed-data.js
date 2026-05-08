@@ -388,10 +388,11 @@ async function seedNotifications(users) {
 async function seedDemandAnalytics(products) {
   const analytics = [];
 
-  for (const product of products) {
+  for (let idx = 0; idx < products.length; idx++) {
+    const product = products[idx];
     analytics.push({
       productId: product._id,
-      demandScore: 5 + Math.random() * 5,
+      demandScore: (idx === 0) ? 9.2 : (idx === 1) ? 8.5 : (Math.random() * 3 + 6).toFixed(1),
       avgRequestsPerWeek: 200 + Math.floor(Math.random() * 400),
       fulfillmentRate: 0.75 + Math.random() * 0.25,
       growthTrend: -0.1 + Math.random() * 0.3,

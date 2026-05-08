@@ -325,7 +325,13 @@ async function seedDatabase() {
         minUnitsRequired: 200,
         discountPercentage: 12,
         targetRetailers: ['ALL']
-      }
+      },
+      participatingRetailers: retailers.slice(0, 8).map(r => ({
+        retailerId: r._id, optedIn: true, rating: 4.2 + Math.random(), feedback: 'Interested in this deal.'
+      })),
+      salesData: retailers.slice(0, 4).map(r => ({
+        retailerId: r._id, unitsSold: Math.floor(Math.random() * 300) + 200, rewardAmount: 5000
+      }))
     });
 
     const activeB2CPromo = await Promotion.create({
@@ -396,10 +402,11 @@ async function seedDatabase() {
     // ==================== STEP 6: DEMAND ANALYTICS ====================
     console.log('\n📊 Creating demand analytics...');
 
-    for (const product of products) {
+    for (let idx = 0; idx < products.length; idx++) {
+      const product = products[idx];
       await ProductDemandAnalytics.create({
         productId: product._id,
-        demandScore: (Math.random() * 3 + 7).toFixed(1),
+        demandScore: (idx === 0) ? 9.5 : (idx === 1) ? 8.8 : (Math.random() * 3 + 6).toFixed(1),
         avgRequestsPerWeek: Math.floor(Math.random() * 500) + 100,
         peakDemandDay: ['MONDAY', 'FRIDAY', 'SATURDAY'][Math.floor(Math.random() * 3)],
         seasonalDemand: { SUMMER: 1.2, MONSOON: 0.9, WINTER: 1.4, SPRING: 1.1 },
