@@ -263,22 +263,42 @@ const predictProductDemand = async (req, res) => {
     }
 
     const base       = analytics?.avgRequestsPerWeek || 50;
-    const trend      = analytics?.growthTrend || 0;
+    const trend      = Math.min(Math.max(analytics?.growthTrend || 0, -0.5), 0.5); // Dampened trend (-50% to +50%)
     const season     = getCurrentSeason();
     const seasonMult = analytics?.seasonalDemand?.[season]
       ? analytics.seasonalDemand[season] / base
       : 1.0;
 
-    // Apply compound growth + seasonal multiplier per week
+    // Helper for date ranges
+    const getWeekRange = (weekNum) => {
+      const start = new Date();
+      start.setDate(start.getDate() + (weekNum - 1) * 7);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      
+      const options = { month: 'short', day: 'numeric' };
+      return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+    };
+
+    // Apply linear growth + seasonal multiplier per week
     const weeks = [1, 2, 3, 4].map(w => {
-      const growthFactor  = Math.pow(1 + trend * 0.5, w);  // dampened
+      // Linear growth: Base * (1 + dampenedTrend * w/4)
+      const growthFactor  = 1 + (trend * (w / 4)); 
       const predicted     = Math.round(base * growthFactor * seasonMult);
-      return { week: w, predicted: Math.max(predicted, 0) };
+      
+      return { 
+        week: w, 
+        label: getWeekRange(w),
+        predictedUnits: Math.max(predicted, 0),
+        predictedValueLKR: Math.max(predicted * product.price, 0)
+      };
     });
 
     const trendLabel =
       trend > 0.05  ? 'INCREASING' :
       trend < -0.05 ? 'DECREASING' : 'STABLE';
+
+    const rationale = `Based on ${analytics?.avgRequestsPerWeek?.toFixed(0) || 0} units avg. weekly demand, adjusted for ${trendLabel.toLowerCase()} trend (${(trend * 100).toFixed(1)}%) and ${season.toLowerCase()} seasonality.`;
 
     const confidence = Math.min(0.65 + (analytics?.demandScore || 0) * 0.035, 0.97);
 
@@ -287,8 +307,10 @@ const predictProductDemand = async (req, res) => {
       productId,
       productName:    product.name,
       currentStock:   product.stockQuantity,
+      unitPrice:      product.price,
       weeks,
       trend:          trendLabel,
+      rationale,
       confidence:     parseFloat(confidence.toFixed(2)),
       peakDemandDay:  analytics?.peakDemandDay || 'MONDAY',
       currentSeason:  season,

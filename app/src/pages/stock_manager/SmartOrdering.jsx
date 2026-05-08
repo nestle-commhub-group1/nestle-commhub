@@ -316,6 +316,7 @@ export default function SmartOrdering() {
             productName={selectedProduct?.name || ''}
             currentStock={selectedProduct?.currentStock || 0}
             loading={forecastLoading}
+            rationale={forecast?.rationale || ''}
           />
         </section>
 

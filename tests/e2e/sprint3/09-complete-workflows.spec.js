@@ -93,12 +93,12 @@ test.describe('SPRINT 3: Complete User Workflows', () => {
     
     const productName = await firstProduct.locator('td').nth(1).locator('p').first().textContent();
     
-    // Look for HOW button (star)
-    const howBtn = firstProduct.locator('button[title*="HOW"]');
+    // Look for Promotion button (Flame icon)
+    const howBtn = firstProduct.locator('button[title*="Promote"]');
     await howBtn.click();
     
     // Should see success toast
-    const toast = page.locator('div').filter({ hasText: /Marked|Removed/ });
+    const toast = page.locator('div').filter({ hasText: /Promoted|Stopped/ });
     await expect(toast).toBeVisible({ timeout: 5000 });
     
     console.log(`✅ Product ${productName} marked as HOW`);
@@ -215,3 +215,14 @@ test.describe('SPRINT 3: Complete User Workflows', () => {
 
 });
 
+
+test('WORKFLOW 5: Retailer Views Order Details', async ({ page }) => {
+  await loginAs(page, 'retailer');
+  await page.goto('http://localhost:5173/retailer/stock-requests');
+  await page.waitForLoadState('networkidle');
+  await page.click('button:has-text("Order History")');
+  const firstOrder = page.locator('div').filter({ hasText: /Order #/i }).first();
+  await firstOrder.locator('button:has-text("View Details")').click();
+  await expect(page.locator('h3').filter({ hasText: /#[0-9A-F]+/i })).toBeVisible();
+  console.log('✅ Retailer can view order item details');
+});
