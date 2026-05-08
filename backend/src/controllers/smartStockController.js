@@ -27,9 +27,9 @@ const SM_ROLES = ['stock_manager', 'hq_admin'];
 /** Current meteorological season (Southern-hemisphere aware for Sri Lanka). */
 function getCurrentSeason() {
   const month = new Date().getMonth() + 1; // 1-12
-  if (month >= 6 && month <= 9)  return 'MONSOON'; // June–Sep SW monsoon
-  if (month >= 10 && month <= 1) return 'WINTER';  // Oct–Jan NE monsoon
-  if (month >= 3 && month <= 5)  return 'SUMMER';  // Mar–May dry season
+  if (month >= 6 && month <= 9)   return 'MONSOON'; // June–Sep SW monsoon
+  if (month >= 10 || month <= 1)  return 'WINTER';  // Oct–Jan NE monsoon
+  if (month >= 3 && month <= 5)   return 'SUMMER';  // Mar–May dry season
   return 'SPRING';                                   // Feb
 }
 
@@ -290,7 +290,8 @@ const predictProductDemand = async (req, res) => {
         week: w, 
         label: getWeekRange(w),
         predictedUnits: Math.max(predicted, 0),
-        predictedValueLKR: Math.max(predicted * product.price, 0)
+        predictedValueLKR: Math.max(predicted * (product.price || 0), 0),
+        predicted: Math.max(predicted, 0) // Backwards compatibility for old frontend
       };
     });
 

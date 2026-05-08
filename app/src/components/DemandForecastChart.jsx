@@ -105,13 +105,15 @@ export default function DemandForecastChart({
               callbacks: {
                 label: (ctx) => {
                   const w = weeks[ctx.dataIndex];
-                  if (ctx.dataset.label === 'Predicted Units') {
+                  if (ctx.dataset.label === 'Predicted Units' && w) {
+                    const pUnits = w.predictedUnits ?? 0;
+                    const pValue = w.predictedValueLKR ?? 0;
                     return [
-                      ` Predicted Demand: ${w.predictedUnits.toLocaleString()} units`,
-                      ` Estimated Value: LKR ${w.predictedValueLKR.toLocaleString()}`
+                      ` Predicted Demand: ${pUnits.toLocaleString()} units`,
+                      ` Estimated Value: LKR ${pValue.toLocaleString()}`
                     ];
                   }
-                  return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} units`;
+                  return ` ${ctx.dataset.label}: ${(ctx.parsed.y ?? 0).toLocaleString()} units`;
                 }
               }
             },
@@ -126,7 +128,7 @@ export default function DemandForecastChart({
               ticks: {
                 font:     { weight: '700', size: 11 },
                 color:    '#6B7280',
-                callback: v => v.toLocaleString(),
+                callback: v => (v ?? 0).toLocaleString(),
               },
               beginAtZero: true,
             },
@@ -185,9 +187,9 @@ export default function DemandForecastChart({
       {/* Meta badges */}
       <div className="flex flex-wrap gap-2">
         {[
-          { label: 'Confidence',     value: `${Math.round(confidence * 100)}%`,     color: '#3B82F6' },
-          { label: 'Peak Day',       value: peakDemandDay.charAt(0) + peakDemandDay.slice(1).toLowerCase(), color: '#F59E0B' },
-          { label: 'Current Stock',  value: `${currentStock.toLocaleString()} units`, color: '#8B5CF6' },
+          { label: 'Confidence',     value: `${Math.round((confidence ?? 0.8) * 100)}%`,     color: '#3B82F6' },
+          { label: 'Peak Day',       value: (peakDemandDay ?? 'Monday').charAt(0) + (peakDemandDay ?? 'Monday').slice(1).toLowerCase(), color: '#F59E0B' },
+          { label: 'Current Stock',  value: `${(currentStock ?? 0).toLocaleString()} units`, color: '#8B5CF6' },
         ].map(b => (
           <div
             key={b.label}
@@ -220,21 +222,24 @@ export default function DemandForecastChart({
       {!loading && weeks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {weeks.map((w, i) => {
-            const prev    = i > 0 ? weeks[i - 1].predictedUnits : w.predictedUnits;
-            const delta   = i > 0 ? Math.round(((w.predictedUnits - prev) / prev) * 100) : 0;
-            const isUp    = delta > 0;
+            const currentUnits = w.predictedUnits ?? 0;
+            const prevUnits    = i > 0 ? (weeks[i - 1].predictedUnits ?? currentUnits) : currentUnits;
+            const delta        = prevUnits > 0 ? Math.round(((currentUnits - prevUnits) / prevUnits) * 100) : 0;
+            const isUp         = delta > 0;
+            const currentValue = w.predictedValueLKR ?? 0;
+
             return (
               <div key={w.week} className="bg-[#FAFAF9] rounded-[16px] p-4 border border-[#F0EDE8] hover:border-orange-200 transition-colors group relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-8 h-8 bg-orange-100 rounded-bl-full opacity-0 group-hover:opacity-40 transition-opacity"></div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                  {w.label.split(' - ')[0]}
+                  {(w.label ?? `Week ${w.week}`).split(' - ')[0]}
                 </p>
                 <div className="space-y-0.5">
                   <p className="text-[18px] font-black text-[#2C1810]">
-                    {w.predictedUnits.toLocaleString()} <span className="text-[10px] font-bold text-gray-400">units</span>
+                    {currentUnits.toLocaleString()} <span className="text-[10px] font-bold text-gray-400">units</span>
                   </p>
                   <p className="text-[11px] font-black text-orange-700">
-                    LKR {w.predictedValueLKR.toLocaleString()}
+                    LKR {currentValue.toLocaleString()}
                   </p>
                 </div>
                 {i > 0 && (
