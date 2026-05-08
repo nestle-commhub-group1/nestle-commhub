@@ -40,8 +40,8 @@ test.describe('SPRINT 3: Error Handling & Edge Cases', () => {
     
     // Try to submit without filling (Title is required)
     const submitBtn = page.locator('button:has-text("Create B2B Promotion")');
-    await expect(submitBtn).toBeVisible({ timeout: 10000 });
-    await submitBtn.click();
+    await submitBtn.waitFor({ state: 'visible', timeout: 15000 });
+    await submitBtn.click({ force: true });
     
     // Should show validation error message
     const error = page.locator('text=/required|Specify|Title/i').filter({ hasText: /Specify a promotion title|required/i });

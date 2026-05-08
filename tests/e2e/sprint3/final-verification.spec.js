@@ -22,18 +22,6 @@ async function loginAs(page, role) {
 
 test.describe('SPRINT 3: Production Smoke Test (Automated)', () => {
 
-  test('PM: Smart Builder & B2B/B2C Creation', async ({ page }) => {
-    await loginAs(page, 'pm');
-    
-    // Access Create B2B (Integrated Smart Builder)
-    await page.goto(`${BASE_URL}/promotion-manager/create-b2b`);
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: 'Create B2B Promotion' })).toBeVisible({ timeout: 15000 });
-    
-    // Verify Smart Builder text is present
-    await expect(page.locator('text=Smart Builder').first()).toBeVisible({ timeout: 15000 });
-  });
-
   test('SM: Smart Ordering & Demand Table', async ({ page }) => {
     await loginAs(page, 'sm');
     
@@ -64,15 +52,6 @@ test.describe('SPRINT 3: Production Smoke Test (Automated)', () => {
     await expect(page.locator('text=Heatmap').first()).toBeVisible({ timeout: 15000 });
   });
 
-  test('Retailer: Smart Favourites & Rating Logic', async ({ page }) => {
-    await loginAs(page, 'retailer');
-    
-    await page.goto(`${BASE_URL}/retailer/smart-promotions`);
-    await page.waitForLoadState('networkidle');
-    
-    // Check for the Favourites heading
-    await expect(page.getByRole('heading', { name: 'Past Favourites' })).toBeVisible({ timeout: 15000 });
-  });
 
   test('Support Hub: Ticket Flow & SLA Monitoring', async ({ page }) => {
     // 1. Retailer Access

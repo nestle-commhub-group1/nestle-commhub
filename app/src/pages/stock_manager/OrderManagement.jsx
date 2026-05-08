@@ -59,6 +59,19 @@ const OrderManagement = () => {
 
   const handleProcessSubmit = async (e) => {
     e.preventDefault();
+
+    // Block acceptance if stock is insufficient
+    if (processData.status === 'accepted') {
+      const insufficientItem = selectedOrder.items.find(item => 
+        (item.product?.stockQuantity || 0) < item.quantity
+      );
+      
+      if (insufficientItem) {
+        alert(`Cannot accept order: Insufficient stock for ${insufficientItem.product?.name}. Please add more inventory first.`);
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem('token');
       await axios.put(`${API_URL}/api/orders/${selectedOrder._id}/status`, processData, {
