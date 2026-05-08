@@ -123,6 +123,17 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Logic for stock deduction if accepted now (and wasn't before)
     if (status === "accepted" && oldStatus !== "accepted") {
+        // Validate stock levels first
+        for (const item of order.items) {
+            const product = await Product.findById(item.product);
+            if (!product || product.stockQuantity < item.quantity) {
+                return res.status(400).json({ 
+                    message: `Insufficient stock for ${product ? product.name : 'Unknown Product'}. Current stock: ${product ? product.stockQuantity : 0}. Please add more inventory first.` 
+                });
+            }
+        }
+
+        // Deduct stock
         for (const item of order.items) {
             await Product.findByIdAndUpdate(item.product, {
                 $inc: { stockQuantity: -item.quantity }

@@ -1,7 +1,7 @@
 /**
  * CreateB2CPromotion.jsx — Form for B2C customer-facing promotion offers.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Loader2, Sparkles, Copy, Percent, TrendingUp } from 'lucide-react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';

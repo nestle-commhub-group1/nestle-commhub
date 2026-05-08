@@ -11,7 +11,7 @@ const Notification = require('../models/Notification');
  */
 const getTopPerformingPromotions = async (req, res) => {
   try {
-    const promotions = await Promotion.find({ status: 'ended' }).lean();
+    const promotions = await Promotion.find({ status: 'archived' }).lean();
     
     const scored = promotions.map(p => {
       const optIns = p.participatingRetailers?.length || 0;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, useMap, Popup, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents, Popup, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
@@ -25,6 +25,25 @@ const MapResizer = () => {
       map.invalidateSize();
     }, 400);
   }, [map]);
+  return null;
+};
+
+const ZoomTracker = ({ setZoom }) => {
+  const map = useMapEvents({
+    zoomend: () => {
+      setZoom(map.getZoom());
+    },
+  });
+  return null;
+};
+
+const MapController = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, zoom, { duration: 1.5 });
+    }
+  }, [center, zoom, map]);
   return null;
 };
 
@@ -65,10 +84,12 @@ const HeatLayer = ({ data }) => {
 const HeatmapDashboard = ({ embedded = false }) => {
   const [retailerData, setRetailerData] = useState([]);
   const [selectedRetailer, setSelectedRetailer] = useState(null);
-  const [selectedProvince, setSelectedProvince] = useState(null);
+  const [selectedProvinceName, setSelectedProvinceName] = useState(null);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [zoom, setZoom] = useState(7.5);
+  const [mapConfig, setMapConfig] = useState({ center: [7.8731, 80.7718], zoom: 7.5 });
   const [filters, setFilters] = useState({
     region: 'all',
     issueType: 'all',
@@ -107,7 +128,9 @@ const HeatmapDashboard = ({ embedded = false }) => {
     });
 
     retailerData.forEach(retailer => {
-      const province = retailer.region || 'Unknown';
+      // Normalize province name: remove " Province" suffix if present
+      let province = (retailer.region || 'Unknown').replace(/\s+Province$/i, '').trim();
+      
       if (provinceMap[province]) {
         provinceMap[province].totalRetailers++;
         provinceMap[province].issueCount += (retailer.openTickets || 0);
@@ -165,10 +188,15 @@ const HeatmapDashboard = ({ embedded = false }) => {
   }, [filters]);
 
   const handleProvinceSelection = (name) => {
-    if (provinceMetrics[name]) {
-      setSelectedProvince(provinceMetrics[name]);
+    if (PROVINCE_COORDINATES[name]) {
+      const coords = PROVINCE_COORDINATES[name];
+      if (coords) {
+        setMapConfig({ center: [coords.lat, coords.lng], zoom: 9 });
+      }
+      setSelectedProvinceName(name);
       setSelectedRetailer(null);
       setShowDetailPanel(true);
+      setFilters(prev => ({ ...prev, region: name }));
     }
   };
 
@@ -187,6 +215,8 @@ const HeatmapDashboard = ({ embedded = false }) => {
     if (rate >= 15) return 'text-amber-600 font-bold';
     return 'text-green-600 font-bold';
   };
+
+  const selectedProvince = selectedProvinceName ? provinceMetrics[selectedProvinceName] : null;
 
   return (
     <div className={embedded ? "" : "p-8 min-h-screen bg-[#F5F3F0] font-sans"}>
@@ -218,6 +248,10 @@ const HeatmapDashboard = ({ embedded = false }) => {
             onChange={(e) => {
               setFilters(prev => ({ ...prev, region: e.target.value }));
               if (e.target.value !== 'all') handleProvinceSelection(e.target.value);
+              else {
+                setSelectedProvinceName(null);
+                setMapConfig({ center: [7.8731, 80.7718], zoom: 7.5 });
+              }
             }}
           >
             <option value="all">Full Country Coverage</option>
@@ -276,36 +310,60 @@ const HeatmapDashboard = ({ embedded = false }) => {
             </div>
           )}
           
-          <MapContainer center={[7.8731, 80.7718]} zoom={7.5} style={{ width: '100%', height: '100%', zIndex: 1 }}>
+          <MapContainer center={mapConfig.center} zoom={mapConfig.zoom} style={{ width: '100%', height: '100%', zIndex: 1 }}>
             <TileLayer 
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             <MapResizer />
+            <ZoomTracker setZoom={setZoom} />
+            <MapController center={mapConfig.center} zoom={mapConfig.zoom} />
             
             {/* Smooth Density Heat Layer */}
             {!loading && <HeatLayer data={heatmapPoints} />}
 
-            {/* Individual Retailer Markers (Minimalist dots) */}
+            {/* Province Hotspots (Visible when zoomed out and no specific province selected) */}
+            {zoom < 9 && filters.region === 'all' && Object.entries(PROVINCE_COORDINATES).map(([name, coords]) => (
+              <CircleMarker
+                key={`province-marker-${name}`}
+                center={[coords.lat, coords.lng]}
+                radius={25}
+                fillColor={provinceMetrics[name]?.color || '#2ECC71'}
+                color="white"
+                weight={2}
+                fillOpacity={0.3}
+                className="province-hit-area"
+                eventHandlers={{ click: () => handleProvinceSelection(name) }}
+              >
+                <Popup className="heatmap-tooltip">
+                  <div className="text-center">
+                    <p className="font-black text-[12px] text-[#2C1810]">{name} Province</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Click for regional breakdown</p>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+
+            {/* Individual Retailer Markers (Always visible, optimized for interaction) */}
             {retailerData.filter(r => r.latitude != null && r.longitude != null).map((r, i) => (
               <CircleMarker
                 key={`retailer-${r.id || i}`}
                 center={[r.latitude, r.longitude]}
-                radius={3}
+                radius={zoom < 9 ? 8 : zoom < 11 ? 6 : 4}
                 fillColor="white"
                 color="#2C1810"
-                weight={0.5}
-                fillOpacity={0.8}
+                weight={1}
+                fillOpacity={0.9}
                 eventHandlers={{ click: () => {
                   setSelectedRetailer(r);
-                  setSelectedProvince(null);
+                  setSelectedProvinceName(null);
                   setShowDetailPanel(true);
                 }}}
               >
                 <Popup className="heatmap-tooltip">
                   <div className="text-center">
                     <p className="font-black text-[12px] text-[#2C1810]">{r.businessName}</p>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">{r.region} Province</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{r.region} Province</p>
                   </div>
                 </Popup>
               </CircleMarker>

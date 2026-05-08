@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download, FileText } from 'lucide-react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
 import API_URL from '../../config/api';
 import {
@@ -54,14 +54,23 @@ const NoData = () => (
 const MetricCard = ({ label, value, sub, accentColor }) => (
   <div
     data-testid="metric-card"
-    className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E0DBD5] flex items-center justify-between"
+    className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E0DBD5] flex items-center justify-between group hover:shadow-md transition-all"
     style={{ borderLeft: `4px solid ${accentColor}` }}
   >
     <div>
-      <p className="text-[13px] font-semibold text-gray-500 mb-1">{label}</p>
+      <p className="text-[13px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">{label}</p>
       <p className="text-[32px] font-extrabold text-[#2C1810] leading-none">{value}</p>
       <p className="text-[12px] text-gray-400 mt-2 font-medium">{sub}</p>
     </div>
+  </div>
+);
+
+const NestleLogo = () => (
+  <div className="flex items-center space-x-2">
+    <div className="w-8 h-8 bg-[#3D2B1F] rounded-lg flex items-center justify-center">
+      <span className="text-white font-black text-xl">N</span>
+    </div>
+    <span className="text-[#3D2B1F] font-black tracking-tighter text-xl">CommHub</span>
   </div>
 );
 
@@ -79,6 +88,18 @@ const PMInsightsDashboard = () => {
   const [loadState, setLoadState] = useState({
     summary: true, promos: true, conversions: true, feedback: true, stock: true,
   });
+
+  const unitsChartRef = React.useRef(null);
+  const stockChartRef = React.useRef(null);
+  const sentimentChartRef = React.useRef(null);
+  const conversionChartRef = React.useRef(null);
+  const fulfillmentChartRef = React.useRef(null);
+
+  // Hidden PDF refs
+  const pdfUnitsRef = React.useRef(null);
+  const pdfStockRef = React.useRef(null);
+  const pdfSentimentRef = React.useRef(null);
+  const pdfFulfillmentRef = React.useRef(null);
 
   const updateLoad = (key, val) =>
     setLoadState(prev => ({ ...prev, [key]: val }));
@@ -100,13 +121,16 @@ const PMInsightsDashboard = () => {
   };
 
   const fetchAll = useCallback(async () => {
-    const qs = period === 'all' ? '?period=all' : `?period=${period}d`;
+    const periodQs = period === 'all' ? 'period=all' : `period=${period}d`;
+    const promoQs = promoFilter === 'all' ? '' : `&promotionId=${promoFilter}`;
+    const qs = `?${periodQs}${promoQs}`;
+
     apiFetch(`/api/analytics/summary${qs}`, 'summary').then(setSummary);
-    apiFetch(`/api/analytics/promotions`, 'promos').then(setPromotions);
+    apiFetch(`/api/analytics/promotions${qs}`, 'promos').then(setPromotions);
     apiFetch(`/api/analytics/conversions${qs}`, 'conversions').then(setConversions);
-    apiFetch(`/api/analytics/feedback`, 'feedback').then(setFeedback);
+    apiFetch(`/api/analytics/feedback${qs}`, 'feedback').then(setFeedback);
     apiFetch(`/api/analytics/stock${qs}`, 'stock').then(setStock);
-  }, [period]);
+  }, [period, promoFilter]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -203,6 +227,122 @@ const PMInsightsDashboard = () => {
     ],
   } : null;
 
+  const exportPDF = () => {
+    if (!summary) return;
+
+    const unitsImg = pdfUnitsRef.current?.toBase64Image();
+    const stockImg = pdfStockRef.current?.toBase64Image();
+    const sentimentImg = pdfSentimentRef.current?.toBase64Image();
+    const fulfillmentImg = pdfFulfillmentRef.current?.toBase64Image();
+
+    const printWindow = window.open('', '_blank');
+    const html = `
+      <html>
+        <head>
+          <title>Promotion Manager Report - ${new Date().toLocaleDateString()}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; background: white; color: #3D2B1F; }
+            @media print { .no-print { display: none; } body { padding: 0; margin: 0; } .page-break { page-break-after: always; } }
+          </style>
+        </head>
+        <body class="p-12">
+          <div class="flex justify-between items-start border-b-2 border-[#F0EDE8] pb-8 mb-8">
+            <div>
+              <div class="flex items-center space-x-2 mb-4">
+                <div class="w-10 h-10 bg-[#3D2B1F] rounded-xl flex items-center justify-center text-white font-black text-2xl">N</div>
+                <div class="text-3xl font-black tracking-tighter">CommHub</div>
+              </div>
+              <h1 class="text-4xl font-black uppercase tracking-tight">Campaign ROI Report</h1>
+              <p class="text-gray-500 font-bold mt-2 italic">Promotion Manager Insights Dashboard</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-black text-gray-400 uppercase tracking-widest">Report Scope</p>
+              <p class="text-xl font-black mt-1">${promoFilter === 'all' ? 'All Campaigns' : 'Single Campaign Analysis'}</p>
+              <p class="text-sm font-bold text-gray-500">Last ${period} Days</p>
+              <p class="text-xs text-gray-400 mt-4 italic">Generated on ${new Date().toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-6 mb-12">
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Active Promos</p>
+              <p class="text-3xl font-black">${summary.activePromotions || 0}</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Sold</p>
+              <p class="text-3xl font-black text-amber-600">${(summary.totalUnitsSold || 0).toLocaleString()}</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Conversion</p>
+              <p class="text-3xl font-black text-green-600">${summary.avgConversionRate || 0}%</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retailer Sat.</p>
+              <p class="text-3xl font-black text-blue-600">${summary.avgFeedbackRating || 0}/10</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-12 mb-12">
+            <div class="space-y-4">
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400">Campaign Performance</h3>
+              ${unitsImg ? `<img src="${unitsImg}" class="w-full rounded-2xl border border-gray-100 p-4" />` : ''}
+            </div>
+            <div class="space-y-4">
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400">Retailer Sentiment</h3>
+              ${sentimentImg ? `<img src="${sentimentImg}" class="w-48 mx-auto" />` : ''}
+              <div class="grid grid-cols-3 gap-2 text-center mt-4 font-black">
+                <div class="p-2 bg-green-50 rounded-xl text-green-600 text-xs">${feedback?.positive || 0} Positive</div>
+                <div class="p-2 bg-amber-50 rounded-xl text-amber-600 text-xs">${feedback?.neutral || 0} Neutral</div>
+                <div class="p-2 bg-red-50 rounded-xl text-red-600 text-xs">${feedback?.negative || 0} Negative</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-break"></div>
+
+          <div class="mt-12 space-y-8">
+            <h3 class="text-lg font-black uppercase tracking-widest text-gray-400 mb-6">Detailed Campaign Metrics</h3>
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-[#F8F7F5]">
+                  <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Promotion</th>
+                  <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Units Sold</th>
+                  <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Conversion %</th>
+                  <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Fulfillment %</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredConversions?.map(c => `
+                  <tr>
+                    <td class="p-4 font-bold border-b border-[#F8F7F5]">${c.promotionName}</td>
+                    <td class="p-4 border-b border-[#F8F7F5]">${c.totalUnitsSold || '--'}</td>
+                    <td class="p-4 font-black text-amber-600 border-b border-[#F8F7F5]">${c.conversionRate}%</td>
+                    <td class="p-4 font-black text-green-600 border-b border-[#F8F7F5]">${c.fulfillmentRate}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="mt-12">
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400 mb-6">Demand Trend (Promoted Goods)</h3>
+              ${stockImg ? `<img src="${stockImg}" class="w-full h-64 object-contain rounded-2xl border border-gray-100 p-4" />` : ''}
+            </div>
+          </div>
+
+          <div class="mt-24 pt-8 border-t border-[#F0EDE8] text-center text-xs text-gray-400 font-bold uppercase tracking-widest">
+            Nestle CommHub Promotion Manager Confidential • Internal Use Only
+          </div>
+
+          <script>window.onload = () => { setTimeout(() => window.print(), 1000); };</script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   /* ── Select style ── */
   const selectCls =
     'w-full px-4 py-3 bg-[#F8F7F5] border border-[#E0DBD5] rounded-[14px] font-semibold text-[14px] text-[#3D2B1F] outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 cursor-pointer appearance-none';
@@ -213,13 +353,22 @@ const PMInsightsDashboard = () => {
       <div className="min-h-screen bg-nestle-gray p-6 lg:p-8 font-sans space-y-6">
 
         {/* ── Page Header ── */}
-        <div>
-          <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">
-            Promotion Analytics
-          </h1>
-          <p className="text-[14px] text-gray-500 font-medium mt-1">
-            Insights for active campaigns, conversions and feedback
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">
+              Promotion Analytics
+            </h1>
+            <p className="text-[14px] text-gray-500 font-medium mt-1">
+              Insights for active campaigns, conversions and feedback
+            </p>
+          </div>
+          <button 
+            onClick={exportPDF}
+            className="flex items-center space-x-2 px-6 py-3 bg-[#3D2B1F] text-white rounded-[16px] hover:bg-[#2C1810] transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
+            <Download size={16} className="text-white/80" />
+            <span className="text-[12px] font-black uppercase tracking-wider">Export ROI Report</span>
+          </button>
         </div>
 
         {/* ── Filter Bar ── */}
@@ -319,6 +468,7 @@ const PMInsightsDashboard = () => {
               {loadState.promos ? <Spinner /> : filteredPromos.length > 0 ? (
                 <div className="h-[380px]">
                   <Bar
+                    ref={unitsChartRef}
                     aria-label="Units Sold per Campaign Bar Chart"
                     data={unitsSoldData}
                     options={{ ...CHART_DEFAULTS, indexAxis: 'y' }}
@@ -334,6 +484,7 @@ const PMInsightsDashboard = () => {
               {loadState.stock ? <Spinner /> : stockLineData ? (
                 <div className="h-[380px]">
                   <Line
+                    ref={stockChartRef}
                     aria-label="Stock Request Trend Line Chart"
                     data={stockLineData}
                     options={CHART_DEFAULTS}
@@ -354,6 +505,7 @@ const PMInsightsDashboard = () => {
               {loadState.feedback ? <Spinner /> : doughnutData ? (
                 <div className="h-[380px]">
                   <Doughnut
+                    ref={sentimentChartRef}
                     aria-label="Feedback Sentiment Doughnut Chart"
                     data={doughnutData}
                     options={{ ...CHART_DEFAULTS, maintainAspectRatio: false }}
@@ -369,6 +521,7 @@ const PMInsightsDashboard = () => {
               {loadState.conversions ? <Spinner /> : conversionData ? (
                 <div className="h-[380px]">
                   <Bar
+                    ref={conversionChartRef}
                     aria-label="Conversion Rate by Promotion Bar Chart"
                     data={conversionData}
                     options={{
@@ -395,6 +548,7 @@ const PMInsightsDashboard = () => {
             {loadState.conversions ? <Spinner /> : fulfillmentData ? (
               <div className="h-[400px]">
                 <Bar
+                  ref={fulfillmentChartRef}
                   aria-label="Order Fulfillment Rate by Promotion Bar Chart"
                   data={fulfillmentData}
                   options={{
@@ -409,6 +563,14 @@ const PMInsightsDashboard = () => {
             ) : <NoData />}
           </div>
         )}
+
+        {/* Hidden Report Engine */}
+        <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none" aria-hidden="true">
+          {unitsSoldData && <div className="w-[800px] h-[400px]"><Bar ref={pdfUnitsRef} data={unitsSoldData} options={{...CHART_DEFAULTS, animation: false, indexAxis: 'y'}} /></div>}
+          {stockLineData && <div className="w-[800px] h-[400px]"><Line ref={pdfStockRef} data={stockLineData} options={{...CHART_DEFAULTS, animation: false}} /></div>}
+          {doughnutData && <div className="w-[400px] h-[400px]"><Doughnut ref={pdfSentimentRef} data={doughnutData} options={{...CHART_DEFAULTS, animation: false}} /></div>}
+          {fulfillmentData && <div className="w-[800px] h-[400px]"><Bar ref={pdfFulfillmentRef} data={fulfillmentData} options={{...CHART_DEFAULTS, animation: false, scales: {x: {stacked: true}, y: {stacked: true, max: 100}}}} /></div>}
+        </div>
 
       </div>
     </PromotionManagerLayout>

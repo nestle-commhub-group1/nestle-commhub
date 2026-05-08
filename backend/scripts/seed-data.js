@@ -341,17 +341,41 @@ async function seedDatabase() {
       promotionType: 'B2B_RETAILER',
       createdBy: pm._id,
       status: 'archived',
+      discount: 10,
       b2bConfig: {
         minUnitsRequired: 100,
         discountPercentage: 10,
         targetRetailers: ['HIGH_VOLUME']
       },
-      participatingRetailers: retailers.slice(3, 8).map(r => ({
-        retailerId: r._id, optedIn: true, rating: 3.5 + Math.random(), feedback: 'Steady demand.'
+      participatingRetailers: retailers.slice(0, 15).map(r => ({
+        retailerId: r._id, optedIn: true, rating: 4.8, feedback: 'Excellent volume driver.'
       })),
-      salesData: [
-        { retailerId: retailers[0]._id, unitsSold: 800, rewardAmount: 15000 }
-      ]
+      salesData: retailers.slice(0, 15).map(r => ({
+        retailerId: r._id, unitsSold: 1200 + Math.floor(Math.random() * 500), submittedAt: new Date('2024-01-15')
+      }))
+    });
+
+    const endedPromo3 = await Promotion.create({
+      title: 'Maggi Mega Deal',
+      description: 'Limited time bulk offer on Maggi Family Packs.',
+      category: 'discount',
+      startDate: new Date('2023-11-01'),
+      endDate: new Date('2023-11-30'),
+      promotionType: 'B2B_RETAILER',
+      createdBy: pm._id,
+      status: 'archived',
+      discount: 20,
+      b2bConfig: {
+        minUnitsRequired: 200,
+        discountPercentage: 20,
+        targetRetailers: ['ALL']
+      },
+      participatingRetailers: retailers.slice(0, 25).map(r => ({
+        retailerId: r._id, optedIn: true, rating: 4.9, feedback: 'Best ROI of the year.'
+      })),
+      salesData: retailers.slice(0, 20).map(r => ({
+        retailerId: r._id, unitsSold: 2500, submittedAt: new Date('2023-11-15')
+      }))
     });
 
     // Active Promotions

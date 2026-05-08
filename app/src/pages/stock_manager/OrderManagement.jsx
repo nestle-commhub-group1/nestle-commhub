@@ -67,7 +67,8 @@ const OrderManagement = () => {
       setIsProcessModalOpen(false);
       fetchOrders();
     } catch (err) {
-      alert('Update failed');
+      const msg = err.response?.data?.message || 'Update failed';
+      alert(msg);
     }
   };
 
@@ -179,16 +180,26 @@ const OrderManagement = () => {
                         <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center">
                             <ShoppingBag size={14} className="mr-2" /> Order Items
                         </h3>
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 max-h-40 overflow-y-auto">
-                            {selectedOrder.items.map((item, id) => (
-                                <div key={id} className="flex justify-between items-center mb-2 last:mb-0 pb-2 last:pb-0 border-b last:border-0 border-gray-200/50">
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-nestle-brown">{item.product?.name}</span>
-                                        <span className="text-[10px] text-gray-500">Qty: {item.quantity}</span>
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 max-h-40 overflow-y-auto space-y-3">
+                            {selectedOrder.items.map((item, id) => {
+                                const stock = item.product?.stockQuantity || 0;
+                                const isLow = stock < 1000;
+                                const isInsufficient = stock < item.quantity;
+                                return (
+                                    <div key={id} className={`p-3 rounded-xl border ${isInsufficient ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'}`}>
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-nestle-brown">{item.product?.name}</span>
+                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Requested: {item.quantity} units</span>
+                                                <div className={`mt-1 text-[10px] font-black uppercase ${isLow ? 'text-red-500' : 'text-green-600'}`}>
+                                                    Stock: {stock.toLocaleString()} {isLow && '— ADD MORE INVENTORY'}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-nestle-brown">LKR {(item.priceAtTime * item.quantity).toLocaleString()}</span>
+                                        </div>
                                     </div>
-                                    <span className="text-xs font-black text-nestle-brown">LKR { (item.priceAtTime * item.quantity).toLocaleString() }</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

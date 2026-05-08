@@ -37,7 +37,7 @@ const HIGH_QUANTITY_THRESHOLD = 50;
  * Supported period values: '7d', '30d', '90d', 'all' (default: '30d')
  */
 function buildFilters(query) {
-  const { period = "30d", region } = query;
+  const { period = "30d", region, productId } = query;
 
   const dateFilter = {};
   if (period !== "all") {
@@ -45,8 +45,9 @@ function buildFilters(query) {
     dateFilter.createdAt = { $gte: new Date(Date.now() - days * 86400000) };
   }
 
-  // Region is matched against the retailer's province field; resolved at call-site.
-  return { dateFilter, region: region || null };
+  const cleanRegion = region && region !== 'all' ? region.trim() : null;
+
+  return { dateFilter, region: cleanRegion, productId: productId || null };
 }
 
 /**
@@ -176,7 +177,7 @@ const getLowStockAlerts = async (req, res) => {
 
     // If a region filter is provided, first resolve retailer IDs in that region
     let retailerFilter = {};
-    if (region) {
+    if (region && region !== 'all') {
       const regionRetailers = await User.find(
         { role: "retailer", province: { $regex: region, $options: "i" } },
         "_id"
@@ -237,6 +238,7 @@ const getLowStockAlerts = async (req, res) => {
     products.forEach((p) => (nameMap[p._id.toString()] = p.name));
 
     const data = agg.map((item) => ({
+      productId: item._id,
       productName: nameMap[item._id.toString()] || "Unknown Product",
       severity: item.highQtyPct > 80 ? "critical" : "low",
     }));
@@ -265,11 +267,11 @@ const getTopRetailersByVolume = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const { dateFilter, region } = buildFilters(req.query);
+    const { dateFilter, region, productId } = buildFilters(req.query);
 
     // If a region filter is provided, first resolve retailer IDs in that region
     let retailerFilter = {};
-    if (region) {
+    if (region && region !== 'all') {
       const regionRetailers = await User.find(
         { role: "retailer", province: { $regex: region, $options: "i" } },
         "_id"
@@ -277,8 +279,13 @@ const getTopRetailersByVolume = async (req, res) => {
       retailerFilter = { retailer: { $in: regionRetailers.map((r) => r._id) } };
     }
 
+    const matchQuery = { ...dateFilter, ...retailerFilter };
+    if (productId && productId !== 'all') {
+      matchQuery["items.product"] = productId;
+    }
+
     const pipeline = [
-      { $match: { ...dateFilter, ...retailerFilter } },
+      { $match: matchQuery },
       {
         $group: {
           _id: "$retailer",
@@ -584,18 +591,59 @@ const getPromotionsSummary = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const promotions = await Promotion.find().lean();
+    const { dateFilter, region } = buildFilters(req.query);
+
+    // If region is specified, get retailer IDs for filtering
+    let regionRetailerIds = null;
+    if (region) {
+      const regionUsers = await User.find({ 
+        role: "retailer", 
+        province: { $regex: `^${region}( Province)?$`, $options: "i" } 
+      }).select("_id").lean();
+      regionRetailerIds = regionUsers.map(u => u._id.toString());
+    }
+
+    const { promotionId } = req.query;
+    let promotions = await Promotion.find().lean();
+
+    if (promotionId && promotionId !== 'all') {
+      promotions = promotions.filter(p => p._id.toString() === promotionId);
+    }
     const activePromotions = promotions.filter((p) => p.status === "active");
     const now = new Date();
     const sevenDays = new Date(now.getTime() + 7 * 86400000);
-    const endingSoon = activePromotions.filter(
+    const endingSoonCount = activePromotions.filter(
       (p) => new Date(p.endDate) <= sevenDays
     ).length;
 
-    // Total units sold across all salesData
-    let totalUnitsSold = 0;
+    // General Order Stats (Filtered by region and date)
+    const orderQuery = { ...dateFilter };
+    if (regionRetailerIds) orderQuery.retailer = { $in: regionRetailerIds };
+    const orders = await Order.find(orderQuery).select("status").lean();
+    
+    const totalOrders = orders.length;
+    const fulfilled = orders.filter(o => 
+      ["accepted", "shipped", "delivered"].includes(o.status)
+    ).length;
+    const avgFulfillmentRate = totalOrders > 0 
+      ? Math.round((fulfilled / totalOrders) * 100) 
+      : 0;
+
+    // Total units sold across all salesData (Filtered by region and date)
+    let totalPromoUnitsSold = 0;
     promotions.forEach((p) => {
-      (p.salesData || []).forEach((s) => (totalUnitsSold += s.unitsSold || 0));
+      (p.salesData || []).forEach((s) => {
+        // Filter by region
+        if (regionRetailerIds && !regionRetailerIds.includes(s.retailerId?.toString())) return;
+        
+        // Filter by date
+        if (dateFilter.createdAt?.$gte) {
+          const submittedAt = s.submittedAt || p.createdAt;
+          if (new Date(submittedAt) < dateFilter.createdAt.$gte) return;
+        }
+        
+        totalPromoUnitsSold += s.unitsSold || 0;
+      });
     });
 
     // Avg conversion rate (opted-in / total participating)
@@ -606,9 +654,18 @@ const getPromotionsSummary = async (req, res) => {
 
     promotions.forEach((p) => {
       const pr = p.participatingRetailers || [];
-      totalParticipating += pr.length;
-      totalOptedIn += pr.filter((r) => r.optedIn).length;
       pr.forEach((r) => {
+        // Filter by region if applicable
+        if (regionRetailerIds && !regionRetailerIds.includes(r.retailerId?.toString())) return;
+
+        // Filter by date
+        if (dateFilter.createdAt?.$gte) {
+          const optedInDate = r.optedInDate || p.createdAt;
+          if (new Date(optedInDate) < dateFilter.createdAt.$gte) return;
+        }
+
+        totalParticipating++;
+        if (r.optedIn) totalOptedIn++;
         if (r.rating != null) {
           totalRating += r.rating;
           ratingCount++;
@@ -630,23 +687,50 @@ const getPromotionsSummary = async (req, res) => {
 
     const b2bStats = {
       count: b2bPromos.length,
-      totalOptIns: b2bPromos.reduce((s, p) => s + (p.participatingRetailers?.filter(r => r.optedIn).length || 0), 0),
+      totalOptIns: b2bPromos.reduce((s, p) => {
+        const filtered = p.participatingRetailers?.filter(r => {
+          if (regionRetailerIds && !regionRetailerIds.includes(r.retailerId?.toString())) return false;
+          return r.optedIn;
+        }) || [];
+        return s + filtered.length;
+      }, 0),
       avgDiscount: b2bPromos.length > 0 ? (b2bPromos.reduce((s, p) => s + (p.b2bConfig?.discountPercentage || p.discount || 0), 0) / b2bPromos.length).toFixed(1) : 0,
-      totalUnits: b2bPromos.reduce((s, p) => s + (p.salesData || []).reduce((sum, sd) => sum + (sd.unitsSold || 0), 0), 0)
+      totalUnits: b2bPromos.reduce((s, p) => {
+        const units = (p.salesData || []).reduce((sum, sd) => {
+          if (regionRetailerIds && !regionRetailerIds.includes(sd.retailerId?.toString())) return sum;
+          return sum + (sd.unitsSold || 0);
+        }, 0);
+        return s + units;
+      }, 0)
     };
 
     const b2cStats = {
       count: b2cPromos.length,
-      totalActivations: b2cPromos.reduce((s, p) => s + (p.b2cConfig?.currentlyActive?.length || 0), 0),
+      totalActivations: b2cPromos.reduce((s, p) => {
+        // B2C activations are just retailer IDs in currentlyActive
+        const filtered = (p.b2cConfig?.currentlyActive || []).filter(rid => {
+          if (regionRetailerIds && !regionRetailerIds.includes(rid.toString())) return false;
+          return true;
+        });
+        return s + filtered.length;
+      }, 0),
       avgPrice: b2cPromos.length > 0 ? (b2cPromos.reduce((s, p) => s + (p.b2cConfig?.customerFacingPrice || 0), 0) / b2cPromos.filter(p => p.b2cConfig?.customerFacingPrice).length || 1).toFixed(0) : 0,
-      totalUnits: b2cPromos.reduce((s, p) => s + (p.salesData || []).reduce((sum, sd) => sum + (sd.unitsSold || 0), 0), 0)
+      totalUnits: b2cPromos.reduce((s, p) => {
+        const units = (p.salesData || []).reduce((sum, sd) => {
+          if (regionRetailerIds && !regionRetailerIds.includes(sd.retailerId?.toString())) return sum;
+          return sum + (sd.unitsSold || 0);
+        }, 0);
+        return s + units;
+      }, 0)
     };
 
     return res.status(200).json({
       data: {
         activePromotions: activePromotions.length,
-        endingSoon,
-        totalUnitsSold,
+        endingSoon: endingSoonCount,
+        totalOrders,
+        avgFulfillmentRate,
+        totalUnitsSold: totalPromoUnitsSold,
         avgConversionRate,
         conversionDelta: "+4%",
         avgFeedbackRating,
@@ -675,13 +759,35 @@ const getPromotionsList = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
+    const { dateFilter, region } = buildFilters(req.query);
+
+    // If region is specified, get retailer IDs for filtering
+    let regionRetailerIds = null;
+    if (region) {
+      const regionUsers = await User.find({ 
+        role: "retailer", 
+        province: { $regex: `^${region}( Province)?$`, $options: "i" } 
+      }).select("_id").lean();
+      regionRetailerIds = regionUsers.map(u => u._id.toString());
+    }
+
     const promotions = await Promotion.find()
       .select("title status startDate endDate salesData")
       .lean();
 
     const data = promotions.map((p) => {
       const totalUnitsSold = (p.salesData || []).reduce(
-        (sum, s) => sum + (s.unitsSold || 0),
+        (sum, s) => {
+          if (regionRetailerIds && !regionRetailerIds.includes(s.retailerId?.toString())) return sum;
+          
+          // Filter by date
+          if (dateFilter.createdAt?.$gte) {
+            const submittedAt = s.submittedAt || p.createdAt;
+            if (new Date(submittedAt) < dateFilter.createdAt.$gte) return sum;
+          }
+
+          return sum + (s.unitsSold || 0);
+        },
         0
       );
       return {
@@ -718,7 +824,14 @@ const getFeedbackSentiment = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const promotions = await Promotion.find()
+    const { promotionId } = req.query;
+
+    const query = {};
+    if (promotionId && promotionId !== 'all') {
+      query._id = promotionId;
+    }
+
+    const promotions = await Promotion.find(query)
       .select("participatingRetailers")
       .lean();
 
@@ -768,19 +881,65 @@ const getStockTrend = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const { dateFilter } = buildFilters(req.query);
+    const { dateFilter, region, productId } = buildFilters(req.query);
+    const { promotionId } = req.query;
+
+    if (promotionId && promotionId !== 'all') {
+      // If a specific promotion is selected, aggregate its salesData trend
+      const promo = await Promotion.findById(promotionId).lean();
+      if (!promo) return res.status(200).json({ data: [] });
+
+      const dayMap = {};
+      (promo.salesData || []).forEach(s => {
+        const date = s.submittedAt || promo.createdAt;
+        if (dateFilter.createdAt?.$gte && new Date(date) < dateFilter.createdAt.$gte) return;
+        
+        const dayIdx = new Date(date).getDay() + 1; // 1=Sun
+        dayMap[dayIdx] = (dayMap[dayIdx] || 0) + (s.unitsSold || 0);
+      });
+
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const data = dayNames.map((day, idx) => ({
+        day,
+        totalUnits: dayMap[idx + 1] || 0
+      }));
+
+      return res.status(200).json({ data });
+    }
+
+    const matchQuery = { ...dateFilter };
+    if (productId && productId !== 'all') {
+      matchQuery["items.product"] = require("mongoose").Types.ObjectId(productId);
+    }
 
     const pipeline = [
-      { $match: { ...dateFilter } },
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "users",
+          localField: "retailer",
+          foreignField: "_id",
+          as: "retailerInfo"
+        }
+      },
+      { $unwind: "$retailerInfo" }
+    ];
+
+    if (region && region !== "all") {
+      pipeline.push({ $match: { "retailerInfo.province": { $regex: `^${region}$`, $options: "i" } } });
+    }
+
+    pipeline.push(
       { $unwind: "$items" },
+      { $match: productId && productId !== 'all' ? { "items.product": require("mongoose").Types.ObjectId(productId) } : {} },
       {
         $group: {
           _id: { $dayOfWeek: "$createdAt" }, // 1=Sun … 7=Sat
           totalUnits: { $sum: "$items.quantity" },
         },
       },
-      { $sort: { _id: 1 } },
-    ];
+      { $sort: { _id: 1 } }
+    );
 
     const agg = await Order.aggregate(pipeline);
 
@@ -819,12 +978,36 @@ const getStockManagerSummary = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const { dateFilter } = buildFilters(req.query);
+    const { dateFilter, region, productId } = buildFilters(req.query);
 
-    // Total stock requests (count of order line-items)
-    const orders = await Order.find({ ...dateFilter })
-      .select("items status createdAt")
+    // Fetch orders with retailer info for filtering
+    const ordersQuery = { ...dateFilter };
+    if (productId && productId !== 'all') {
+      ordersQuery["items.product"] = productId;
+    }
+
+    // Resolve retailers in region for pipeline-based metrics (like lowStockPipeline)
+    let retailerFilter = {};
+    if (region && region !== 'all') {
+      const regionRetailers = await User.find(
+        { role: "retailer", province: { $regex: region, $options: "i" } },
+        "_id"
+      ).lean();
+      retailerFilter = { retailer: { $in: regionRetailers.map((r) => r._id) } };
+    }
+
+    let orders = await Order.find({ ...ordersQuery, ...retailerFilter })
+      .populate("retailer", "province district")
+      .select("items status createdAt retailer")
       .lean();
+
+    // Filter by region if specified (already done via retailerFilter, but let's be safe)
+    if (region && region !== "all") {
+      orders = orders.filter(o => {
+        const prov = o.retailer?.province || "";
+        return prov.toLowerCase().trim() === region.toLowerCase().trim();
+      });
+    }
 
     let totalStockRequests = 0;
     const dayBuckets = {}; // dayOfWeek → totalUnits
@@ -832,6 +1015,9 @@ const getStockManagerSummary = async (req, res) => {
     orders.forEach((o) => {
       const dayOfWeek = new Date(o.createdAt).getDay(); // 0=Sun
       (o.items || []).forEach((item) => {
+        // If a specific product is filtered, only count that product
+        if (productId && productId !== 'all' && item.product.toString() !== productId) return;
+        
         const qty = item.quantity || 0;
         totalStockRequests += qty;
         dayBuckets[dayOfWeek] = (dayBuckets[dayOfWeek] || 0) + qty;
@@ -855,9 +1041,11 @@ const getStockManagerSummary = async (req, res) => {
       ? parseFloat(((fulfilled / totalOrders) * 100).toFixed(1))
       : 0;
 
+    // (redundant blocks removed)
+
     // Low stock alert count (reuse logic)
     const lowStockPipeline = [
-      { $match: { ...dateFilter } },
+      { $match: { ...dateFilter, ...retailerFilter } },
       { $unwind: "$items" },
       {
         $group: {
@@ -923,10 +1111,27 @@ const getProductsList = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const { dateFilter } = buildFilters(req.query);
+    const { dateFilter, region } = buildFilters(req.query);
 
+    const matchQuery = { ...dateFilter };
     const pipeline = [
-      { $match: { ...dateFilter } },
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "users",
+          localField: "retailer",
+          foreignField: "_id",
+          as: "retailerInfo"
+        }
+      },
+      { $unwind: "$retailerInfo" }
+    ];
+
+    if (region && region !== "all") {
+      pipeline.push({ $match: { "retailerInfo.province": { $regex: `^${region}$`, $options: "i" } } });
+    }
+
+    pipeline.push(
       { $unwind: "$items" },
       {
         $group: {
@@ -935,7 +1140,8 @@ const getProductsList = async (req, res) => {
         },
       },
       { $sort: { requestCount: -1 } },
-    ];
+      { $limit: 5 },
+    );
 
     const agg = await Order.aggregate(pipeline);
 
@@ -974,11 +1180,16 @@ const getFulfillmentByRegion = async (req, res) => {
       return res.status(200).json({ data: null });
     }
 
-    const { dateFilter } = buildFilters(req.query);
+    const { dateFilter, productId } = buildFilters(req.query);
 
     // Fetch orders with retailer populated for province
-    const orders = await Order.find({ ...dateFilter })
-      .select("retailer status")
+    const ordersQuery = { ...dateFilter };
+    if (productId && productId !== 'all') {
+      ordersQuery["items.product"] = productId;
+    }
+
+    const orders = await Order.find(ordersQuery)
+      .select("retailer status items")
       .lean();
 
     // Get all retailer IDs
@@ -1097,7 +1308,9 @@ const getHeatMapData = async (req, res) => {
 
     const retailerQuery = { role: "retailer" };
     if (region !== "all") {
-      retailerQuery.province = { $regex: region, $options: "i" };
+      // Use a more specific match to avoid "Central" matching "North Central"
+      // We look for the region name either exactly or followed by " Province"
+      retailerQuery.province = { $regex: `^${region}( Province)?$`, $options: "i" };
     }
 
     const retailers = await User.find(retailerQuery).lean();

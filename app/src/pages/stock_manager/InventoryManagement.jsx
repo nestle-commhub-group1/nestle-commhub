@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import StockManagerLayout from '../../components/layout/StockManagerLayout';
 import { Package, Plus, Search, Edit2, Trash2, X, Check } from 'lucide-react';
 
 const InventoryManagement = () => {
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +23,20 @@ const InventoryManagement = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Handle deep-link editing from dashboard
+  useEffect(() => {
+    if (products.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const editId = params.get('edit');
+      if (editId) {
+        const productToEdit = products.find(p => p._id === editId);
+        if (productToEdit) {
+          handleEdit(productToEdit);
+        }
+      }
+    }
+  }, [location.search, products]);
 
   const fetchProducts = async () => {
     try {
@@ -115,46 +131,52 @@ const InventoryManagement = () => {
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0">
-                        <img src={product.image || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }} />
+            <tbody className="divide-y divide-gray-50">              {products.map((product) => {
+                const isLow = product.stockQuantity < 1000;
+                return (
+                  <tr key={product._id} className={`hover:bg-gray-50/50 transition-colors ${isLow ? 'bg-red-50/60' : ''}`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0">
+                          <img src={product.image || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-nestle-brown">{product.name}</p>
+                          <p className="text-xs text-gray-400 truncate max-w-[200px]">{product.description}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-bold text-nestle-brown">{product.name}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-[200px]">{product.description}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        {product.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-nestle-brown">
+                      {product.price.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <div className="flex items-center space-x-2">
+                          <span className={`w-2 h-2 rounded-full ${isLow ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                          <span className={`font-black ${isLow ? 'text-red-600' : 'text-nestle-brown'}`}>{product.stockQuantity}</span>
+                        </div>
+                        {isLow && <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter mt-0.5">Low Inventory</span>}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-wider">
-                      {product.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-nestle-brown">
-                    {product.price.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <span className={`w-2 h-2 rounded-full ${product.stockQuantity < 20 ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                      <span className="font-black text-nestle-brown">{product.stockQuantity}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button onClick={() => handleEdit(product)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(product._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button onClick={() => handleEdit(product)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(product._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
             </tbody>
           </table>
         </div>

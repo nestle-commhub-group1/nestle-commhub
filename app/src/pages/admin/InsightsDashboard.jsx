@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Loader2, BarChart3, TrendingUp, Users, Package, 
-  Calendar, MapPin, ChevronRight, Filter, RefreshCw, CheckCircle
+  Calendar, MapPin, ChevronRight, Filter, RefreshCw, CheckCircle, Download, FileText
 } from 'lucide-react';
 import HeatmapDashboard from './HeatmapDashboard';
 import {
@@ -16,7 +16,16 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line, Doughnut, Pie } from 'react-chartjs-2';
+
+const NestleLogo = () => (
+  <div className="flex items-center space-x-2">
+    <div className="w-8 h-8 bg-[#3D2B1F] rounded-lg flex items-center justify-center">
+      <span className="text-white font-black text-xl">N</span>
+    </div>
+    <span className="text-[#3D2B1F] font-black tracking-tighter text-xl">CommHub</span>
+  </div>
+);
 import API_URL from '../../config/api';
 
 ChartJS.register(
@@ -97,6 +106,17 @@ const InsightsDashboard = () => {
     summary: true, promos: true, stock: true, feedback: true, fulfillment: true, products: true
   });
 
+  const promosChartRef = React.useRef(null);
+  const stockChartRef = React.useRef(null);
+  const feedbackChartRef = React.useRef(null);
+  const fulfillmentChartRef = React.useRef(null);
+
+  // Dedicated refs for PDF export (to ensure we capture charts even if not on active tab)
+  const pdfPromosRef = React.useRef(null);
+  const pdfStockRef = React.useRef(null);
+  const pdfFeedbackRef = React.useRef(null);
+  const pdfFulfillmentRef = React.useRef(null);
+
   const apiFetch = async (path, key) => {
     setLoadState(prev => ({ ...prev, [key]: true }));
     try {
@@ -120,6 +140,176 @@ const InsightsDashboard = () => {
     apiFetch(`/api/analytics/fulfillment${qs}`, 'fulfillment').then(setFulfillment);
     apiFetch(`/api/analytics/products${qs}`, 'products').then(setProducts);
   }, [period, region]);
+
+  const downloadReport = () => {
+    if (!summary) return;
+    const rows = [];
+    rows.push(['Nestle CommHub - HQ Business Insights Report']);
+    rows.push([`Generated At: ${new Date().toLocaleString()}`]);
+    rows.push([`Region Scope: ${region === 'all' ? 'All Regions' : region}`]);
+    rows.push([`Time Period: Last ${period} Days`]);
+    rows.push([]);
+    rows.push(['SUMMARY KEY PERFORMANCE INDICATORS']);
+    rows.push(['Metric', 'Value', 'Context']);
+    rows.push(['Total Orders', summary.totalOrders || 0, 'Volume of sales orders']);
+    rows.push(['Fulfillment Rate', `${summary.avgFulfillmentRate || 0}%`, 'Efficiency of delivery']);
+    rows.push(['Feedback Score', `${summary.avgFeedbackRating || 0}/10`, 'Retailer satisfaction']);
+    rows.push(['Promotion Revenue (Units)', summary.totalPromoUnitsSold || 0, 'Impact of active campaigns']);
+    rows.push([]);
+    if (promotions && promotions.length > 0) {
+      rows.push(['PROMOTIONAL PERFORMANCE BREAKDOWN']);
+      rows.push(['Promotion Title', 'Units Sold']);
+      promotions.forEach(p => { rows.push([p.title, p.totalUnitsSold]); });
+      rows.push([]);
+    }
+    if (fulfillment && fulfillment.length > 0) {
+      rows.push(['REGIONAL FULFILLMENT MATRIX']);
+      rows.push(['Region', 'Fulfillment Rate %']);
+      fulfillment.forEach(f => { rows.push([f.region, `${f.fulfillmentRate}%`]); });
+    }
+    const csvContent = rows.map(r => r.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Nestle_Report_${region}_${period}d.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPDF = () => {
+    if (!summary) return;
+
+    // Use dedicated PDF refs which are always mounted (hidden)
+    const promoImg = pdfPromosRef.current?.toBase64Image();
+    const stockImg = pdfStockRef.current?.toBase64Image();
+    const feedbackImg = pdfFeedbackRef.current?.toBase64Image();
+    const fulfillmentImg = pdfFulfillmentRef.current?.toBase64Image();
+
+    const printWindow = window.open('', '_blank');
+    const html = `
+      <html>
+        <head>
+          <title>Nestle CommHub Report - ${region} - ${period}d</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; background: white; color: #3D2B1F; }
+            @media print {
+              .no-print { display: none; }
+              body { padding: 0; margin: 0; }
+              .page-break { page-break-after: always; }
+            }
+          </style>
+        </head>
+        <body class="p-12">
+          <div class="flex justify-between items-start border-b-2 border-[#F0EDE8] pb-8 mb-8">
+            <div>
+              <div class="flex items-center space-x-2 mb-4">
+                <div class="w-10 h-10 bg-[#3D2B1F] rounded-xl flex items-center justify-center text-white font-black text-2xl">N</div>
+                <div class="text-3xl font-black tracking-tighter">CommHub</div>
+              </div>
+              <h1 class="text-4xl font-black uppercase tracking-tight">Analytical Insights</h1>
+              <p class="text-gray-500 font-bold mt-2">Executive Summary Report</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-black text-gray-400 uppercase tracking-widest">Report Context</p>
+              <p class="text-xl font-black mt-1">${region === 'all' ? 'National Scope' : region + ' Province'}</p>
+              <p class="text-sm font-bold text-gray-500">Last ${period} Days Period</p>
+              <p class="text-xs text-gray-400 mt-4 italic">Generated on ${new Date().toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-6 mb-12">
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Orders</p>
+              <p class="text-3xl font-black">${summary.totalOrders || 0}</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fulfillment</p>
+              <p class="text-3xl font-black text-green-600">${summary.avgFulfillmentRate || 0}%</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Retailer Sat.</p>
+              <p class="text-3xl font-black text-purple-600">${summary.avgFeedbackRating || 0}/10</p>
+            </div>
+            <div class="bg-[#F8F7F5] p-6 rounded-3xl border border-[#F0EDE8]">
+              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Promo Revenue</p>
+              <p class="text-3xl font-black text-blue-600">${summary.totalPromoUnitsSold || 0}u</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-12 mb-12">
+            <div class="space-y-4">
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400">Promotional Performance</h3>
+              ${promoImg ? `<img src="${promoImg}" class="w-full rounded-2xl border border-gray-100 p-4" />` : '<div class="h-48 bg-gray-50 flex items-center justify-center italic text-gray-400">Chart not available</div>'}
+            </div>
+            <div class="space-y-4">
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400">Feedback Sentiment</h3>
+              ${feedbackImg ? `<img src="${feedbackImg}" class="w-48 mx-auto" />` : '<div class="h-48 bg-gray-50 flex items-center justify-center italic text-gray-400">Chart not available</div>'}
+              <div class="grid grid-cols-3 gap-2 text-center mt-4">
+                <div class="p-2 bg-green-50 rounded-xl"><p class="text-[10px] font-bold text-green-600">Positive</p><p class="font-black">${feedback?.positive || 0}</p></div>
+                <div class="p-2 bg-amber-50 rounded-xl"><p class="text-[10px] font-bold text-amber-600">Neutral</p><p class="font-black">${feedback?.neutral || 0}</p></div>
+                <div class="p-2 bg-red-50 rounded-xl"><p class="text-[10px] font-bold text-red-600">Negative</p><p class="font-black">${feedback?.negative || 0}</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-break"></div>
+
+          <div class="mt-12 space-y-8">
+            <div>
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400 mb-6">Regional Performance Matrix</h3>
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-[#F8F7F5]">
+                    <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Province</th>
+                    <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Total Orders</th>
+                    <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Fulfilled</th>
+                    <th class="p-4 text-xs font-black uppercase tracking-widest text-gray-400 border-b border-[#F0EDE8]">Rate %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${fulfillment?.map(f => `
+                    <tr>
+                      <td class="p-4 font-bold border-b border-[#F8F7F5]">${f.region}</td>
+                      <td class="p-4 border-b border-[#F8F7F5]">${f.totalOrders}</td>
+                      <td class="p-4 border-b border-[#F8F7F5]">${f.fulfilledOrders}</td>
+                      <td class="p-4 font-black text-blue-600 border-b border-[#F8F7F5]">${f.fulfillmentRate}%</td>
+                    </tr>
+                  `).join('') || ''}
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-black uppercase tracking-widest text-gray-400 mb-6">Demand Trend Analysis</h3>
+              ${stockImg ? `<img src="${stockImg}" class="w-full h-64 object-contain rounded-2xl border border-gray-100 p-4" />` : '<div class="h-48 bg-gray-50 flex items-center justify-center italic text-gray-400">Chart not available</div>'}
+            </div>
+          </div>
+
+          <div class="mt-24 pt-8 border-t border-[#F0EDE8] flex justify-between items-center text-xs text-gray-400 font-bold uppercase tracking-widest">
+            <div>Internal Document - Nestle CommHub Confidential</div>
+            <div>Page 1 of 1</div>
+          </div>
+
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                // window.close();
+              }, 1000);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -173,6 +363,9 @@ const InsightsDashboard = () => {
     <div className="space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
+          <div className="mb-2">
+            <NestleLogo />
+          </div>
           <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">HQ Business Insights</h1>
           <p className="text-[14px] text-gray-500 font-medium mt-1">Cross-regional performance and operational analytics</p>
         </div>
@@ -201,6 +394,21 @@ const InsightsDashboard = () => {
               ))}
             </select>
           </div>
+          <button 
+            onClick={downloadReport} 
+            title="Download CSV"
+            className="p-2 hover:bg-gray-50 rounded-[10px] transition-colors text-gray-400 hover:text-[#3D2B1F]"
+          >
+            <FileText size={18} />
+          </button>
+          <button 
+            onClick={exportPDF} 
+            title="Export PDF Report"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#3D2B1F] text-white rounded-[12px] hover:bg-[#2C1810] transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
+            <Download size={14} className="text-white/80" />
+            <span className="text-[11px] font-black uppercase tracking-wider">Export PDF</span>
+          </button>
           <button onClick={fetchAll} className="p-2 hover:bg-gray-50 rounded-[10px] transition-colors text-gray-400 hover:text-[#3D2B1F]">
             <RefreshCw size={16} className={Object.values(loadState).some(v => v) ? 'animate-spin' : ''} />
           </button>
@@ -265,7 +473,7 @@ const InsightsDashboard = () => {
               {loadState.promos ? (
                 <div className="h-[400px] flex items-center justify-center"><Loader2 size={30} className="animate-spin text-gray-300" /></div>
               ) : promosBarData ? (
-                <div className="h-[400px]"><Bar data={promosBarData} options={{...CHART_OPTIONS, indexAxis: 'y'}} /></div>
+                <div className="h-[400px]"><Bar ref={promosChartRef} data={promosBarData} options={{...CHART_OPTIONS, indexAxis: 'y'}} /></div>
               ) : <div className="h-[400px] flex items-center justify-center text-gray-400 font-bold italic">No promotion data for this period</div>}
             </div>
           )}
@@ -349,7 +557,7 @@ const InsightsDashboard = () => {
               {loadState.stock ? (
                 <div className="h-[400px] flex items-center justify-center"><Loader2 size={30} className="animate-spin text-gray-300" /></div>
               ) : stockLineData ? (
-                <div className="h-[400px]"><Line data={stockLineData} options={CHART_OPTIONS} /></div>
+                <div className="h-[400px]"><Line ref={stockChartRef} data={stockLineData} options={CHART_OPTIONS} /></div>
               ) : <div className="h-[400px] flex items-center justify-center text-gray-400 font-bold italic">No trend data available</div>}
             </div>
           )}
@@ -383,7 +591,7 @@ const InsightsDashboard = () => {
                 {loadState.feedback ? (
                   <div className="h-full flex items-center justify-center"><Loader2 size={30} className="animate-spin text-gray-300" /></div>
                 ) : feedbackData ? (
-                  <Doughnut data={feedbackData} options={{...CHART_OPTIONS, cutout: '75%'}} />
+                  <Doughnut ref={feedbackChartRef} data={feedbackData} options={{...CHART_OPTIONS, cutout: '75%'}} />
                 ) : <div className="h-full flex items-center justify-center text-gray-400 font-bold italic">No feedback data</div>}
               </div>
             </div>
@@ -397,7 +605,7 @@ const InsightsDashboard = () => {
                   {loadState.fulfillment ? (
                     <div className="h-[300px] flex items-center justify-center"><Loader2 size={30} className="animate-spin text-gray-300" /></div>
                   ) : fulfillmentData ? (
-                    <div className="h-[300px]"><Bar data={fulfillmentData} options={{...CHART_OPTIONS, scales: {y: {max: 100}}}} /></div>
+                    <div className="h-[300px]"><Bar ref={fulfillmentChartRef} data={fulfillmentData} options={{...CHART_OPTIONS, scales: {y: {max: 100}}}} /></div>
                   ) : <div className="h-[300px] flex items-center justify-center text-gray-400 font-bold italic">No fulfillment data</div>}
                 </div>
                 <div className="bg-[#F8F7F5] rounded-[24px] p-6 border border-[#F0EDE8]">
@@ -423,6 +631,13 @@ const InsightsDashboard = () => {
 
           {activeTab === 'HeatMap' && <HeatmapDashboard embedded={true} />}
         </div>
+      </div>
+      {/* Hidden Report Engine (for PDF Export) */}
+      <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none" aria-hidden="true">
+        {promosBarData && <div className="w-[800px] h-[400px]"><Bar ref={pdfPromosRef} data={promosBarData} options={{...CHART_OPTIONS, animation: false}} /></div>}
+        {stockLineData && <div className="w-[800px] h-[400px]"><Line ref={pdfStockRef} data={stockLineData} options={{...CHART_OPTIONS, animation: false}} /></div>}
+        {feedbackData && <div className="w-[400px] h-[400px]"><Doughnut ref={pdfFeedbackRef} data={feedbackData} options={{...CHART_OPTIONS, animation: false}} /></div>}
+        {fulfillmentData && <div className="w-[800px] h-[400px]"><Bar ref={pdfFulfillmentRef} data={fulfillmentData} options={{...CHART_OPTIONS, animation: false}} /></div>}
       </div>
     </div>
   );
