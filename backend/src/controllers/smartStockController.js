@@ -227,7 +227,7 @@ const getSmartStockRecommendations = async (req, res) => {
           growthTrend:        analytics.growthTrend,
           reason,
           confidence:         Math.min(0.7 + analytics.demandScore * 0.03, 0.98),
-          howStatus:          product.howStatus,
+          howStatus:          product.howStatus || { isHOW: false },
         };
       })
     );
@@ -453,8 +453,8 @@ const markProductAsHOW = async (req, res) => {
 
     await Notification.create({
       userId: req.user._id,
-      type: 'promo',
-      message: `⭐ ${product.name} is now a HOW (High-Opportunity Winner) for the next 30 days.`
+      type: 'promotion',
+      message: `🔥 ${product.name} is now a Hot Item for the next 30 days. Check it out in the Stock Requests tab!`
     });
 
     res.status(200).json({ success: true, data: product });

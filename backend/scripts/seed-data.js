@@ -207,10 +207,11 @@ async function seedDatabase() {
         latitude: s.lat,
         longitude: s.lng,
         phone: '+94770000000',
+        credits: s.email === 'retailer1@test.com' ? 8500 : s.email === 'retailer2@test.com' ? 4200 : 0,
         isActive: true
       });
       retailers.push(r);
-      console.log(`✅ Retailer created: ${s.biz} (${s.prov})`);
+      console.log(`✅ Retailer created: ${s.biz} (${s.prov}) — Credits: ${r.credits}`);
     }
 
     // ==================== STEP 2: CREATE PRODUCTS ====================
@@ -223,6 +224,7 @@ async function seedDatabase() {
         category: 'Coffee',
         price: 2500,
         stockQuantity: 150,
+        howStatus: { isHOW: true, reason: 'Viral Social Media Trend', markedAt: new Date() },
         isActive: true
       },
       {
@@ -247,6 +249,7 @@ async function seedDatabase() {
         category: 'Nutrition',
         price: 80,
         stockQuantity: 1000,
+        howStatus: { isHOW: true, reason: 'Seasonal Monsoon Demand', markedAt: new Date() },
         isActive: true
       },
       {
@@ -255,6 +258,46 @@ async function seedDatabase() {
         category: 'Coffee',
         price: 1500,
         stockQuantity: 400,
+        isActive: true
+      },
+      {
+        name: 'Maggi Coconut Milk Powder',
+        description: 'Real coconut milk in powder form for rich curries.',
+        category: 'Nutrition',
+        price: 350,
+        stockQuantity: 800,
+        isActive: true
+      },
+      {
+        name: 'Nestlé Cerevita',
+        description: 'Nutritious grain-based cereal for growing children.',
+        category: 'Nutrition',
+        price: 650,
+        stockQuantity: 450,
+        isActive: true
+      },
+      {
+        name: 'Nescafé 3-in-1',
+        description: 'Perfect mix of coffee, creamer and sugar in a sachet.',
+        category: 'Coffee',
+        price: 45,
+        stockQuantity: 5000,
+        isActive: true
+      },
+      {
+        name: 'KitKat Chunky',
+        description: 'Thick crispy wafer finger covered in milk chocolate.',
+        category: 'Confectionery',
+        price: 150,
+        stockQuantity: 600,
+        isActive: true
+      },
+      {
+        name: 'Nestlé Full Cream Milk',
+        description: '100% fresh cow milk for the whole family.',
+        category: 'Dairy',
+        price: 450,
+        stockQuantity: 250,
         isActive: true
       }
     ];
@@ -274,7 +317,7 @@ async function seedDatabase() {
       endDate: new Date('2024-04-15'),
       promotionType: 'B2B_RETAILER',
       createdBy: pm._id,
-      status: 'archived', // Using archived for ended promos
+      status: 'archived', 
       b2bConfig: {
         minUnitsRequired: 50,
         discountPercentage: 15,
@@ -358,7 +401,8 @@ async function seedDatabase() {
     console.log('\n📋 Creating orders...');
 
     const orders = [];
-    for (let i = 0; i < 60; i++) {
+    const ORDER_COUNT = 100;
+    for (let i = 0; i < ORDER_COUNT; i++) {
       const retailer = retailers[i % retailers.length];
       const product = products[i % products.length];
       const qty = Math.floor(Math.random() * 200) + 20;
@@ -373,31 +417,33 @@ async function seedDatabase() {
           discountApplied: i % 5 === 0 ? 10 : 0
         }],
         totalAmount: amount,
-        status: ['delivered', 'shipped', 'accepted', 'pending'][i % 4],
+        status: ['delivered', 'shipped', 'accepted', 'pending', 'denied'][Math.floor(Math.random() * 5)],
         distributor: i % 2 === 0 ? distributor1._id : distributor2._id,
-        createdAt: new Date(Date.now() - (i * 12 * 60 * 60 * 1000)) // Spread over past 20 days
+        createdAt: new Date(Date.now() - (i * 8 * 60 * 60 * 1000)) // Spread over past month
       });
     }
 
     await Order.create(orders);
-    console.log('✅ Created 40 mock orders');
+    console.log(`✅ Created ${ORDER_COUNT} mock orders`);
 
     // ==================== STEP 5: CREATE TICKETS ====================
     console.log('\n🎫 Creating tickets...');
 
     const categories = ['stock_out', 'logistics_delay', 'product_quality', 'pricing_issue'];
-    for (let i = 0; i < 15; i++) {
+    const TICKET_COUNT = 25;
+    for (let i = 0; i < TICKET_COUNT; i++) {
       const r = retailers[i % retailers.length];
       await Ticket.create({
         retailerId: r._id,
         category: categories[i % categories.length],
-        priority: i % 3 === 0 ? 'high' : 'medium',
-        status: i % 4 === 0 ? 'open' : 'in_progress',
-        description: `Simulated issue ${i + 1} for ${r.businessName}`,
-        assignedTo: genStaff._id
+        priority: i % 3 === 0 ? 'high' : i % 5 === 0 ? 'critical' : 'medium',
+        status: i % 4 === 0 ? 'open' : i % 5 === 0 ? 'resolved' : 'in_progress',
+        description: `Simulated issue ${i + 1} for ${r.businessName}: regarding recent shipment of ${products[i % products.length].name}.`,
+        assignedTo: genStaff._id,
+        createdAt: new Date(Date.now() - (i * 24 * 60 * 60 * 1000))
       });
     }
-    console.log('✅ Created 3 support tickets sequentially');
+    console.log(`✅ Created ${TICKET_COUNT} support tickets`);
 
     // ==================== STEP 6: DEMAND ANALYTICS ====================
     console.log('\n📊 Creating demand analytics...');
@@ -406,20 +452,21 @@ async function seedDatabase() {
       const product = products[idx];
       await ProductDemandAnalytics.create({
         productId: product._id,
-        demandScore: (idx === 0) ? 9.5 : (idx === 1) ? 8.8 : (Math.random() * 3 + 6).toFixed(1),
+        demandScore: (idx === 0) ? 9.5 : (idx === 3) ? 9.2 : (idx === 1) ? 8.8 : (Math.random() * 4 + 5).toFixed(1),
         avgRequestsPerWeek: Math.floor(Math.random() * 500) + 100,
-        peakDemandDay: ['MONDAY', 'FRIDAY', 'SATURDAY'][Math.floor(Math.random() * 3)],
+        peakDemandDay: ['MONDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'][Math.floor(Math.random() * 4)],
         seasonalDemand: { SUMMER: 1.2, MONSOON: 0.9, WINTER: 1.4, SPRING: 1.1 },
-        demandHistory: Array.from({ length: 8 }, (_, i) => ({
+        demandHistory: Array.from({ length: 12 }, (_, i) => ({
           period: `Week ${i + 1}`,
-          requests: Math.floor(Math.random() * 400) + 100,
-          fulfillmentRate: 0.95
+          requests: Math.floor(Math.random() * 400) + 150,
+          fulfillmentRate: 0.85 + (Math.random() * 0.1)
         })),
         recommendations: {
-          optimalStockLevel: 500,
-          reorderThreshold: 100,
-          safetyStock: 50
-        }
+          optimalStockLevel: 600,
+          reorderThreshold: 150,
+          safetyStock: 75
+        },
+        lastCalculatedAt: new Date()
       });
     }
     console.log('✅ Created demand analytics for all products');
@@ -428,11 +475,11 @@ async function seedDatabase() {
     console.log('\n💝 Creating retailer preferences...');
 
     await RetailerPromotionPreference.create(
-      retailers.slice(0, 5).map(r => ({
+      retailers.slice(0, 7).map(r => ({
         retailerId: r._id,
         promotionId: endedPromo1._id,
         optedIn: true,
-        rating: 4,
+        rating: 4 + Math.floor(Math.random() * 2),
         notifyOnRerun: true
       }))
     );
@@ -445,7 +492,8 @@ async function seedDatabase() {
     console.log('PM:             pm@nestle.com / password123');
     console.log('Stock Manager:  sm@nestle.com / password123');
     console.log('General Staff:  staff@nestle.com / password123');
-    console.log('Retailer 1:     retailer1@test.com / password123');
+    console.log('Retailer 1:     retailer1@test.com / password123 (Credits: 8500)');
+    console.log('Retailer 2:     retailer2@test.com / password123 (Credits: 4200)');
     console.log('='.repeat(40));
 
     process.exit(0);

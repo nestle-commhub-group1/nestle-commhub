@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
-import { ShoppingBag, Search, Plus, Minus, ShoppingCart, Trash2, CheckCircle, Tag, Clock, Heart } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Minus, ShoppingCart, Trash2, CheckCircle, Tag, Clock, Heart, TrendingUp, Flame } from 'lucide-react';
 
 const StockRequests = () => {
   const [products, setProducts] = useState([]);
@@ -13,6 +13,7 @@ const StockRequests = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [userCredits, setUserCredits] = useState(0);
   const [useCredits, setUseCredits] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -260,8 +261,73 @@ const StockRequests = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredProducts.map(product => (
+           {/* High Demand Section (Separated) */}
+        {products.some(p => p.howStatus?.isHOW) && !searchQuery && (
+          <div className="mb-10 animate-fade-in">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-orange-100 rounded-xl">
+                  <Flame size={20} className="text-orange-600" />
+                </div>
+                <h2 className="text-[18px] font-black text-[#2C1810] uppercase tracking-wider">High Demand Items</h2>
+              </div>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full">
+                Trending Now
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.filter(p => p.howStatus?.isHOW).map(product => (
+                <div key={product._id} className="bg-gradient-to-br from-orange-50/50 to-white p-5 rounded-[28px] border-2 border-orange-100 shadow-sm flex flex-col hover:shadow-lg transition-all group relative overflow-hidden">
+                  <div className="absolute -right-8 -top-8 w-24 h-24 bg-orange-100/50 rounded-full blur-2xl group-hover:bg-orange-200/50 transition-colors"></div>
+                  
+                  <div className="h-40 bg-white/60 backdrop-blur-sm rounded-2xl mb-4 overflow-hidden relative">
+                    <img src={product.image} alt={product.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
+                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-orange-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-orange-600/20 flex items-center z-20 animate-pulse">
+                      <TrendingUp size={10} className="mr-1" />
+                      Hot Item
+                    </span>
+                    <span className="absolute top-10 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm text-nestle-brown text-[10px] font-black rounded-full shadow-sm">
+                        {product.category}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-[16px] font-black text-[#2C1810] group-hover:text-orange-600 transition-colors line-clamp-1">{product.name}</h3>
+                    <p className="text-[12px] text-gray-500 mt-1 line-clamp-2 leading-relaxed h-8 font-medium">
+                        {product.description}
+                    </p>
+                    
+                    <div className="mt-4 flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Price per unit</p>
+                        <p className="text-[17px] font-black text-[#2C1810]">LKR {product.price.toLocaleString()}</p>
+                      </div>
+                      <button 
+                        onClick={() => addToCart(product)}
+                        className="w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-lg shadow-orange-600/30 flex items-center justify-center transition-all hover:scale-110 active:scale-95 group-hover:rotate-12"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-10 border-b border-gray-100"></div>
+          </div>
+        )}
+
+        {/* Regular Products Grid */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[18px] font-black text-[#2C1810] uppercase tracking-wider">
+            {searchQuery ? 'Search Results' : 'Regular Products'}
+          </h2>
+          <p className="text-[12px] text-gray-400 font-bold">{filteredProducts.filter(p => !p.howStatus?.isHOW || searchQuery).length} Items</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.filter(p => !p.howStatus?.isHOW || searchQuery).map((product) => (
                 <div key={product._id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col hover:shadow-md transition-all group">
                   <div className="h-40 bg-gray-50 rounded-2xl mb-4 overflow-hidden relative">
                     <img src={product.image} alt={product.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
@@ -274,23 +340,29 @@ const StockRequests = () => {
                         </span>
                     )}
                   </div>
-                  <h3 className="font-black text-nestle-brown text-lg">{product.name}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-1 mb-3 font-medium">{product.description}</p>
-                  <div className="mt-auto flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Price per unit</span>
-                        <span className="text-xl font-black text-nestle-brown">LKR {product.price.toLocaleString()}</span>
+
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-[16px] font-black text-[#2C1810] group-hover:text-nestle-brown transition-colors line-clamp-1">{product.name}</h3>
+                    <p className="text-[12px] text-gray-500 mt-1 line-clamp-2 leading-relaxed h-8 font-medium">
+                        {product.description}
+                    </p>
+                    
+                    <div className="mt-4 flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Price per unit</p>
+                        <p className="text-[17px] font-black text-[#2C1810]">LKR {product.price.toLocaleString()}</p>
+                      </div>
+                      <button 
+                        onClick={() => addToCart(product)}
+                        className="w-10 h-10 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-xl shadow-lg shadow-[#3D2B1F]/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                      >
+                        <Plus size={20} />
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => addToCart(product)}
-                      className="bg-nestle-brown text-white p-3 rounded-2xl hover:bg-nestle-brown-hover transition-colors shadow-lg shadow-nestle-brown/20"
-                    >
-                      <Plus size={20} />
-                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+            ))}
+        </div> 
           </div>
 
           {/* Cart Section */}
@@ -426,7 +498,11 @@ const StockRequests = () => {
             </div>
           ) : (
             orders.map(order => (
-              <div key={order._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-nestle-brown/30 transition-all group">
+              <div 
+                key={order._id} 
+                className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-nestle-brown/30 transition-all group cursor-pointer"
+                onClick={() => setSelectedOrder(order)}
+              >
                 <div className="flex items-center space-x-5">
                    <div className="p-4 bg-gray-50 rounded-2xl text-nestle-brown group-hover:bg-nestle-brown group-hover:text-white transition-colors">
                       <ShoppingBag size={24} />
@@ -447,12 +523,18 @@ const StockRequests = () => {
                    </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3" onClick={e => e.stopPropagation()}>
                    <button 
                      onClick={() => toggleFavorite(order._id)}
                      className={`p-3 rounded-2xl transition-all ${order.isFavorite ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-gray-50 text-gray-300 border border-gray-100 hover:text-red-400'}`}
                    >
                      <Heart size={20} fill={order.isFavorite ? 'currentColor' : 'none'} />
+                   </button>
+                   <button 
+                     onClick={() => setSelectedOrder(order)}
+                     className="px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                   >
+                     View Details
                    </button>
                    <button 
                      onClick={() => handleReorder(order._id)}
@@ -464,6 +546,63 @@ const StockRequests = () => {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+            <div className="bg-[#3D2B1F] p-6 text-white flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">Order Details</p>
+                <h3 className="text-xl font-black">#{selectedOrder._id.substring(selectedOrder._id.length-8).toUpperCase()}</h3>
+              </div>
+              <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                <Plus size={24} className="rotate-45" />
+              </button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-4">
+                {selectedOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="w-16 h-16 bg-white rounded-xl p-2 border border-gray-100 shrink-0">
+                      <img src={item.product?.image} className="w-full h-full object-contain" alt="" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-[#2C1810] text-[15px] truncate">{item.product?.name}</p>
+                      <p className="text-[12px] text-gray-400 font-bold uppercase tracking-wider">{item.product?.category}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-[#2C1810] text-[15px]">{item.quantity} units</p>
+                      <p className="text-[12px] text-gray-400 font-bold uppercase tracking-wider">LKR {(item.priceAtTime * item.quantity).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 bg-[#FAFAF9] border-t border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
+                   <div className={`w-2 h-2 rounded-full ${
+                      selectedOrder.status === 'pending' ? 'bg-amber-500' :
+                      selectedOrder.status === 'accepted' ? 'bg-blue-500' : 'bg-green-500'
+                   }`}></div>
+                   <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">{selectedOrder.status}</span>
+                </div>
+                <p className="text-[20px] font-black text-[#2C1810]">Total: LKR {selectedOrder.totalAmount.toLocaleString()}</p>
+              </div>
+              <button 
+                onClick={() => { handleReorder(selectedOrder._id); setSelectedOrder(null); }}
+                className="w-full py-4 bg-[#3D2B1F] hover:bg-[#2C1810] text-white rounded-2xl font-black transition-all flex items-center justify-center space-x-2 shadow-lg shadow-black/10"
+              >
+                <Plus size={18} />
+                <span>Reorder All Items</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
