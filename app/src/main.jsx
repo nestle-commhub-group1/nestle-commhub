@@ -13,6 +13,6 @@ createRoot(document.getElementById('root')).render(
 //   import('./tests/runRoleDashboardTests.js')
 // }
 
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && localStorage.getItem('runHeatMapTests') === 'true') {
   import('./tests/runHeatMapTests.js')
 }

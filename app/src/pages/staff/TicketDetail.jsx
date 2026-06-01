@@ -4,7 +4,7 @@
  * Detailed ticket view for Nestlé sales staff, with tools to manage the ticket.
  *
  * Key responsibilities:
- * - Loads ticket data and chat messages from the API (with fallback to hardcoded data in dev mode)
+ * - Loads ticket data and chat messages from the API
  * - Polls for new messages every 8 seconds for a near-real-time chat experience
  * - Lets staff update the ticket status (in_progress / resolved) with a confirmation modal
  * - Lets staff manually escalate a ticket to HQ Admin with a confirmation modal
@@ -17,27 +17,7 @@ import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../../config/api';
 import StaffLayout from '../../components/layout/StaffLayout';
-import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle, Loader2 } from 'lucide-react';
-import { formatDateTime } from '../../utils/dateUtils';
-
-// Hardcoded fallback data used in development mode when the backend is not available.
-// This lets UI development continue without a running server or database.
-const FALLBACK = {
-  id:'TKT-1041', category:'Stock Out', priority:'High', status:'In Progress',
-  retailer:'Saman General Stores', submitted:'March 15, 2026 10:23 AM',
-  description:'We have completely run out of Milo 400g packs. Customers have been asking daily for the past week and we are losing significant sales. Please arrange urgent restock before the weekend when demand peaks.',
-  slaBreached: false, slaTime:'2h 14m', slaDeadline:'Mar 15, 2:23 PM', slaProgress:45,
-  retailerInfo:{ name:'Saman Perera', business:'Saman General Stores', phone:'+94 77 123 4567', email:'saman@samanstores.lk', address:'12/A Baseline Rd, Colombo 09', initials:'SP' }
-};
-
-// Sample messages for dev mode fallback
-const INIT_MSGS = [
-  { id:1, sender:'retailer', name:'Saman Perera',    text:'We have completely run out of Milo 400g. Customers asking daily. Please help urgently.', time:'10:23 AM' },
-  { id:2, sender:'staff',    name:'Nadeeka Perera',  text:"Thank you for reporting. I have noted your issue and will check with the distribution team right away.", time:'11:45 AM' },
-  { id:3, sender:'retailer', name:'Saman Perera',    text:'Thank you. We are losing around 50 sales per day. Please expedite if possible.', time:'12:02 PM' },
-  { id:4, sender:'staff',    name:'Nadeeka Perera',  text:'Escalated to warehouse team. Expect delivery within 48 hours. I will keep you updated.', time:'2:15 PM' },
-];
-
+import { ArrowLeft, Send, User, Clock, Paperclip, X, ChevronDown, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 
 const priCls = p => ({ High:'bg-orange-100 text-orange-700 border border-orange-200', Critical:'bg-red-100 text-red-700 border border-red-200', Medium:'bg-yellow-100 text-yellow-700 border border-yellow-200', Low:'bg-gray-100 text-gray-600 border border-gray-200' }[p] || 'bg-gray-100 text-gray-600');
 const staCls = s => ({ 'Open':'bg-red-50 text-red-700 border border-red-200', 'In Progress':'bg-yellow-50 text-yellow-700 border border-yellow-200', 'Resolved':'bg-green-50 text-green-700 border border-green-200', 'Escalated':'bg-purple-100 text-purple-700 border border-purple-200' }[s] || 'bg-gray-50 text-gray-600');
@@ -45,11 +25,12 @@ const staCls = s => ({ 'Open':'bg-red-50 text-red-700 border border-red-200', 'I
 export default function StaffTicketDetail() {
   const { id } = useParams();
   const token = localStorage.getItem('token');
-  const [ticket, setTicket] = useState(FALLBACK);
-  const [messages, setMessages] = useState(INIT_MSGS);
+  const [ticket, setTicket] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState(FALLBACK.status);
+  const [loadError, setLoadError] = useState('');
+  const [status, setStatus] = useState('');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -58,26 +39,15 @@ export default function StaffTicketDetail() {
   const [selectedDistributor, setSelectedDistributor] = useState(null);
   const [actionResult, setActionResult] = useState(null); // { type: 'success'|'error', msg }
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isMsgsLoading, setIsMsgsLoading] = useState(false);
 
   // Priority & Time-to-Resolve state (staff-editable)
   const [editPriority, setEditPriority] = useState('');
   const [editTTR, setEditTTR] = useState('');
   const [savingPriority, setSavingPriority] = useState(false);
 
-  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
-
   // ── Fetch ticket + messages on mount ────────────────────────────────────
   useEffect(() => {
     if (!token || !id) { setLoading(false); return; }
-
-    // In dev mode, skip the API and use the hardcoded FALLBACK data
-    if (isDevMode) {
-      setTicket(FALLBACK);
-      setMessages(INIT_MSGS);
-      setLoading(false);
-      return;
-    }
 
     Promise.all([
       fetch(`${API_URL}/api/tickets/${id}`, { headers:{ Authorization:`Bearer ${token}` } }).then(r=>r.json()).catch(()=>null),
@@ -116,6 +86,10 @@ export default function StaffTicketDetail() {
         // Pre-populate the staff-editable priority and TTR fields
         setEditPriority(t.priority || 'low');
         setEditTTR(t.timeToResolve || '');
+        setLoadError('');
+      } else {
+        setTicket(null);
+        setLoadError(ticketData?.message || `Ticket ${id} could not be loaded.`);
       }
       if (msgData?.success) {
         const mapped = (msgData.messages || []).map(m => ({
@@ -129,12 +103,14 @@ export default function StaffTicketDetail() {
       }
     }).catch(err => {
       console.log("Ticket detail error:", err.message);
+      setTicket(null);
+      setLoadError('Failed to load this ticket. Please return to My Tickets and try again.');
     }).finally(() => setLoading(false));
-  }, [id, token, isDevMode]);
+  }, [id, token]);
 
   // Poll for messages — staff_distributor channel only
   useEffect(() => {
-    if (!id || !token || isDevMode || !ticket.distributorId) return;
+    if (!id || !token || !ticket?.distributorId) return;
     const interval = setInterval(async () => {
       try {
         const res = await axios.get(`${API_URL}/api/tickets/${id}/messages?chatRoom=staff_distributor`, {
@@ -153,11 +129,11 @@ export default function StaffTicketDetail() {
       } catch (err) { console.error("Poll error", err); }
     }, 8000);
     return () => clearInterval(interval);
-  }, [id, token, isDevMode, ticket.distributorId]);
+  }, [id, token, ticket?.distributorId]);
 
   // ── SLA Countdown ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!ticket.originalDeadline || ticket.status === 'Resolved') {
+    if (!ticket?.originalDeadline || ticket.status === 'Resolved') {
       setTimeLeft(0);
       return;
     }
@@ -172,11 +148,11 @@ export default function StaffTicketDetail() {
     calculate();
     const interval = setInterval(calculate, 1000 * 60); // Update every minute
     return () => clearInterval(interval);
-  }, [ticket.originalDeadline, ticket.status]);
+  }, [ticket?.originalDeadline, ticket?.status]);
 
   const hoursRemaining = Math.floor(timeLeft / (1000 * 60 * 60));
   const minsRemaining = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-  const isOverdue = timeLeft <= 0 && ticket.status !== 'Resolved';
+  const isOverdue = ticket ? timeLeft <= 0 && ticket.status !== 'Resolved' : false;
 
   // ── Fetch distributors ───────────────────────────────────────────────────
   useEffect(() => {
@@ -269,7 +245,7 @@ export default function StaffTicketDetail() {
         setStatus(label);
         setActionResult({ type: 'success', msg: `Status updated to ${label}` });
       }
-    } catch (err) {
+    } catch {
       setActionResult({ type: 'error', msg: "Failed to update status." });
     } finally {
       setShowStatusConfirm(null);
@@ -313,7 +289,9 @@ export default function StaffTicketDetail() {
       const r = await fetch(`${API_URL}/api/tickets/${id}/escalate`, { method:'POST', headers:{ Authorization:`Bearer ${token}` } });
       const data = await r.json();
       if (data.success) { setStatus('Escalated'); setActionResult({ type:'success', msg:'Ticket escalated to HQ Admin.' }); return; }
-    } catch(_) {}
+    } catch {
+      // Fall through to the optimistic local escalation below.
+    }
     setStatus('Escalated');
     setActionResult({ type:'success', msg:'Ticket escalated to HQ Admin.' });
     setTimeout(() => setActionResult(null), 3000);
@@ -322,13 +300,22 @@ export default function StaffTicketDetail() {
   return (
     <StaffLayout>
       <div className="pb-10">
-        {/* Dev Mode Banner */}
-        {isDevMode && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center">
-            <span className="mr-2">ℹ️</span> Dev mode — showing sample data
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+            <Loader2 className="w-8 h-8 text-[#3D2B1F] animate-spin mb-3" />
+            <p className="text-[14px] font-medium">Loading ticket...</p>
           </div>
-        )}
-
+        ) : loadError || !ticket ? (
+          <div className="bg-white border border-red-200 rounded-[20px] p-10 text-center shadow-sm">
+            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+            <h1 className="text-[22px] font-extrabold text-[#2C1810] mb-2">Ticket not loaded</h1>
+            <p className="text-[14px] text-gray-500 font-medium mb-5">{loadError || 'The requested ticket could not be found.'}</p>
+            <Link to="/staff/tickets" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-5 py-3 rounded-[10px] text-[13px] font-bold">
+              <ArrowLeft size={16} /> Back to My Tickets
+            </Link>
+          </div>
+        ) : (
+          <>
         {/* Header */}
         <div className="mb-6">
           <Link to="/staff/tickets" className="inline-flex items-center space-x-2 text-[13px] font-bold text-gray-500 hover:text-[#3D2B1F] transition-colors mb-4">
@@ -604,6 +591,8 @@ export default function StaffTicketDetail() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Modals ... (keeping original modals as they work fine) */}

@@ -8,12 +8,10 @@ import { getCurrentGreeting, formatCurrentDate, formatDate } from '../../utils/d
 
 const StaffDashboard = () => {
 
-  const [user, setUser] = useState({ fullName: 'Nadeeka' });
+  const [user, setUser] = useState({ fullName: 'User' });
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
-
-  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -22,20 +20,12 @@ const StaffDashboard = () => {
         const parsedUser = JSON.parse(storedUser);
         const name = parsedUser.fullName || parsedUser.name || 'User';
         setUser({ ...parsedUser, fullName: name.split(' ')[0] });
-      } catch (e) { }
+      } catch {
+        // Keep the generic user label if stored user data is invalid.
+      }
     }
 
     const fetchTickets = async () => {
-      // Skip API if dev mode
-      if (isDevMode) {
-        setTickets([
-          { _id: '1', ticketNumber: 'TKT-1041', category: 'stock_out', priority: 'high', status: 'in_progress', createdAt: new Date().toISOString() },
-          { _id: '2', ticketNumber: 'TKT-1037', category: 'packaging_damage', priority: 'medium', status: 'open', createdAt: new Date().toISOString() }
-        ]);
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
@@ -68,7 +58,7 @@ const StaffDashboard = () => {
     };
 
     fetchTickets();
-  }, [isDevMode]);
+  }, []);
 
   const stats = {
     assigned: Array.isArray(tickets) ? tickets.length : 0,
@@ -168,12 +158,6 @@ const StaffDashboard = () => {
   return (
     <StaffLayout>
       <div className="space-y-8 pb-10">
-        {isDevMode && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-[10px] text-[12px] font-bold flex items-center mb-4">
-            Dev mode — showing sample data
-          </div>
-        )}
-
         <div>
           <h1 className="text-[26px] font-extrabold text-[#2C1810]">{getCurrentGreeting()}, {user.fullName}</h1>
           <div className="flex items-center text-gray-500 mt-1 text-[14px]">

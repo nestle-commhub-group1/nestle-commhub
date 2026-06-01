@@ -10,45 +10,31 @@ import LanguageSelector from '../LanguageSelector';
 import ThemeToggle from '../ThemeToggle';
 import { useLanguage } from '../../i18n/LanguageContext';
 
+function getStoredStaffUser() {
+  const storedUser = localStorage.getItem('user');
+  if (!storedUser) return { fullName: 'User', initials: 'U', staffCategory: 'Staff', email: '' };
+  try {
+    const parsedUser = JSON.parse(storedUser);
+    const name = parsedUser.fullName || parsedUser.name || 'User';
+    const parts = name.split(' ');
+    const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
+    return { ...parsedUser, fullName: name, initials: initials.toUpperCase() };
+  } catch (e) {
+    console.error('Failed to parse user', e);
+    return { fullName: 'User', initials: 'U', staffCategory: 'Staff', email: '' };
+  }
+}
+
 const StaffLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [loadingNotifs, setLoadingNotifs] = useState(false);
   const { t } = useLanguage();
-  const [user, setUser] = useState({ fullName: 'User', initials: 'U', staffCategory: 'Staff', email: '' });
+  const [user] = useState(getStoredStaffUser);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        const name = parsedUser.fullName || parsedUser.name || 'User';
-        const parts = name.split(' ');
-        const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name[0];
-        setUser({ ...parsedUser, fullName: name, initials: initials.toUpperCase() });
-      } catch (e) {
-        console.error('Failed to parse user', e);
-      }
-    } else {
-      setUser({ fullName: 'Nadeeka Perera', initials: 'NP', staffCategory: 'Staff', email: 'nadeeka.perera@nestle.com' });
-    }
-    
-    if (isDevMode) {
-      setNotifications([
-        { _id: '1', message: 'New ticket assigned: TKT-1041', type: 'ticket', createdAt: new Date().toISOString(), isRead: false },
-        { _id: '2', message: 'SLA Warning: TKT-1037 is nearing deadline', type: 'warning', createdAt: new Date().toISOString(), isRead: false }
-      ]);
-    } else {
-      fetchNotifications();
-    }
-  }, [isDevMode]);
-
-  const fetchNotifications = async () => {
+  async function fetchNotifications() {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -59,7 +45,12 @@ const StaffLayout = ({ children }) => {
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(fetchNotifications, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const markAsRead = async (id) => {
     try {
@@ -139,25 +130,6 @@ const StaffLayout = ({ children }) => {
   };
 
   const nestleLogoUrl = "/nestle-logo.png";
-
-  const TopBar = () => (
-    <div className="flex bg-nestle-brown text-white h-16 items-center justify-between px-4 lg:hidden sticky top-0 z-20">
-      <button onClick={() => setIsSidebarOpen(true)} className="p-2">
-        <Menu size={24} />
-      </button>
-      <div className="flex items-center justify-center h-full py-2">
-        <img src={nestleLogoUrl} alt="Nestlé" className="h-full w-auto object-contain invert brightness-0" draggable="false" />
-      </div>
-      <button className="p-2 relative" onClick={() => setIsNotificationsOpen(true)}>
-        <Bell size={24} />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-nestle-brown">
-            {unreadCount}
-          </span>
-        )}
-      </button>
-    </div>
-  );
 
   return (
     <div className="flex h-screen bg-nestle-gray font-sans overflow-hidden">
@@ -245,7 +217,22 @@ const StaffLayout = ({ children }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative overflow-hidden">
-        <TopBar />
+        <div className="flex bg-nestle-brown text-white h-16 items-center justify-between px-4 lg:hidden sticky top-0 z-20">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2">
+            <Menu size={24} />
+          </button>
+          <div className="flex items-center justify-center h-full py-2">
+            <img src={nestleLogoUrl} alt="Nestlé" className="h-full w-auto object-contain invert brightness-0" draggable="false" />
+          </div>
+          <button className="p-2 relative" onClick={() => setIsNotificationsOpen(true)}>
+            <Bell size={24} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center border-2 border-nestle-brown">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* Top Right Desktop Notifications Icon */}
         <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">

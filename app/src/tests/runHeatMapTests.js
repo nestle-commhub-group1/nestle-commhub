@@ -31,7 +31,7 @@ export function getRole() {
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload && payload.role) return payload.role;
     }
-  } catch (e) {
+  } catch {
     // Ignore parsing errors
   }
   return 'unknown';
@@ -39,6 +39,11 @@ export function getRole() {
 
 export function getText() {
   return document.body.innerText;
+}
+
+function navigatePath(path) {
+  window.history.pushState(null, '', `${window.location.origin}${path}`);
+  window.dispatchEvent(new Event('popstate'));
 }
 
 export async function runHeatMapTests() {
@@ -49,8 +54,7 @@ export async function runHeatMapTests() {
   await runTest('Heat Map tab is visible for HQ Admin', async () => {
     const role = getRole();
     if (role === 'hqAdmin' || role === 'hq_admin' || role === 'staff') {
-      window.history.pushState(null, '', 'http://localhost:5173/admin/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/admin/insights');
       await wait(3000);
       const tabs = document.querySelectorAll('button, [role="tab"]');
       const hasHeatMap = Array.from(tabs).some(tab => 
@@ -67,8 +71,7 @@ export async function runHeatMapTests() {
   await runTest('Heat Map tab is NOT visible for PM', async () => {
     const role = getRole();
     if (role === 'pm' || role === 'promotion_manager') {
-      window.history.pushState(null, '', 'http://localhost:5173/pm/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/pm/insights');
       await wait(3000);
       const tabs = document.querySelectorAll('button, [role="tab"]');
       const hasHeatMap = Array.from(tabs).some(tab => tab.innerText && tab.innerText.includes('Heat Map'));
@@ -83,8 +86,7 @@ export async function runHeatMapTests() {
   await runTest('Heat Map tab is NOT visible for Stock Manager', async () => {
     const role = getRole();
     if (role === 'stockManager' || role === 'stock_manager') {
-      window.history.pushState(null, '', 'http://localhost:5173/stock/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/stock/insights');
       await wait(3000);
       const tabs = document.querySelectorAll('button, [role="tab"]');
       const hasHeatMap = Array.from(tabs).some(tab => tab.innerText && tab.innerText.includes('Heat Map'));
@@ -98,8 +100,7 @@ export async function runHeatMapTests() {
 
   await runTest('Heat Map tab is NOT visible for Retailer', async () => {
     if (getRole() === 'retailer') {
-      window.history.pushState(null, '', 'http://localhost:5173/retailer/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/retailer/insights');
       await wait(3000);
       const tabs = document.querySelectorAll('button, [role="tab"]');
       const hasHeatMap = Array.from(tabs).some(tab => tab.innerText && tab.innerText.includes('Heat Map'));
@@ -114,8 +115,7 @@ export async function runHeatMapTests() {
   await runTest('Clicking Heat Map tab loads the map', async () => {
     const role = getRole();
     if (role === 'hqAdmin' || role === 'hq_admin' || role === 'staff') {
-      window.history.pushState(null, '', 'http://localhost:5173/admin/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/admin/insights');
       await wait(2000);
       
       const buttons = Array.from(document.querySelectorAll('button, [role="tab"]'));
@@ -219,8 +219,7 @@ export async function runHeatMapTests() {
   await runTest('Metric cards show zero values when no data', async () => {
     const role = getRole();
     if (role === 'hqAdmin' || role === 'hq_admin' || role === 'staff') {
-      window.history.pushState(null, '', 'http://localhost:5173/admin/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/admin/insights');
       await wait(2000);
       
       const buttons = Array.from(document.querySelectorAll('button, [role="tab"]'));
@@ -229,7 +228,6 @@ export async function runHeatMapTests() {
       
       await wait(4000);
       
-      const metricCards = document.querySelectorAll('[data-testid="metric-card"]');
       const text = getText();
       
       // Look for any large text that isn't '0' or '0.0' or '0%'
@@ -338,8 +336,7 @@ export async function runHeatMapTests() {
   await runTest('Region filter dropdown changes value', async () => {
     const role = getRole();
     if (role === 'hqAdmin' || role === 'hq_admin' || role === 'staff') {
-      window.history.pushState(null, '', 'http://localhost:5173/admin/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/admin/insights');
       await wait(2000);
       
       const buttons = Array.from(document.querySelectorAll('button, [role="tab"]'));
@@ -408,9 +405,6 @@ export async function runHeatMapTests() {
   await runTest('Changing filters triggers API refetch', async () => {
     const role = getRole();
     if (role === 'hqAdmin' || role === 'hq_admin' || role === 'staff') {
-      const cards = document.querySelectorAll('[data-testid="metric-card"]');
-      const htmlBefore = cards.length > 0 ? cards[0].parentNode.innerHTML : '';
-      
       const selects = Array.from(document.querySelectorAll('select'));
       const regionSelect = selects.find(s => s.innerHTML.includes('Western'));
       
@@ -420,9 +414,6 @@ export async function runHeatMapTests() {
       regionSelect.dispatchEvent(new Event('change', { bubbles: true }));
       
       await wait(3000);
-      
-      const htmlAfter = cards.length > 0 ? cards[0].parentNode.innerHTML : '';
-      const uiChanged = htmlBefore !== htmlAfter || !!document.querySelector('.animate-spin');
       
       if (regionSelect.value === 'Western') {
         console.log('✅ PASS: [Changing filters triggers API refetch] — filter state updated, refetch assumed');
@@ -586,8 +577,7 @@ export async function runHeatMapTests() {
         return originalFetch.apply(this, args);
       };
 
-      window.history.pushState(null, '', 'http://localhost:5173/admin/insights');
-      window.dispatchEvent(new Event('popstate'));
+      navigatePath('/admin/insights');
       await wait(2000);
       
       const buttons = Array.from(document.querySelectorAll('button, [role="tab"]'));
