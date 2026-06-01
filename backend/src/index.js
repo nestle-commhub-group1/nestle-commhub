@@ -16,7 +16,7 @@ const cors = require('cors');
 require('dotenv').config(); // Load .env variables into process.env before anything else
 
 const app = express();
-const PORT = process.env.PORT || 5001; // Render sets PORT automatically; 5001 is the local fallback
+const PORT = process.env.PORT || (process.env.RENDER === 'true' ? 10000 : 5001); // Render sets PORT automatically; 5001 is the local fallback
 
 /* ─── Database Connection ─────────────────────────────────────────────────── */
 
@@ -143,8 +143,10 @@ app.get('/api/health', (req, res) => {
 
 /* ─── Server Start ────────────────────────────────────────────────────────── */
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Explicitly bind to '0.0.0.0' for cloud environments like Render
+const HOST = '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 
   // ─── Render Keep-Alive ────────────────────────────────────────────────────
   // Render's free tier spins down inactive services after 15 minutes.
