@@ -516,6 +516,12 @@ export default function Register() {
           >
             Create Account
           </button>
+          <p className="text-center text-[11px] font-medium leading-5 text-gray-500">
+            Registration data is used only for CommHub identity, role access, support, promotions, order fulfilment, and compliance workflows.{' '}
+            <Link to="/privacy" className="font-black text-[#3D2B1F] underline underline-offset-2">
+              Privacy Notice
+            </Link>
+          </p>
         </form>
 
         {/* Link back to login for users who already have an account */}

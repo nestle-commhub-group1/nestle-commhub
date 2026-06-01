@@ -7,6 +7,9 @@ import axios from 'axios';
 import API_URL from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 import { formatTimeAgo } from '../../utils/dateUtils';
+import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ThemeToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const RetailerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,6 +17,7 @@ const RetailerLayout = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'Retailer', email: '' });
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -228,7 +232,7 @@ const RetailerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.badge && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -245,7 +249,7 @@ const RetailerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.label === 'Notifications' && unreadCount > 0 && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -263,7 +267,7 @@ const RetailerLayout = ({ children }) => {
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-nestle-brown-hover hover:text-white rounded-xl transition-colors"
           >
             <LogOut size={20} />
-            <span className="font-medium text-[15px]">Logout</span>
+            <span className="font-medium text-[15px]">{t('Logout')}</span>
           </button>
         </div>
       </div>
@@ -273,7 +277,9 @@ const RetailerLayout = ({ children }) => {
         <TopBar />
 
         {/* Top Right Desktop Notifications Icon */}
-        <div className="hidden lg:flex absolute top-6 right-8 z-10">
+        <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">
+          <ThemeToggle compact />
+          <LanguageSelector compact />
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
             {unreadCount > 0 && (

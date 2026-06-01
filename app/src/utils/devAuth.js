@@ -20,8 +20,8 @@ const devUsers = {
     role: "hq_admin",
   },
   distributor: {
-    fullName: "Distributor One",
-    email: "distributor1@test.com",
+    fullName: "Kamal Jayawardena",
+    email: "dist1@nestle.com",
     role: "distributor",
   },
   promotion_manager: {

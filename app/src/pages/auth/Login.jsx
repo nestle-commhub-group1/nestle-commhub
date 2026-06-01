@@ -15,10 +15,12 @@ import axios                from "axios";
 import API_URL              from "../../config/api";
 import AuthLayout           from "../../components/AuthLayout";
 import { useAuth }          from "../../context/AuthContext";
+import { useLanguage }      from "../../i18n/LanguageContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth(); // Get the login function from global auth state
+  const { t } = useLanguage();
 
   // Form field values — controlled inputs
   const [form, setForm]         = useState({ email: "", password: "" });
@@ -114,9 +116,9 @@ export default function Login() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#3D2B1F]">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-[#3D2B1F]">{t('Welcome back')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Sign in to your Nestlé CommHub account
+            {t('Sign in to your Nestle CommHub account')}
           </p>
         </div>
 
@@ -132,7 +134,7 @@ export default function Login() {
           {/* Email field */}
           <div>
             <label className="block text-sm font-semibold text-[#3D2B1F] mb-1.5">
-              Email <span className="text-red-500">*</span>
+              {t('Email')} <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -157,13 +159,13 @@ export default function Login() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-sm font-semibold text-[#3D2B1F]">
-                Password <span className="text-red-500">*</span>
+                {t('Password')} <span className="text-red-500">*</span>
               </label>
               <Link
                 to="/forgot-password"
                 className="text-xs text-[#3D2B1F] underline underline-offset-2 hover:opacity-70 transition-opacity"
               >
-                Forgot password?
+                {t('Forgot password?')}
               </Link>
             </div>
             <div className="relative">
@@ -210,8 +212,14 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-[#3D2B1F] text-white text-sm font-semibold rounded-lg py-3.5 mt-2 hover:bg-[#2e1f15] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t('Signing in...') : t('Sign in')}
           </button>
+          <p className="text-center text-[11px] font-medium leading-5 text-gray-500">
+            By continuing, you agree that your data is used for CommHub support, promotions, stock fulfilment, analytics, and compliance workflows.{' '}
+            <Link to="/privacy" className="font-black text-[#3D2B1F] underline underline-offset-2">
+              {t('Privacy Notice')}
+            </Link>
+          </p>
         </form>
 
         {/* Link to registration page */}
@@ -221,7 +229,7 @@ export default function Login() {
             to="/register"
             className="text-[#3D2B1F] font-semibold hover:underline"
           >
-            Register
+            {t('Register')}
           </Link>
         </p>
       </div>

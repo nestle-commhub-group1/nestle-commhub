@@ -6,12 +6,16 @@ import {
 import axios from 'axios';
 import API_URL from '../../config/api';
 import { formatTimeAgo } from '../../utils/dateUtils';
+import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ThemeToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const DistributorLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [user, setUser] = useState({ fullName: 'User', initials: 'U', role: 'Distributor', email: '' });
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -108,7 +112,6 @@ const DistributorLayout = ({ children }) => {
     { label: 'Dashboard', path: '/distributor/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'My Allocations', path: '/distributor/dashboard', icon: <ClipboardList size={20} /> },
     { label: 'Notifications', path: '#', icon: <Bell size={20} />, badge: unreadCount, action: () => setIsNotificationsOpen(true) },
-    { label: 'Profile', path: '/distributor/profile', icon: <User size={20} /> },
   ];
 
   const getNotificationIcon = (type) => {
@@ -184,7 +187,7 @@ const DistributorLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.badge > 0 && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -201,7 +204,7 @@ const DistributorLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
               </Link>
             )
@@ -214,7 +217,7 @@ const DistributorLayout = ({ children }) => {
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-nestle-brown-hover hover:text-white rounded-xl transition-colors"
           >
             <LogOut size={20} />
-            <span className="font-medium text-[15px]">Logout</span>
+            <span className="font-medium text-[15px]">{t('Logout')}</span>
           </button>
         </div>
       </div>
@@ -224,7 +227,9 @@ const DistributorLayout = ({ children }) => {
         <TopBar />
 
         {/* Top Right Desktop Notifications Icon */}
-        <div className="hidden lg:flex absolute top-6 right-8 z-10">
+        <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">
+          <ThemeToggle compact />
+          <LanguageSelector compact />
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
             {unreadCount > 0 && (

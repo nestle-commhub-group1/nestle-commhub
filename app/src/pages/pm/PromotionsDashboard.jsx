@@ -7,9 +7,30 @@ import { Building2, Users, PlusCircle, RefreshCw, Percent, Package, CheckCircle,
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
 import AdminLayout from '../../components/layout/AdminLayout';
 import API_URL from '../../config/api';
-import { Tag } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 function fmt(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—'; }
+function formatPoints(value) { return `${Math.round(Number(value) || 0).toLocaleString()} pts`; }
+function getRetailerId(retailer) {
+  if (!retailer) return null;
+  return typeof retailer === 'string' ? retailer : (retailer._id || retailer.id);
+}
+function getRetailerName(retailer) {
+  if (!retailer) return 'Retailer';
+  if (typeof retailer === 'string') return 'Retailer';
+  return retailer.businessName || retailer.fullName || retailer.email || 'Retailer';
+}
+function getRewardSummary(promotion) {
+  const rows = promotion.salesData || [];
+  const pending = rows.filter(s => !s.rewardIssuedAt);
+  const paid = rows.filter(s => s.rewardIssuedAt);
+  return {
+    pending,
+    paid,
+    pendingPoints: pending.reduce((sum, s) => sum + (Number(s.rewardAmount) || 0), 0),
+    paidPoints: paid.reduce((sum, s) => sum + (Number(s.rewardAmount) || 0), 0),
+  };
+}
 function StatusPill({ status }) {
   const m = { active:'bg-green-100 text-green-700', inactive:'bg-gray-100 text-gray-500', archived:'bg-red-100 text-red-600' };
   return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${m[status]||m.inactive}`}>{status}</span>;
@@ -47,13 +68,78 @@ function AnalyticsStrip({ promotions, tab }) {
   );
 }
 
-function B2BTable({ promotions }) {
+function RewardCell({ promotion, approvingId, onApproveReward, t }) {
+  const { pending, paid, pendingPoints, paidPoints } = getRewardSummary(promotion);
+
+  if (!pending.length && !paid.length) {
+    return (
+      <div className="rounded-[12px] border border-dashed border-[#E0DBD5] bg-[#FAFAF9] px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('No sales reports')}</p>
+      </div>
+    );
+  }
+
+  if (!pending.length) {
+    return (
+      <div className="rounded-[12px] border border-green-100 bg-green-50 px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <CheckCircle size={13} className="text-green-700" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-700">{t('All paid')}</p>
+        </div>
+        <p className="mt-1 text-[12px] font-black text-[#2C1810]">{formatPoints(paidPoints)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-w-[230px] overflow-hidden rounded-[14px] border border-amber-200 bg-amber-50/70">
+      <div className="flex items-center justify-between gap-2 border-b border-amber-100 px-3 py-2">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">{t('Pending approval')}</p>
+          <p className="text-[13px] font-black text-[#2C1810]">{formatPoints(pendingPoints)}</p>
+        </div>
+        {paid.length > 0 && (
+          <span className="rounded-full bg-green-50 px-2 py-1 text-[9px] font-black uppercase text-green-700">
+            {formatPoints(paidPoints)} paid
+          </span>
+        )}
+      </div>
+      <div className="max-h-[150px] divide-y divide-amber-100 overflow-y-auto">
+        {pending.map((sale) => {
+          const retailerId = getRetailerId(sale.retailerId);
+          const actionId = `${promotion._id}-${retailerId}`;
+          const isApproving = approvingId === actionId;
+          return (
+            <div key={actionId} className="grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-black text-[#2C1810]">{getRetailerName(sale.retailerId)}</p>
+                <p className="text-[10px] font-bold text-gray-500">{sale.unitsSold || 0} units sold</p>
+              </div>
+              <div className="text-right">
+                <p className="mb-1 text-[11px] font-black text-[#2C1810]">{formatPoints(sale.rewardAmount)}</p>
+                <button
+                  onClick={() => onApproveReward(promotion._id, retailerId)}
+                  disabled={isApproving}
+                  className="rounded-[9px] border border-[#3D2B1F] bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-[#3D2B1F] hover:bg-[#3D2B1F] hover:text-white disabled:opacity-60"
+                >
+                  {isApproving ? t('Saving') : t('Approve')}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function B2BTable({ promotions, approvingId, onApproveReward, t }) {
   return (
     <div className="bg-white rounded-[20px] border border-[#E0DBD5] shadow-sm overflow-hidden">
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-[#F8F7F5]">
-            <tr>{['Promotion','Discount','Min Units','Target','Dates','Status','Opt-Ins'].map(h=>(<th key={h} className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{h}</th>))}</tr>
+            <tr>{['Promotion','Discount','Min Units','Target','Dates','Status','Points','Opt-Ins'].map(h=>(<th key={h} className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t(h)}</th>))}</tr>
           </thead>
           <tbody className="divide-y divide-[#F0EDE8]">
             {promotions.map(p=>(
@@ -64,6 +150,7 @@ function B2BTable({ promotions }) {
                 <td className="px-4 py-4"><div className="flex flex-wrap gap-1">{(p.b2bConfig?.targetRetailers||['ALL']).map(t=>(<span key={t} className="bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">{t.replace('_',' ')}</span>))}</div></td>
                 <td className="px-4 py-4"><p className="text-[12px] font-bold text-gray-600">{fmt(p.startDate)}</p><p className="text-[11px] text-gray-400">→ {fmt(p.endDate)}</p></td>
                 <td className="px-4 py-4"><StatusPill status={p.status}/></td>
+                <td className="px-4 py-4"><RewardCell promotion={p} approvingId={approvingId} onApproveReward={onApproveReward} t={t}/></td>
                 <td className="px-4 py-4 text-[14px] font-black text-[#2C1810]">{p.participatingRetailers?.length||0}</td>
               </tr>
             ))}
@@ -76,6 +163,10 @@ function B2BTable({ promotions }) {
             <div className="flex justify-between"><p className="font-black text-[14px] text-[#2C1810]">{p.title}</p><StatusPill status={p.status}/></div>
             <div className="grid grid-cols-3 gap-2 text-center">
               {[{l:'Discount',v:`${p.b2bConfig?.discountPercentage||0}%`},{l:'Min Units',v:p.b2bConfig?.minUnitsRequired||0},{l:'Opt-Ins',v:p.participatingRetailers?.length||0}].map(m=>(<div key={m.l} className="bg-[#FAFAF9] rounded-[10px] p-2 border border-[#F0EDE8]"><p className="text-[9px] font-black text-gray-400 uppercase">{m.l}</p><p className="text-[13px] font-black text-[#2C1810]">{m.v}</p></div>))}
+            </div>
+            <div className="bg-[#FAFAF9] rounded-[12px] p-3 border border-[#F0EDE8]">
+              <p className="text-[9px] font-black text-gray-400 uppercase mb-2">{t('Points')}</p>
+              <RewardCell promotion={p} approvingId={approvingId} onApproveReward={onApproveReward} t={t}/>
             </div>
           </div>
         ))}
@@ -126,11 +217,14 @@ function B2CTable({ promotions }) {
 
 export default function PromotionsDashboard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [tab,     setTab]     = useState('B2B');
   const [b2b,     setB2b]     = useState([]);
   const [b2c,     setB2c]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [user,    setUser]    = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
+  const [notice, setNotice] = useState(null);
   
   const token = localStorage.getItem('token');
   const headers = { Authorization:`Bearer ${token}` };
@@ -156,6 +250,39 @@ export default function PromotionsDashboard() {
 
   useEffect(()=>{ fetchAll(); },[fetchAll]);
 
+  const handleApproveReward = async (promoId, retailerId) => {
+    if (!retailerId) {
+      setNotice({ type: 'error', text: 'Invalid retailer selection.' });
+      return;
+    }
+    const actionId = `${promoId}-${retailerId}`;
+    setApprovingId(actionId);
+    setNotice(null);
+    try {
+      const res = await fetch(`${API_URL}/api/promotions/${promoId}/approve-reward`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ retailerId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error approving reward');
+      const issuedAt = data.rewardIssuedAt || new Date().toISOString();
+      setB2b(prev => prev.map(p => p._id !== promoId ? p : {
+        ...p,
+        salesData: (p.salesData || []).map(s => (
+          getRetailerId(s.retailerId) === retailerId ? { ...s, rewardIssuedAt: issuedAt } : s
+        )),
+      }));
+      setNotice({ type: 'success', text: 'Reward approved and loyalty points issued.' });
+      fetchAll();
+    } catch (err) {
+      setNotice({ type: 'error', text: err.message || 'Error approving reward.' });
+      fetchAll();
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
   const current = tab==='B2B' ? b2b : b2c;
   const isAdmin = user?.role === 'hq_admin';
   const Layout = isAdmin ? AdminLayout : PromotionManagerLayout;
@@ -173,6 +300,12 @@ export default function PromotionsDashboard() {
             <span>Refresh</span>
           </button>
         </div>
+
+        {notice && (
+          <div className={`rounded-[14px] border px-4 py-3 text-[13px] font-bold ${notice.type === 'success' ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-700'}`}>
+            {notice.text}
+          </div>
+        )}
 
         {/* Tab bar */}
         <div className="flex bg-[#F8F7F5] rounded-[16px] p-1.5 w-fit gap-1">
@@ -204,7 +337,7 @@ export default function PromotionsDashboard() {
               </button>
             )}
           </div>
-        ) : (<><AnalyticsStrip promotions={current} tab={tab}/>{tab==='B2B'?<B2BTable promotions={b2b}/>:<B2CTable promotions={b2c}/>}</>)}
+        ) : (<><AnalyticsStrip promotions={current} tab={tab}/>{tab==='B2B'?<B2BTable promotions={b2b} approvingId={approvingId} onApproveReward={handleApproveReward} t={t}/>:<B2CTable promotions={b2c}/>}</>)}
       </div>
     </Layout>
   );

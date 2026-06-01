@@ -9,6 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "node src/seed/seedEmployees.js",
     "seed-full": "node scripts/seed-data.js",
+    "seed-month-analytics": "node scripts/seed-month-analytics-data.js",
     "clean": "node src/seed/cleanTestAccounts.js"
   },
   "keywords": [],

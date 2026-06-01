@@ -15,6 +15,7 @@ import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 import { Search, Loader2, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 // Status filter tabs shown at the top of the ticket list
 const TABS = ['All', 'Open', 'In Progress', 'Resolved', 'Escalated'];
@@ -49,8 +50,15 @@ const categoryColor = (c) => ({
 
 // Convert "stock_out" → "Stock Out", "logistics_delay" → "Logistics Delay", etc.
 const formatCategory = (cat) => {
-  if (!cat) return "Unknown"
-  return cat.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+  if (!cat) return "Unknown";
+  const map = {
+    stock_out: 'Stock Out',
+    product_quality: 'Product Quality',
+    quality_issue: 'Product Quality',
+    logistics_delay: 'Logistics Delay',
+    pricing_issue: 'Pricing Issue',
+  };
+  return map[cat] || cat.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
 // Convert "in_progress" → "In Progress", "open" → "Open", etc.
@@ -71,6 +79,9 @@ export default function MyTickets() {
   const [error, setError]     = useState(null);
   const [search, setSearch]   = useState('');
   const [activeTab, setActiveTab] = useState('All');
+  const { language, t } = useLanguage();
+  const locale = language === 'si' ? 'si-LK' : language === 'ta' ? 'ta-LK' : 'en-US';
+  const ticketDate = (date) => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(date));
 
   // True only in local development when using a dev token (bypasses real API)
   const isDevMode = import.meta.env.DEV && localStorage.getItem('token')?.startsWith('dev-token-');
@@ -157,8 +168,8 @@ export default function MyTickets() {
 
         {/* Page header */}
         <div>
-          <h1 className="text-[26px] font-extrabold text-[#2C1810]">My Tickets</h1>
-          <p className="text-[15px] font-medium text-gray-500 mt-1">Track all your submitted issues</p>
+          <h1 className="text-[26px] font-extrabold text-[#2C1810]">{t('My Tickets')}</h1>
+          <p className="text-[15px] font-medium text-gray-500 mt-1">{t('Track all your submitted issues')}</p>
         </div>
 
         {/* Summary stat cards */}
@@ -170,7 +181,7 @@ export default function MyTickets() {
             { label: 'Resolved',    value: summary.resolved, accent: 'bg-green-50',  text: 'text-green-700' },
           ].map(c => (
             <div key={c.label} className={`${c.accent} border border-[#E0DBD5] rounded-[16px] p-5`}>
-              <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">{c.label}</p>
+              <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">{t(c.label)}</p>
               <p className={`text-[32px] font-extrabold leading-none ${c.text}`}>{c.value}</p>
             </div>
           ))}
@@ -183,7 +194,7 @@ export default function MyTickets() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by ticket ID or description..."
+              placeholder={t('Search by ticket ID or description...')}
               className="w-full pl-10 pr-4 py-3 border border-[#E0DBD5] rounded-[10px] text-[14px] font-medium text-[#2C1810] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 focus:border-[#3D2B1F] bg-white"
             />
           </div>
@@ -191,7 +202,7 @@ export default function MyTickets() {
             to="/retailer/submit-issue"
             className="bg-[#3D2B1F] text-white font-bold text-[14px] px-5 py-3 rounded-[10px] hover:bg-[#2C1810] transition-colors whitespace-nowrap flex items-center justify-center"
           >
-            + Submit Issue
+            + {t('Submit Issue')}
           </Link>
         </div>
 
@@ -206,7 +217,7 @@ export default function MyTickets() {
                   : 'border-transparent text-gray-500 hover:text-[#3D2B1F]' // Inactive tab
                 }`}
             >
-              {tab}
+              {t(tab)}
               {/* Show count badge for non-All tabs */}
               {tab !== 'All' && (
                 <span className="ml-1.5 bg-gray-100 text-gray-600 text-[11px] font-bold px-1.5 py-0.5 rounded-full">
@@ -221,7 +232,7 @@ export default function MyTickets() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 bg-white border border-[#E0DBD5] rounded-[20px]">
             <Loader2 className="w-10 h-10 text-[#3D2B1F] animate-spin mb-4" />
-            <p className="text-[15px] font-bold text-gray-500">Loading your tickets...</p>
+            <p className="text-[15px] font-bold text-gray-500">{t('Loading your tickets...')}</p>
           </div>
         ) : error ? (
           <div className="text-center py-16 bg-red-50 border border-red-100 rounded-[20px]">
@@ -231,28 +242,28 @@ export default function MyTickets() {
               onClick={() => window.location.reload()}
               className="mt-4 text-[14px] font-bold text-[#3D2B1F] underline"
             >
-              Try Again
+              {t('Try Again')}
             </button>
           </div>
         ) : tickets.length === 0 ? (
           // No tickets at all — show an empty state with a prompt to submit
           <div className="text-center py-20 bg-white border border-[#E0DBD5] rounded-[20px]">
             <p className="text-[40px] mb-3">🎫</p>
-            <p className="text-[18px] font-bold text-[#2C1810]">No tickets yet.</p>
-            <p className="text-[15px] text-gray-500 mt-2 mb-8">Submit your first issue to see it here!</p>
+            <p className="text-[18px] font-bold text-[#2C1810]">{t('No tickets yet.')}</p>
+            <p className="text-[15px] text-gray-500 mt-2 mb-8">{t('Submit your first issue to see it here!')}</p>
             <Link
               to="/retailer/submit-issue"
               className="bg-[#3D2B1F] text-white font-bold text-[15px] px-8 py-3.5 rounded-[12px] hover:bg-[#2C1810] transition-colors shadow-md inline-block"
             >
-              + Submit Your First Issue
+              + {t('Submit Your First Issue')}
             </Link>
           </div>
         ) : filtered.length === 0 ? (
           // Tickets exist but none match the current search/filter
           <div className="text-center py-16 bg-white border border-[#E0DBD5] rounded-[20px]">
             <p className="text-[40px] mb-3">🔍</p>
-            <p className="text-[16px] font-bold text-[#2C1810]">No search results found</p>
-            <p className="text-[14px] text-gray-500 mt-1">Try a different filter or search term</p>
+            <p className="text-[16px] font-bold text-[#2C1810]">{t('No search results found')}</p>
+            <p className="text-[14px] text-gray-500 mt-1">{t('Try a different filter or search term')}</p>
           </div>
         ) : (
           // Ticket cards
@@ -263,13 +274,13 @@ export default function MyTickets() {
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className="text-[15px] font-extrabold text-[#2563EB]">{ticket.ticketNumber}</span>
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md ${categoryColor(ticket.category)}`}>
-                    {formatCategory(ticket.category)}
+                    {t(formatCategory(ticket.category))}
                   </span>
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md ${priorityClass(ticket.priority)}`}>
-                    {formatPriority(ticket.priority)}
+                    {t(formatPriority(ticket.priority))}
                   </span>
                   <span className="text-[12px] text-gray-400 font-medium ml-auto">
-                    {new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {ticketDate(ticket.createdAt)}
                   </span>
                 </div>
                 {/* Description preview — clamped to 2 lines */}
@@ -277,13 +288,13 @@ export default function MyTickets() {
                 {/* Bottom row: status badge and "View Details" link */}
                 <div className="flex items-center justify-between">
                   <span className={`text-[12px] font-bold px-3 py-1 rounded-full ${statusClass(ticket.status)}`}>
-                    {formatStatus(ticket.status)}
+                    {t(formatStatus(ticket.status))}
                   </span>
                   <Link
                     to={`/retailer/tickets/${ticket._id}`}
                     className="text-[13px] font-bold text-[#3D2B1F] hover:text-[#2C1810] transition-colors flex items-center space-x-1 group"
                   >
-                    <span>View Details</span>
+                    <span>{t('View Details')}</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">›</span>
                   </Link>
                 </div>

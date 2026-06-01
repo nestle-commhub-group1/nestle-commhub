@@ -75,8 +75,6 @@ const UserManagement = () => {
       case 'retailer': return 'Retailer';
       case 'hq_admin': return 'HQ Admin';
       case 'distributor': return 'Distributor';
-      case 'delivery_driver': return 'Delivery Driver';
-      case 'regional_manager': return 'Regional Manager';
       default: return role;
     }
   };
@@ -84,11 +82,9 @@ const UserManagement = () => {
   const getRoleBadge = (role) => {
     switch(role) {
       case 'staff': return 'text-[#1D4ED8] bg-[#DBEAFE] border-[#1D4ED8]/20';
-      case 'regional_manager': return 'text-[#6B21A8] bg-[#F3E8FF] border-[#6B21A8]/20';
       case 'hq_admin': return 'text-[#8B0000] bg-[#FFE4E4] border-[#8B0000]/20';
       case 'distributor': return 'text-[#C2410C] bg-[#FFEDD5] border-[#C2410C]/20';
       case 'retailer': return 'text-nestle-success bg-green-50 border-green-200';
-      case 'delivery_driver': return 'text-gray-700 bg-gray-100 border-gray-200';
       default: return 'text-gray-700 bg-gray-100';
     }
   };

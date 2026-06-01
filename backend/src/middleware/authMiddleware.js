@@ -58,7 +58,7 @@ const protect = async (req, res, next) => {
         retailer:    "retailer1@test.com",
         staff:       "staff@nestle.com",
         hq_admin:    "admin@nestle.com",
-        distributor: "distributor1@test.com",
+        distributor: "dist1@nestle.com",
         promotion_manager: "pm@nestle.com",
         stock_manager: "sm@nestle.com"
       };

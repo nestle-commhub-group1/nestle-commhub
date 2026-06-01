@@ -23,6 +23,7 @@ const notificationSchema = new mongoose.Schema({
       "promotion_rating",
       "sales_report",
       "sales_reminder",
+      "reward_issued",
       "promo_chat",
       "warning",
     ],

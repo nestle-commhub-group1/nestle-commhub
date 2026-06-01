@@ -15,12 +15,13 @@
 
 import React from 'react';
 import { Bell, BellOff, Tag, Package, Calendar, ChevronRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
 
-function formatDate(dateStr) {
+function formatDate(dateStr, locale = 'en-GB') {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', {
+  return new Date(dateStr).toLocaleDateString(locale, {
     month: 'short', year: 'numeric',
   });
 }
@@ -62,7 +63,9 @@ export default function RetailerPromotionCard({
   variant  = 'favorite',
   onOptIn,
 }) {
+  const { language, t } = useLanguage();
   const isFavorite = variant === 'favorite';
+  const locale = language === 'si' ? 'si-LK' : language === 'ta' ? 'ta-LK' : 'en-GB';
 
   return (
     <div className={`bg-white rounded-[20px] border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
@@ -71,32 +74,33 @@ export default function RetailerPromotionCard({
       {/* Top accent bar */}
       <div className={`h-1 ${isFavorite ? 'bg-gradient-to-r from-amber-400 to-amber-300' : 'bg-gradient-to-r from-blue-400 to-blue-300'}`} />
 
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-4 h-full flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             {/* Category + discount */}
-            <div className="flex items-center flex-wrap gap-2 mb-2">
+            <div className="flex items-center flex-wrap gap-2 mb-3 min-h-[24px]">
               <CategoryPill category={promo.category} />
               {promo.discount > 0 && (
                 <span className="flex items-center space-x-1 text-[11px] font-black text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
                   <Tag size={10} />
-                  <span>{promo.discount}% OFF</span>
-                </span>
-              )}
-              {!isFavorite && promo.similarTo && (
-                <span className="text-[10px] text-gray-400 font-semibold italic">
-                  Similar to your past favourites
+                  <span>{promo.discount}% {t('OFF')}</span>
                 </span>
               )}
             </div>
 
-            <h3 className="font-black text-[15px] text-[#2C1810] leading-tight truncate">
+            {!isFavorite && (
+              <p className="mb-3 text-[11px] text-gray-400 font-bold italic leading-none">
+                {t('Similar to your past favourites')}
+              </p>
+            )}
+
+            <h3 className="font-black text-[15px] text-[#2C1810] leading-tight line-clamp-2 min-h-[38px]">
               {promo.title || promo.name}
             </h3>
 
             {promo.description && (
-              <p className="text-[12px] text-gray-500 mt-1 line-clamp-2">{promo.description}</p>
+              <p className="text-[12px] text-gray-500 mt-2 line-clamp-2 min-h-[40px]">{promo.description}</p>
             )}
           </div>
 
@@ -110,11 +114,11 @@ export default function RetailerPromotionCard({
         </div>
 
         {/* ── Stats grid ── */}
-        <div className={`grid gap-2 ${isFavorite ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className={`grid gap-2 ${isFavorite ? 'grid-cols-3' : 'grid-cols-2'} ${isFavorite ? '' : 'mt-auto'}`}>
           {isFavorite && (
             <div className="bg-[#FAFAF9] rounded-[10px] p-2.5 text-center border border-[#F0EDE8]">
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-                Your Orders
+                {t('Your Orders')}
               </p>
               <div className="flex items-center justify-center space-x-1">
                 <Package size={11} className="text-[#3D2B1F]" />
@@ -127,26 +131,26 @@ export default function RetailerPromotionCard({
 
           <div className="bg-[#FAFAF9] rounded-[10px] p-2.5 text-center border border-[#F0EDE8]">
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-              {isFavorite ? 'Last Ran' : 'Starts'}
+              {isFavorite ? t('Last Ran') : t('Starts')}
             </p>
             <div className="flex items-center justify-center space-x-1">
               <Calendar size={11} className="text-[#3D2B1F]" />
               <p className="text-[12px] font-bold text-[#2C1810]">
                 {isFavorite
-                  ? formatDate(promo.lastOrderDate || promo.startDate)
-                  : formatDate(promo.startDate)}
+                  ? formatDate(promo.lastOrderDate || promo.startDate, locale)
+                  : formatDate(promo.startDate, locale)}
               </p>
             </div>
           </div>
 
           <div className="bg-[#FAFAF9] rounded-[10px] p-2.5 text-center border border-[#F0EDE8]">
             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">
-              {isFavorite ? 'Ends' : 'Ends'}
+              {t('Ends')}
             </p>
             <div className="flex items-center justify-center space-x-1">
               <Calendar size={11} className="text-gray-400" />
               <p className="text-[12px] font-bold text-[#2C1810]">
-                {formatDate(promo.endDate)}
+                {formatDate(promo.endDate, locale)}
               </p>
             </div>
           </div>
@@ -173,15 +177,15 @@ export default function RetailerPromotionCard({
               } disabled:opacity-50`}
             >
               {promo.notifyOnRerun ? (
-                <><Bell size={14} className="text-emerald-600" /><span>Notifying on Rerun ✓</span></>
+                <><Bell size={14} className="text-emerald-600" /><span>{t('Notifying on Rerun')} ✓</span></>
               ) : (
-                <><BellOff size={14} /><span>Enable Rerun Notifications</span></>
+                <><BellOff size={14} /><span>{t('Enable Rerun Notifications')}</span></>
               )}
             </button>
 
             {promo.notifyOnRerun && (
               <p className="text-[11px] text-emerald-600 text-center font-medium">
-                ✅ You'll be notified when this promotion returns
+                ✅ {t("You'll be notified when this promotion returns")}
               </p>
             )}
           </div>
@@ -190,9 +194,9 @@ export default function RetailerPromotionCard({
           <div className="flex space-x-2">
             <button
               onClick={() => onOptIn?.(promo._id)}
-              className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 rounded-[12px] bg-[#3D2B1F] hover:bg-[#2C1810] text-white text-[12px] font-black transition-colors"
+              className="flex-1 flex items-center justify-center space-x-1.5 py-3 rounded-[12px] bg-[#3D2B1F] hover:bg-[#2C1810] text-white text-[12px] font-black transition-colors"
             >
-              <span>View &amp; Opt In</span>
+              <span>{t('View & Opt In')}</span>
               <ChevronRight size={13} />
             </button>
           </div>

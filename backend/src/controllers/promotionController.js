@@ -576,7 +576,8 @@ const approveReward = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Reward approved and loyalty points issued successfully',
-      credits: retailer.credits
+      credits: retailer.credits,
+      rewardIssuedAt: salesEntry.rewardIssuedAt
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -622,6 +623,7 @@ const getB2BPromotions = async (req, res) => {
       promotionType: 'B2B_RETAILER',
     })
       .populate('createdBy', 'fullName email')
+      .populate('salesData.retailerId', 'fullName email businessName')
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, promotions });

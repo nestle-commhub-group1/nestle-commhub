@@ -362,19 +362,19 @@ const InsightsDashboard = () => {
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
+        <div className="min-w-0">
           <div className="mb-2">
             <NestleLogo />
           </div>
           <h1 className="text-[28px] font-black text-[#2C1810] tracking-tight">HQ Business Insights</h1>
           <p className="text-[14px] text-gray-500 font-medium mt-1">Cross-regional performance and operational analytics</p>
         </div>
-        <div className="flex items-center space-x-3 bg-white p-1.5 rounded-[16px] border border-[#E0DBD5] shadow-sm">
-          <div className="flex items-center space-x-2 px-3 py-1.5 border-r border-gray-100">
+        <div className="flex w-full flex-wrap items-center gap-2 rounded-[16px] border border-[#E0DBD5] bg-white p-1.5 shadow-sm md:w-auto md:flex-nowrap">
+          <div className="flex min-w-[140px] flex-1 items-center space-x-2 rounded-[12px] px-3 py-2 md:flex-none md:border-r md:border-gray-100 md:py-1.5">
             <Calendar size={14} className="text-gray-400" />
             <select 
               value={period} onChange={(e) => setPeriod(e.target.value)}
-              className="text-[13px] font-bold bg-transparent outline-none cursor-pointer text-[#2C1810]"
+              className="min-w-0 flex-1 cursor-pointer bg-transparent text-[13px] font-bold text-[#2C1810] outline-none"
             >
               <option value="7">Last 7 Days</option>
               <option value="30">Last 30 Days</option>
@@ -382,11 +382,11 @@ const InsightsDashboard = () => {
               <option value="all">All Time</option>
             </select>
           </div>
-          <div className="flex items-center space-x-2 px-3 py-1.5">
+          <div className="flex min-w-[140px] flex-1 items-center space-x-2 rounded-[12px] px-3 py-2 md:flex-none md:py-1.5">
             <MapPin size={14} className="text-gray-400" />
             <select 
               value={region} onChange={(e) => setRegion(e.target.value)}
-              className="text-[13px] font-bold bg-transparent outline-none cursor-pointer text-[#2C1810]"
+              className="min-w-0 flex-1 cursor-pointer bg-transparent text-[13px] font-bold text-[#2C1810] outline-none"
             >
               <option value="all">All Regions</option>
               {['Western', 'Central', 'Northern', 'Eastern', 'Southern'].map(r => (
@@ -397,14 +397,14 @@ const InsightsDashboard = () => {
           <button 
             onClick={downloadReport} 
             title="Download CSV"
-            className="p-2 hover:bg-gray-50 rounded-[10px] transition-colors text-gray-400 hover:text-[#3D2B1F]"
+            className="rounded-[10px] p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-[#3D2B1F]"
           >
             <FileText size={18} />
           </button>
           <button 
             onClick={exportPDF} 
             title="Export PDF Report"
-            className="flex items-center space-x-2 px-4 py-2 bg-[#3D2B1F] text-white rounded-[12px] hover:bg-[#2C1810] transition-all shadow-md hover:shadow-lg active:scale-95"
+            className="flex flex-1 items-center justify-center space-x-2 rounded-[12px] bg-[#3D2B1F] px-4 py-2 text-white shadow-md transition-all hover:bg-[#2C1810] hover:shadow-lg active:scale-95 sm:flex-none"
           >
             <Download size={14} className="text-white/80" />
             <span className="text-[11px] font-black uppercase tracking-wider">Export PDF</span>
@@ -448,12 +448,12 @@ const InsightsDashboard = () => {
 
       {/* Main Analysis Section */}
       <div className="bg-white rounded-[32px] border border-[#E0DBD5] shadow-sm overflow-hidden">
-        <div className="flex overflow-x-auto border-b border-[#F0EDE8] bg-[#F8F7F5] px-4">
+        <div className="flex overflow-x-auto border-b border-[#F0EDE8] bg-[#F8F7F5] px-2 sm:px-4">
           {['Promotions', 'B2B vs B2C', 'Stock', 'Feedback', 'Fulfillment', 'HeatMap'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-8 py-5 text-[12px] font-black uppercase tracking-[0.1em] transition-all relative whitespace-nowrap ${
+              className={`relative whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-[0.1em] transition-all sm:px-8 sm:py-5 sm:text-[12px] ${
                 activeTab === tab ? 'text-[#3D2B1F]' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -463,7 +463,7 @@ const InsightsDashboard = () => {
           ))}
         </div>
 
-        <div className="p-8 min-h-[500px]">
+        <div className="min-h-[500px] p-4 sm:p-8">
           {activeTab === 'Promotions' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">

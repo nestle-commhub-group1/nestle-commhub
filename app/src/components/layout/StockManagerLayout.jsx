@@ -7,12 +7,16 @@ import {
 import axios from 'axios';
 import API_URL from '../../config/api';
 import { formatTimeAgo } from '../../utils/dateUtils';
+import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ThemeToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const StockManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [user, setUser] = useState({ fullName: 'Stock Manager', initials: 'SM', role: 'stock_manager' });
   const [notifications, setNotifications] = useState([]);
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -168,7 +172,7 @@ const StockManagerLayout = ({ children }) => {
                 onClick={() => setIsSidebarOpen(false)}
               >
                 {item.icon}
-                <span className="text-[15px]">{item.label}</span>
+                <span className="text-[15px]">{t(item.label.replace('⚡ ', ''))}</span>
               </Link>
             )
           })}
@@ -180,7 +184,7 @@ const StockManagerLayout = ({ children }) => {
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors font-bold text-[14px]"
           >
             <LogOut size={20} />
-            <span>Logout</span>
+            <span>{t('Logout')}</span>
           </button>
         </div>
       </div>
@@ -189,7 +193,9 @@ const StockManagerLayout = ({ children }) => {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar />
 
-        <div className="hidden lg:flex absolute top-6 right-8 z-10">
+        <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">
+          <ThemeToggle compact />
+          <LanguageSelector compact />
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
             {unreadCount > 0 && (

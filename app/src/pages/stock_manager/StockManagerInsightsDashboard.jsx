@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Download, FileText } from 'lucide-react';
 import StockManagerLayout from '../../components/layout/StockManagerLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import API_URL from '../../config/api';
 import {
   Chart as ChartJS,
@@ -79,6 +80,7 @@ async function apiFetch(path) {
 
 const StockManagerInsightsDashboard = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const [period, setPeriod] = useState('7');
@@ -110,6 +112,26 @@ const StockManagerInsightsDashboard = () => {
   const pdfFulfillmentRef = React.useRef(null);
 
   const regions = fulfillment ? fulfillment.map(f => f.region) : [];
+  const isDark = theme === 'dark';
+  const chartText = isDark ? '#e1d3c6' : '#6B7280';
+  const chartMuted = isDark ? '#c4b4a6' : '#9CA3AF';
+  const chartGrid = isDark ? 'rgba(255, 248, 239, 0.12)' : 'rgba(0,0,0,0.04)';
+  const chartBrown = isDark ? '#d9a679' : '#3D2B1F';
+  const chartFill = isDark ? 'rgba(217, 166, 121, 0.22)' : 'rgba(61,43,31,0.08)';
+  const themedChartOptions = {
+    ...CHART_DEFAULTS,
+    plugins: {
+      ...CHART_DEFAULTS.plugins,
+      legend: {
+        ...CHART_DEFAULTS.plugins.legend,
+        labels: { ...CHART_DEFAULTS.plugins.legend.labels, color: chartText },
+      },
+    },
+    scales: {
+      x: { ...CHART_DEFAULTS.scales.x, ticks: { ...CHART_DEFAULTS.scales.x.ticks, color: chartMuted }, grid: { color: chartGrid } },
+      y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, color: chartMuted }, grid: { color: chartGrid } },
+    },
+  };
 
   const fetchAll = useCallback(async () => {
     setLSummary(true); setLStock(true); setLProducts(true);
@@ -142,10 +164,10 @@ const StockManagerInsightsDashboard = () => {
       {
         label: 'Avg requests',
         data: stock.map(d => d.totalUnits),
-        borderColor: '#3D2B1F',
-        backgroundColor: 'rgba(61,43,31,0.08)',
+        borderColor: chartBrown,
+        backgroundColor: chartFill,
         pointBackgroundColor: '#fff',
-        pointBorderColor: '#3D2B1F',
+        pointBorderColor: chartBrown,
         pointRadius: 5,
         pointHoverRadius: 7,
         tension: 0.4,
@@ -396,8 +418,8 @@ const StockManagerInsightsDashboard = () => {
           {lStock ? <Spinner /> : stockLineData ? (
             <div className="h-[360px]">
               <Line ref={stockChartRef} aria-label="Avg stock requests by day of week Line Chart" data={stockLineData} options={{
-                ...CHART_DEFAULTS,
-                scales: { ...CHART_DEFAULTS.scales, y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v } } },
+                ...themedChartOptions,
+                scales: { ...themedChartOptions.scales, y: { ...themedChartOptions.scales.y, ticks: { ...themedChartOptions.scales.y.ticks, callback: v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v } } },
               }} />
             </div>
           ) : <NoData />}
@@ -409,7 +431,7 @@ const StockManagerInsightsDashboard = () => {
             <h2 className="text-[17px] font-black text-[#2C1810] mb-5">Top 5 Most Requested Products</h2>
             {lProducts ? <Spinner /> : top5Products.length > 0 ? (
               <div className="h-[300px]">
-                <Bar ref={productsChartRef} aria-label="Top 5 most requested products Bar Chart" data={productsBarData} options={{ ...CHART_DEFAULTS, indexAxis: 'y' }} />
+                <Bar ref={productsChartRef} aria-label="Top 5 most requested products Bar Chart" data={productsBarData} options={{ ...themedChartOptions, indexAxis: 'y' }} />
               </div>
             ) : <NoData />}
           </div>
@@ -446,9 +468,9 @@ const StockManagerInsightsDashboard = () => {
             {lFulfillment ? <Spinner /> : fulfillmentBarData ? (
               <div className="h-[300px]">
                 <Bar ref={fulfillmentChartRef} aria-label="Fulfillment rate by region Bar Chart" data={fulfillmentBarData} options={{
-                  ...CHART_DEFAULTS,
+                  ...themedChartOptions,
                   indexAxis: 'y',
-                  scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: v => `${v}%` } } },
+                  scales: { ...themedChartOptions.scales, x: { ...themedChartOptions.scales.x, max: 100, ticks: { ...themedChartOptions.scales.x.ticks, callback: v => `${v}%` } } },
                 }} />
               </div>
             ) : <NoData />}
@@ -459,8 +481,8 @@ const StockManagerInsightsDashboard = () => {
             {lRetailers ? <Spinner /> : retailerBarData ? (
               <div className="h-[300px]">
                 <Bar aria-label="Top retailers by order volume Bar Chart" data={retailerBarData} options={{
-                  ...CHART_DEFAULTS,
-                  scales: { ...CHART_DEFAULTS.scales, x: { ...CHART_DEFAULTS.scales.x, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } } },
+                  ...themedChartOptions,
+                  scales: { ...themedChartOptions.scales, x: { ...themedChartOptions.scales.x, ticks: { ...themedChartOptions.scales.x.ticks, maxRotation: 45 } } },
                 }} />
               </div>
             ) : <NoData />}

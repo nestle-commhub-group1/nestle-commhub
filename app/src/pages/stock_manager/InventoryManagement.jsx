@@ -119,7 +119,52 @@ const InventoryManagement = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="grid gap-4 md:hidden">
+        {products.map((product) => {
+          const isLow = product.stockQuantity < 1000;
+          return (
+            <div key={product._id} className={`rounded-2xl border border-gray-100 bg-white p-4 shadow-sm ${isLow ? 'bg-red-50/50' : ''}`}>
+              <div className="flex items-start gap-3">
+                <div className="h-14 w-14 flex-shrink-0 rounded-xl bg-gray-100">
+                  <img src={product.image || 'https://via.placeholder.com/150'} alt="" className="h-full w-full rounded-xl object-cover" onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-lg font-black text-nestle-brown">{product.name}</p>
+                  <p className="mt-1 line-clamp-2 text-sm font-medium text-gray-500">{product.description}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-blue-600">{product.category}</span>
+                    <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${isLow ? 'bg-red-100 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                      {isLow ? 'Low Inventory' : 'In Stock'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Price</p>
+                  <p className="text-base font-black text-nestle-brown">LKR {product.price.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Stock</p>
+                  <p className={`text-base font-black ${isLow ? 'text-red-600' : 'text-nestle-brown'}`}>{product.stockQuantity}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button onClick={() => handleEdit(product)} className="flex flex-1 items-center justify-center rounded-xl bg-blue-50 py-3 font-black text-blue-600">
+                  <Edit2 size={16} className="mr-2" />
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(product._id)} className="flex flex-1 items-center justify-center rounded-xl bg-red-50 py-3 font-black text-red-600">
+                  <Trash2 size={16} className="mr-2" />
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>

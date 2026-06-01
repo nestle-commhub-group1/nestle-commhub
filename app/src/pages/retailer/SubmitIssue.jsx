@@ -17,6 +17,7 @@ import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 /* ─── Category constants ──────────────────────────────────────────────────── */
 
@@ -36,6 +37,7 @@ const defaultForm = {
 
 export default function SubmitIssue() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [form, setForm]   = useState(defaultForm);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -50,8 +52,8 @@ export default function SubmitIssue() {
 
   function validate() {
     const e = {};
-    if (!form.category)           e.category    = 'Please select a category.';
-    if (!form.description.trim()) e.description = 'Please describe your issue.';
+    if (!form.category)           e.category    = t('Please select a category.');
+    if (!form.description.trim()) e.description = t('Please describe your issue.');
     return e;
   }
 
@@ -131,7 +133,7 @@ export default function SubmitIssue() {
       }
     } catch (err) {
       console.error('Error submitting ticket:', err);
-      setErrors({ submit: err.response?.data?.message || 'Failed to submit issue. Please try again.' });
+      setErrors({ submit: err.response?.data?.message || t('Failed to submit issue. Please try again.') });
     } finally {
       if (!isDevMode) setLoading(false);
     }
@@ -158,29 +160,29 @@ export default function SubmitIssue() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle size={40} className="text-[#2D7A4F]" />
             </div>
-            <h2 className="text-[24px] font-extrabold text-[#2C1810] mb-2">Issue Submitted Successfully!</h2>
-            <p className="text-[15px] text-gray-500 font-medium mb-1">Your ticket number is</p>
+            <h2 className="text-[24px] font-extrabold text-[#2C1810] mb-2">{t('Issue Submitted Successfully!')}</h2>
+            <p className="text-[15px] text-gray-500 font-medium mb-1">{t('Your ticket number is')}</p>
             <p className="text-[28px] font-extrabold text-[#2563EB] mb-4">{submittedTicketNumber}</p>
             <p className="text-[14px] text-gray-500 mb-8">
-              Our team will review and respond to your ticket shortly. You'll be notified when there's an update.
+              {t("Our team will review and respond to your ticket shortly. You'll be notified when there's an update.")}
             </p>
             <Link
               to="/retailer/tickets"
               className="block w-full bg-[#3D2B1F] text-white font-bold py-3.5 rounded-[12px] hover:bg-[#2C1810] transition-colors mb-3 text-[15px]"
             >
-              View My Tickets
+              {t('View My Tickets')}
             </Link>
             <Link
               to="/retailer/dashboard"
               className="block w-full border-2 border-[#3D2B1F] text-[#3D2B1F] font-bold py-3 rounded-[12px] hover:bg-[#F5F3F0] transition-colors text-[15px] text-center mb-3"
             >
-              Go to Dashboard
+              {t('Go to Dashboard')}
             </Link>
             <button
               onClick={reset}
               className="w-full text-[14px] font-medium text-gray-400 hover:text-gray-600 transition-colors py-2"
             >
-              Submit Another Issue
+              {t('Submit Another Issue')}
             </button>
           </div>
         </div>
@@ -202,8 +204,8 @@ export default function SubmitIssue() {
 
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-[26px] font-extrabold text-[#2C1810]">Submit an Issue</h1>
-          <p className="text-[15px] font-medium text-gray-500 mt-1">Report a problem and our team will get back to you</p>
+          <h1 className="text-[26px] font-extrabold text-[#2C1810]">{t('Submit an Issue')}</h1>
+          <p className="text-[15px] font-medium text-gray-500 mt-1">{t('Report a problem and our team will get back to you')}</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -220,14 +222,14 @@ export default function SubmitIssue() {
             {/* Category dropdown */}
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-2">
-                Issue Category <span className="text-red-500">*</span>
+                {t('Issue Category')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.category}
                 onChange={e => { setForm(f => ({ ...f, category: e.target.value })); setErrors(er => ({ ...er, category: undefined, submit: undefined })); }}
                 className={`w-full border rounded-[10px] px-4 py-3 text-[15px] font-medium text-[#2C1810] bg-white focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 transition-colors ${errors.category ? 'border-red-400' : 'border-[#E0DBD5]'}`}
               >
-                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{t(c.label)}</option>)}
               </select>
               {errors.category && <p className="text-red-500 text-[12px] mt-1.5 font-medium">{errors.category}</p>}
             </div>
@@ -238,14 +240,14 @@ export default function SubmitIssue() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest">
-                  Issue Description <span className="text-red-500">*</span>
+                  {t('Issue Description')} <span className="text-red-500">*</span>
                 </label>
                 <span className="text-[12px] text-gray-400 font-medium">{charCount}/500</span>
               </div>
               <textarea
                 rows={5}
                 maxLength={500}
-                placeholder="Describe your issue in detail — include product names, quantities, dates, and any relevant context..."
+                placeholder={t('Describe your issue in detail — include product names, quantities, dates, and any relevant context...')}
                 value={form.description}
                 onChange={e => { setForm(f => ({ ...f, description: e.target.value })); setCharCount(e.target.value.length); setErrors(er => ({ ...er, description: undefined, submit: undefined })); }}
                 className={`w-full border rounded-[10px] px-4 py-3 text-[15px] font-medium text-[#2C1810] placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#3D2B1F]/20 transition-colors ${errors.description ? 'border-red-400' : 'border-[#E0DBD5]'}`}
@@ -256,7 +258,7 @@ export default function SubmitIssue() {
             {/* File attachment area — supports both click-to-upload and drag-and-drop */}
             <div>
               <label className="block text-[12px] font-bold text-[#3D2B1F] uppercase tracking-widest mb-3">
-                Attach Evidence <span className="text-gray-400 font-medium normal-case tracking-normal">(optional)</span>
+                {t('Attach Evidence')} <span className="text-gray-400 font-medium normal-case tracking-normal">({t('optional')})</span>
               </label>
               <div
                 onDragOver={e => { e.preventDefault(); setDragging(true); }}
@@ -269,8 +271,8 @@ export default function SubmitIssue() {
                 {/* Hidden native file input — triggered by the visible upload area above */}
                 <input id="file-upload" type="file" multiple accept="image/*,video/*,audio/*" className="hidden" onChange={e => handleFiles(e.target.files)} />
                 <div className="text-4xl mb-3">📎</div>
-                <p className="text-[14px] font-semibold text-[#3D2B1F]">Click to upload or drag and drop</p>
-                <p className="text-[12px] text-gray-500 mt-1">Photos, videos, voice notes. Max 10MB per file</p>
+                <p className="text-[14px] font-semibold text-[#3D2B1F]">{t('Click to upload or drag and drop')}</p>
+                <p className="text-[12px] text-gray-500 mt-1">{t('Photos, videos, voice notes. Max 10MB per file')}</p>
               </div>
               {/* Show list of selected files with individual remove buttons */}
               {form.files.length > 0 && (
@@ -300,10 +302,10 @@ export default function SubmitIssue() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Submitting...</span>
+                <span>{t('Submitting...')}</span>
               </>
             ) : (
-              <span>Submit Issue</span>
+              <span>{t('Submit Issue')}</span>
             )}
           </button>
         </form>

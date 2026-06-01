@@ -6,6 +6,9 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../../config/api';
+import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ThemeToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const ManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,6 +16,7 @@ const ManagerLayout = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [user, setUser] = useState({ fullName: 'Manager', initials: 'M', role: 'Regional Manager', email: '' });
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -188,7 +192,7 @@ const ManagerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.badge && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -205,7 +209,7 @@ const ManagerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.badge && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -223,7 +227,7 @@ const ManagerLayout = ({ children }) => {
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-nestle-brown-hover hover:text-white rounded-xl transition-colors"
           >
             <LogOut size={20} />
-            <span className="font-medium text-[15px]">Logout</span>
+            <span className="font-medium text-[15px]">{t('Logout')}</span>
           </button>
         </div>
       </div>
@@ -232,7 +236,9 @@ const ManagerLayout = ({ children }) => {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar />
         
-        <div className="hidden lg:flex absolute top-6 right-8 z-10">
+        <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">
+          <ThemeToggle compact />
+          <LanguageSelector compact />
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
             <span className="absolute -top-1 -right-1 bg-nestle-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border-2 border-white">3</span>

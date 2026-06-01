@@ -11,6 +11,8 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./i18n/LanguageContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // ── Auth pages (no role required — publicly accessible) ────────────────────
@@ -21,6 +23,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import OTPVerify from "./pages/auth/OTPVerify";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Unauthorized from "./pages/Unauthorized";
+import PrivacyNotice from "./pages/PrivacyNotice";
+import PrivacyBanner from "./components/PrivacyBanner";
 
 // ── Retailer pages (role: "retailer") ─────────────────────────────────────
 import RetailerDashboard from "./pages/retailer/RetailerDashboard";
@@ -82,8 +86,10 @@ function App() {
     // AuthProvider makes login state and user data available to every component
     // in the tree via the useAuth() hook
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <ThemeProvider>
+        <LanguageProvider>
+          <BrowserRouter>
+          <Routes>
 
           {/* ── Dev-only launcher — lets developers bypass login during testing ── */}
           {/* In production (import.meta.env.DEV === false), this redirects to /login */}
@@ -101,6 +107,7 @@ function App() {
           <Route path="/verify-otp" element={<OTPVerify />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/privacy" element={<PrivacyNotice />} />
 
           {/* ── Retailer routes — only accessible with role="retailer" ──────────── */}
           {/* ProtectedRoute checks isAuthenticated AND that user.role === "retailer" */}
@@ -351,8 +358,11 @@ function App() {
           {/* ── Catch-all — any unknown URL redirects to login ─────────────────── */}
           <Route path="*" element={<Navigate to="/login" replace />} />
 
-        </Routes>
-      </BrowserRouter>
+          </Routes>
+          <PrivacyBanner />
+          </BrowserRouter>
+        </LanguageProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

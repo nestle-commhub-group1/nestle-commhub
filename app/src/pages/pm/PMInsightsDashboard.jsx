@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, Download, FileText } from 'lucide-react';
 import PromotionManagerLayout from '../../components/layout/PromotionManagerLayout';
 import API_URL from '../../config/api';
+import { useTheme } from '../../context/ThemeContext';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -75,6 +76,7 @@ const NestleLogo = () => (
 );
 
 const PMInsightsDashboard = () => {
+  const { theme } = useTheme();
   const [period, setPeriod] = useState('30');
   const [promoFilter, setPromoFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('Promotions');
@@ -134,11 +136,33 @@ const PMInsightsDashboard = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const filteredPromos = promotions
-    ? promoFilter === 'all'
-      ? promotions
-      : promotions.filter(p => p.promotionId === promoFilter)
-    : [];
+  const promotionRows = Array.isArray(promotions) ? promotions : [];
+  const conversionRows = Array.isArray(conversions) ? conversions : [];
+  const stockRows = Array.isArray(stock) ? stock : [];
+
+  const filteredPromos = promoFilter === 'all'
+    ? promotionRows
+    : promotionRows.filter(p => p.promotionId === promoFilter);
+  const isDark = theme === 'dark';
+  const chartText = isDark ? '#e1d3c6' : '#6B7280';
+  const chartMuted = isDark ? '#c4b4a6' : '#9CA3AF';
+  const chartGrid = isDark ? 'rgba(255, 248, 239, 0.12)' : 'rgba(0,0,0,0.04)';
+  const chartBrown = isDark ? '#d9a679' : '#3D2B1F';
+  const chartFill = isDark ? 'rgba(217, 166, 121, 0.22)' : 'rgba(61,43,31,0.08)';
+  const themedChartOptions = {
+    ...CHART_DEFAULTS,
+    plugins: {
+      ...CHART_DEFAULTS.plugins,
+      legend: {
+        ...CHART_DEFAULTS.plugins.legend,
+        labels: { ...CHART_DEFAULTS.plugins.legend.labels, color: chartText },
+      },
+    },
+    scales: {
+      x: { ...CHART_DEFAULTS.scales.x, ticks: { ...CHART_DEFAULTS.scales.x.ticks, color: chartMuted }, grid: { color: chartGrid } },
+      y: { ...CHART_DEFAULTS.scales.y, ticks: { ...CHART_DEFAULTS.scales.y.ticks, color: chartMuted }, grid: { color: chartGrid } },
+    },
+  };
 
   /* ── Chart data ── */
 
@@ -147,16 +171,14 @@ const PMInsightsDashboard = () => {
     datasets: [{
       label: 'Units Sold',
       data: filteredPromos.map(p => p.totalUnitsSold),
-      backgroundColor: '#3D2B1F',
+      backgroundColor: chartBrown,
       borderRadius: 6,
     }],
   };
 
-  const filteredConversions = conversions
-    ? promoFilter === 'all'
-      ? conversions
-      : conversions.filter(c => c.promotionId === promoFilter)
-    : [];
+  const filteredConversions = promoFilter === 'all'
+    ? conversionRows
+    : conversionRows.filter(c => c.promotionId === promoFilter);
 
   const conversionData = filteredConversions.length > 0 ? {
     labels: filteredConversions.map(c => c.promotionName),
@@ -182,25 +204,25 @@ const PMInsightsDashboard = () => {
     }],
   } : null;
 
-  const maxStock = stock ? Math.max(...stock.map(s => s.totalUnits)) : 0;
+  const maxStock = stockRows.length > 0 ? Math.max(...stockRows.map(s => s.totalUnits)) : 0;
   const threshold = maxStock > 0 ? Math.round(maxStock * 0.9) : 0;
-  const stockLineData = stock ? {
-    labels: stock.map(s => s.day),
+  const stockLineData = stockRows.length > 0 ? {
+    labels: stockRows.map(s => s.day),
     datasets: [
       {
         label: 'Stock Requests',
-        data: stock.map(s => s.totalUnits),
-        borderColor: '#3D2B1F',
-        backgroundColor: 'rgba(61,43,31,0.08)',
+        data: stockRows.map(s => s.totalUnits),
+        borderColor: chartBrown,
+        backgroundColor: chartFill,
         fill: true,
         tension: 0.4,
         pointBackgroundColor: '#fff',
-        pointBorderColor: '#3D2B1F',
+        pointBorderColor: chartBrown,
         pointRadius: 4,
       },
       {
         label: 'High Demand Threshold',
-        data: stock.map(() => threshold),
+        data: stockRows.map(() => threshold),
         borderColor: '#EF4444',
         borderDash: [6, 4],
         pointRadius: 0,
@@ -471,7 +493,7 @@ const PMInsightsDashboard = () => {
                     ref={unitsChartRef}
                     aria-label="Units Sold per Campaign Bar Chart"
                     data={unitsSoldData}
-                    options={{ ...CHART_DEFAULTS, indexAxis: 'y' }}
+                    options={{ ...themedChartOptions, indexAxis: 'y' }}
                   />
                 </div>
               ) : <NoData />}
@@ -487,7 +509,7 @@ const PMInsightsDashboard = () => {
                     ref={stockChartRef}
                     aria-label="Stock Request Trend Line Chart"
                     data={stockLineData}
-                    options={CHART_DEFAULTS}
+                    options={themedChartOptions}
                   />
                 </div>
               ) : <NoData />}
@@ -508,7 +530,7 @@ const PMInsightsDashboard = () => {
                     ref={sentimentChartRef}
                     aria-label="Feedback Sentiment Doughnut Chart"
                     data={doughnutData}
-                    options={{ ...CHART_DEFAULTS, maintainAspectRatio: false }}
+                    options={{ ...themedChartOptions, maintainAspectRatio: false }}
                   />
                 </div>
               ) : <NoData />}
@@ -525,11 +547,11 @@ const PMInsightsDashboard = () => {
                     aria-label="Conversion Rate by Promotion Bar Chart"
                     data={conversionData}
                     options={{
-                      ...CHART_DEFAULTS,
+                      ...themedChartOptions,
                       indexAxis: 'y',
                       scales: {
-                        ...CHART_DEFAULTS.scales,
-                        x: { ...CHART_DEFAULTS.scales.x, max: 100, ticks: { ...CHART_DEFAULTS.scales.x.ticks, callback: v => `${v}%` } },
+                        ...themedChartOptions.scales,
+                        x: { ...themedChartOptions.scales.x, max: 100, ticks: { ...themedChartOptions.scales.x.ticks, callback: v => `${v}%` } },
                       },
                     }}
                   />
@@ -552,10 +574,10 @@ const PMInsightsDashboard = () => {
                   aria-label="Order Fulfillment Rate by Promotion Bar Chart"
                   data={fulfillmentData}
                   options={{
-                    ...CHART_DEFAULTS,
+                    ...themedChartOptions,
                     scales: {
-                      x: { ...CHART_DEFAULTS.scales.x, stacked: true, ticks: { ...CHART_DEFAULTS.scales.x.ticks, maxRotation: 45 } },
-                      y: { ...CHART_DEFAULTS.scales.y, stacked: true, max: 100, ticks: { ...CHART_DEFAULTS.scales.y.ticks, callback: v => `${v}%` } },
+                      x: { ...themedChartOptions.scales.x, stacked: true, ticks: { ...themedChartOptions.scales.x.ticks, maxRotation: 45 } },
+                      y: { ...themedChartOptions.scales.y, stacked: true, max: 100, ticks: { ...themedChartOptions.scales.y.ticks, callback: v => `${v}%` } },
                     },
                   }}
                 />

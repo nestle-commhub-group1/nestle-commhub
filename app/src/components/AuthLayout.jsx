@@ -3,9 +3,16 @@
  * Shared wrapper for all auth pages.
  * Renders the Nestlé logo above the white card with a branded strip.
  */
+import LanguageSelector from './LanguageSelector';
+import ThemeToggle from './ThemeToggle';
+
 export default function AuthLayout({ children }) {
   return (
     <div className="min-h-screen bg-[#F0EDEA] flex flex-col items-center justify-center px-4 py-10">
+      <div className="fixed right-4 top-4 z-20 flex items-center gap-2">
+        <ThemeToggle compact />
+        <LanguageSelector compact />
+      </div>
 
       {/* Logo block — sits above the card, outside it */}
       <div className="flex flex-col items-center mb-6">

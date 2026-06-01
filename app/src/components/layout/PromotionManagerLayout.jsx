@@ -7,6 +7,9 @@ import {
 import axios from 'axios';
 import API_URL from '../../config/api';
 import { formatTimeAgo } from '../../utils/dateUtils';
+import LanguageSelector from '../LanguageSelector';
+import ThemeToggle from '../ThemeToggle';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const PromotionManagerLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,6 +17,7 @@ const PromotionManagerLayout = ({ children }) => {
   const [user, setUser] = useState({ fullName: 'Promotion Manager', initials: 'PM', role: 'promotion_manager', staffCategory: 'Promotion Manager', email: '' });
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -189,7 +193,7 @@ const PromotionManagerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.badge > 0 && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -206,7 +210,7 @@ const PromotionManagerLayout = ({ children }) => {
               >
                 <div className="flex items-center space-x-3.5">
                   {item.icon}
-                  <span className="font-medium text-[15px]">{item.label}</span>
+                  <span className="font-medium text-[15px]">{t(item.label)}</span>
                 </div>
                 {item.label === 'Notifications' && unreadCount > 0 && (
                   <span className="bg-nestle-danger text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -227,7 +231,7 @@ const PromotionManagerLayout = ({ children }) => {
             className="flex items-center space-x-3.5 px-4 py-3 w-full text-gray-300 hover:bg-white/5 hover:text-white rounded-xl transition-colors font-bold text-[14px]"
           >
             <LogOut size={20} />
-            <span>Logout</span>
+            <span>{t('Logout')}</span>
           </button>
         </div>
       </div>
@@ -236,7 +240,9 @@ const PromotionManagerLayout = ({ children }) => {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <TopBar />
         
-        <div className="hidden lg:flex absolute top-6 right-8 z-10">
+        <div className="hidden lg:flex absolute top-6 right-8 z-10 items-center gap-3">
+          <ThemeToggle compact />
+          <LanguageSelector compact />
           <button className="p-2 relative bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-100 text-nestle-brown" onClick={() => setIsNotificationsOpen(true)}>
             <Bell size={24} />
             {unreadCount > 0 && (

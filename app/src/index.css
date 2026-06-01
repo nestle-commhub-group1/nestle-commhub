@@ -1,3 +1,265 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html[data-theme='dark'] {
+    color-scheme: dark;
+    --dark-page: #18120f;
+    --dark-sidebar: #2a120b;
+    --dark-surface: #2a1d17;
+    --dark-surface-2: #34251e;
+    --dark-surface-soft: #463126;
+    --dark-border: #70594b;
+    --dark-border-soft: #574337;
+    --dark-text: #fff8ef;
+    --dark-muted: #e1d3c6;
+    --dark-faint: #c4b4a6;
+    --dark-link: #ffe0bd;
+    --dark-accent: #d9a679;
+  }
+
+  html[data-theme='dark'] body {
+    background: var(--dark-page);
+    color: var(--dark-text);
+  }
+
+  html[data-theme='dark'] .bg-white,
+  html[data-theme='dark'] .bg-white\/95,
+  html[data-theme='dark'] .bg-\[\#FAFAF9\],
+  html[data-theme='dark'] .bg-\[\#F8F7F5\],
+  html[data-theme='dark'] .bg-\[\#F5F5F5\],
+  html[data-theme='dark'] .bg-\[\#F5F3F0\],
+  html[data-theme='dark'] [class*="bg-[#FAFAF9]"],
+  html[data-theme='dark'] [class*="bg-[#F8F7F5]"],
+  html[data-theme='dark'] [class*="bg-[#F5F5F5]"],
+  html[data-theme='dark'] [class*="bg-[#F5F3F0]"] {
+    background-color: var(--dark-surface) !important;
+  }
+
+  html[data-theme='dark'] .bg-\[\#F0EDEA\],
+  html[data-theme='dark'] .bg-nestle-gray {
+    background-color: var(--dark-page) !important;
+  }
+
+  html[data-theme='dark'] .bg-nestle-brown {
+    background-color: var(--dark-sidebar) !important;
+  }
+
+  html[data-theme='dark'] .bg-nestle-brown-hover,
+  html[data-theme='dark'] .bg-\[\#3D2B1F\] {
+    background-color: var(--dark-surface-soft) !important;
+  }
+
+  html[data-theme='dark'] .bg-gray-50,
+  html[data-theme='dark'] .bg-gray-100,
+  html[data-theme='dark'] .hover\:bg-gray-50:hover,
+  html[data-theme='dark'] .hover\:bg-gray-100:hover,
+  html[data-theme='dark'] .hover\:bg-gray-200:hover {
+    background-color: var(--dark-surface-2) !important;
+  }
+
+  html[data-theme='dark'] .text-\[\#2C1810\],
+  html[data-theme='dark'] .text-\[\#3D2B1F\],
+  html[data-theme='dark'] .text-nestle-brown {
+    color: var(--dark-text) !important;
+  }
+
+  html[data-theme='dark'] .text-nestle-brown-light {
+    color: var(--dark-link) !important;
+  }
+
+  html[data-theme='dark'] .text-gray-500,
+  html[data-theme='dark'] .text-gray-600,
+  html[data-theme='dark'] .text-gray-700,
+  html[data-theme='dark'] .text-gray-800 {
+    color: var(--dark-muted) !important;
+  }
+
+  html[data-theme='dark'] .text-gray-400 {
+    color: var(--dark-faint) !important;
+  }
+
+  html[data-theme='dark'] .text-gray-300 {
+    color: #d3c5b8 !important;
+  }
+
+  html[data-theme='dark'] .border-\[\#E0DBD5\],
+  html[data-theme='dark'] .border-\[\#F0EDE8\],
+  html[data-theme='dark'] .border-gray-100,
+  html[data-theme='dark'] .border-gray-200,
+  html[data-theme='dark'] .border-nestle-border,
+  html[data-theme='dark'] [class*="border-nestle-border"],
+  html[data-theme='dark'] .divide-nestle-border > :not([hidden]) ~ :not([hidden]),
+  html[data-theme='dark'] [class*="divide-nestle-border"] > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--dark-border-soft) !important;
+  }
+
+  html[data-theme='dark'] .border {
+    border-color: var(--dark-border-soft);
+  }
+
+  html[data-theme='dark'] .border-transparent {
+    border-color: transparent !important;
+  }
+
+  html[data-theme='dark'] input,
+  html[data-theme='dark'] textarea,
+  html[data-theme='dark'] select {
+    background-color: var(--dark-surface-2) !important;
+    color: var(--dark-text) !important;
+    border-color: var(--dark-border-soft) !important;
+  }
+
+  html[data-theme='dark'] input::placeholder,
+  html[data-theme='dark'] textarea::placeholder {
+    color: #d0c0b2 !important;
+  }
+
+  html[data-theme='dark'] .bg-amber-50,
+  html[data-theme='dark'] .bg-yellow-50 {
+    background-color: rgba(120, 85, 35, 0.22) !important;
+  }
+
+  html[data-theme='dark'] .bg-red-50,
+  html[data-theme='dark'] .bg-red-100 {
+    background-color: rgba(130, 45, 45, 0.24) !important;
+  }
+
+  html[data-theme='dark'] .bg-green-50,
+  html[data-theme='dark'] .bg-green-100 {
+    background-color: rgba(45, 110, 70, 0.22) !important;
+  }
+
+  html[data-theme='dark'] .bg-blue-50,
+  html[data-theme='dark'] .bg-blue-100 {
+    background-color: rgba(55, 90, 150, 0.22) !important;
+  }
+
+  html[data-theme='dark'] .bg-purple-100 {
+    background-color: rgba(100, 70, 145, 0.24) !important;
+  }
+
+  html[data-theme='dark'] .text-white {
+    color: #fffaf3;
+  }
+
+  html[data-theme='dark'] img[src="/nestle-logo.png"] {
+    filter: brightness(0) invert(1);
+    opacity: 0.98;
+  }
+
+  html[data-theme='dark'] .opacity-50 {
+    opacity: 0.78 !important;
+  }
+
+  html[data-theme='dark'] .opacity-60 {
+    opacity: 0.84 !important;
+  }
+
+  html[data-theme='dark'] .opacity-70 {
+    opacity: 0.9 !important;
+  }
+
+  html[data-theme='dark'] .shadow-sm,
+  html[data-theme='dark'] .shadow-md,
+  html[data-theme='dark'] .shadow-lg,
+  html[data-theme='dark'] .shadow-xl,
+  html[data-theme='dark'] .shadow-2xl {
+    box-shadow: 0 18px 42px rgba(16, 10, 7, 0.28) !important;
+  }
+
+  html[data-theme='dark'] table,
+  html[data-theme='dark'] thead,
+  html[data-theme='dark'] tbody,
+  html[data-theme='dark'] tr {
+    border-color: var(--dark-border-soft) !important;
+  }
+
+  html[data-theme='dark'] a:hover {
+    color: #f2d8bc;
+  }
+
+  html[data-theme='dark'] canvas {
+    color: var(--dark-muted);
+  }
+
+  html[data-theme='dark'] .leaflet-container,
+  html[data-theme='dark'] .leaflet-tile-pane {
+    filter: saturate(0.88) brightness(0.9) contrast(1.05);
+  }
+
+  html[data-theme='dark'] .stock-product-card {
+    background: #2f211a !important;
+    border-color: #8a6a55 !important;
+    color: #fff8ef !important;
+  }
+
+  html[data-theme='dark'] .stock-product-card-hot {
+    background: linear-gradient(145deg, #37261d 0%, #2a1d17 100%) !important;
+    border-color: #d9a679 !important;
+  }
+
+  html[data-theme='dark'] .stock-product-image {
+    background: #f7f1e8 !important;
+    color: #2c1810 !important;
+    border: 1px solid rgba(112, 89, 75, 0.25);
+  }
+
+  html[data-theme='dark'] .stock-product-title,
+  html[data-theme='dark'] .stock-product-price {
+    color: #fff8ef !important;
+  }
+
+  html[data-theme='dark'] .stock-product-desc {
+    color: #eaded2 !important;
+  }
+
+  html[data-theme='dark'] .stock-product-meta {
+    color: #d9a679 !important;
+  }
+
+  html[data-theme='dark'] .stock-category-chip {
+    background: rgba(255, 250, 243, 0.96) !important;
+    color: #2c1810 !important;
+  }
+
+  html[data-theme='dark'] .retailer-chart-card,
+  html[data-theme='dark'] .retailer-metric-card {
+    background-color: #2a1d17 !important;
+    border-color: #70594b !important;
+    color: #fff8ef !important;
+  }
+
+  html[data-theme='dark'] .retailer-chart-card h1,
+  html[data-theme='dark'] .retailer-chart-card h2,
+  html[data-theme='dark'] .retailer-chart-card h3,
+  html[data-theme='dark'] .retailer-metric-card p {
+    color: #fff8ef !important;
+  }
+
+  html[data-theme='dark'] .retailer-chart-card label,
+  html[data-theme='dark'] .retailer-chart-card p {
+    color: #eaded2 !important;
+  }
+
+  html[data-theme='dark'] .retailer-metric-card p:first-child {
+    color: #eaded2 !important;
+  }
+
+  @media (max-width: 640px) {
+    html[data-theme='dark'] .stock-product-card {
+      border-color: #d9a679 !important;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    html[data-theme='dark'] .stock-product-image {
+      background: #fffaf3 !important;
+    }
+
+    html[data-theme='dark'] .retailer-chart-card,
+    html[data-theme='dark'] .retailer-metric-card {
+      border-color: #7d6251 !important;
+    }
+  }
+}

@@ -3,8 +3,10 @@ import { Save, User, MapPin, Phone, Mail, Loader2, LogOut, CheckCircle2, Camera 
 import axios from 'axios';
 import API_URL from '../../config/api';
 import RetailerLayout from '../../components/layout/RetailerLayout';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const RetailerProfile = () => {
+  const { t } = useLanguage();
   const [user, setUser] = useState({
     fullName: 'Chaminda Jayawardena',
     initials: 'CJ',
@@ -79,12 +81,12 @@ const RetailerProfile = () => {
 
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUserRaw)); // Save raw user from DB
-        alert('Profile updated successfully!');
+        alert(t('Profile updated successfully!'));
         window.location.reload(); // Force reload to sync UI
       }
     } catch (err) {
       console.error("Profile update error:", err.response?.data || err.message);
-      alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
+      alert(`${t('Failed to update profile:')} ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -92,8 +94,8 @@ const RetailerProfile = () => {
     <RetailerLayout>
       <div className="max-w-3xl pb-10">
         <div className="mb-8">
-          <h1 className="text-[26px] font-extrabold text-nestle-brown">My Profile</h1>
-          <p className="text-[15px] font-medium text-gray-500 mt-1">View and update your account details</p>
+          <h1 className="text-[26px] font-extrabold text-nestle-brown">{t('My Profile')}</h1>
+          <p className="text-[15px] font-medium text-gray-500 mt-1">{t('View and update your account details')}</p>
         </div>
 
         {/* Top Card */}
@@ -110,18 +112,18 @@ const RetailerProfile = () => {
             <h2 className="text-[20px] font-extrabold text-nestle-brown">{user.fullName}</h2>
             <p className="text-[14px] font-medium text-gray-500 mt-0.5">{user.email}</p>
             <span className="inline-block mt-3 bg-[#FEF3C7] text-[#92400E] text-[12px] font-bold px-3 py-1 rounded-md shadow-sm">
-              Retailer
+              {t('Retailer')}
             </span>
           </div>
         </div>
 
         {/* Personal Info */}
         <div className="bg-white border border-nestle-border rounded-[20px] p-8 shadow-sm mb-6">
-          <h3 className="text-[13px] font-extrabold text-[#3D2B1F] tracking-widest uppercase mb-6">PERSONAL INFORMATION</h3>
+          <h3 className="text-[13px] font-extrabold text-[#3D2B1F] tracking-widest uppercase mb-6">{t('Personal Information')}</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">FULL NAME <span className="text-nestle-danger">*</span></label>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Full Name')} <span className="text-nestle-danger">*</span></label>
               <input
                 type="text"
                 name="fullName"
@@ -131,7 +133,7 @@ const RetailerProfile = () => {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">PHONE NUMBER <span className="text-nestle-danger">*</span></label>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Phone Number')} <span className="text-nestle-danger">*</span></label>
               <input
                 type="text"
                 name="phone"
@@ -143,7 +145,7 @@ const RetailerProfile = () => {
           </div>
 
           <div>
-            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">EMAIL ADDRESS</label>
+            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Email Address')}</label>
             <input
               type="text"
               value={user.email}
@@ -156,12 +158,12 @@ const RetailerProfile = () => {
         {/* Business Info */}
         <div className="bg-white border border-nestle-border rounded-[20px] p-8 shadow-sm mb-8">
           <h3 className="text-[13px] font-extrabold text-[#3D2B1F] tracking-widest uppercase mb-6 flex items-center">
-            BUSINESS INFORMATION <span className="text-gray-400 font-medium ml-2 text-[12px] normal-case tracking-normal hover:bg-gray-100 px-2 py-0.5 rounded-md">(Read only)</span>
+            {t('Business Information')} <span className="text-gray-400 font-medium ml-2 text-[12px] normal-case tracking-normal hover:bg-gray-100 px-2 py-0.5 rounded-md">({t('Read only')})</span>
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">BUSINESS NAME</label>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Business Name')}</label>
               <input
                 type="text"
                 value={user.businessName}
@@ -170,7 +172,7 @@ const RetailerProfile = () => {
               />
             </div>
             <div>
-              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">TAX ID / REG. NUMBER</label>
+              <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Tax ID / Reg. Number')}</label>
               <input
                 type="text"
                 value={user.taxId}
@@ -181,7 +183,7 @@ const RetailerProfile = () => {
           </div>
 
           <div>
-            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">BUSINESS ADDRESS</label>
+            <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Business Address')}</label>
             <input
               type="text"
               value={user.businessAddress || user.address}
@@ -194,7 +196,7 @@ const RetailerProfile = () => {
           {(user.province || user.district) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
               <div>
-                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">PROVINCE</label>
+                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('Province')}</label>
                 <input
                   type="text"
                   value={user.province || '—'}
@@ -203,7 +205,7 @@ const RetailerProfile = () => {
                 />
               </div>
               <div>
-                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">DISTRICT</label>
+                <label className="block text-[12px] font-bold text-[#3D2B1F] mb-2 uppercase tracking-wide">{t('District')}</label>
                 <input
                   type="text"
                   value={user.district || '—'}
@@ -220,7 +222,7 @@ const RetailerProfile = () => {
           className="w-full md:w-auto bg-[#3D2B1F] text-white font-bold text-[15px] px-8 py-3.5 rounded-[12px] hover:bg-nestle-brown transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
         >
           <Save size={18} />
-          <span>Save Changes</span>
+          <span>{t('Save Changes')}</span>
         </button>
 
       </div>
